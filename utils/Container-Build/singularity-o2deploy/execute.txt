@@ -1,0 +1,20 @@
+!!!!! DO NOT BUILD ON VIRGO !!!!!
+
+./init_sandbox.sh
+
+### replace with: docker username ###
+
+### replace with: docker password ###
+
+./enterBuildEnv.sh
+cd /opt/alibuild/O2Physics
+git remote add [GitHub username] http://github.com/[GitHub username]/O2Physics
+git pull [GitHub username] [branchname on remote]
+cd /opt/alibuild
+aliBuild build O2Physics --defaults o2 -j30
+alienv enter O2Physics::latest
+exit
+exit
+./packageSandboxToSif.sh
+y
+rm -rf sandboxo2

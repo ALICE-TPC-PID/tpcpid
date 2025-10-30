@@ -1,0 +1,42 @@
+Bootstrap: docker
+From: rocm/pytorch:rocm5.4.2_ubuntu20.04_py3.8_pytorch_2.0.0_preview
+
+%labels
+
+    Maintainer "Jeremy Wilkinson" <jeremy.wilkinson@cern.ch>
+    Maintainer "Christian Sonnabend" <christian.sonnabend@cern.ch>
+    Architecture x86_64
+    Version 1.0.0-devel 
+
+%help
+Minimal container for running Pytorch including AMD GPU support with ROCm. Based on the official ROCm image from NVidia, https://hub.docker.com/r/rocm/pytorch. 
+version 1.0.0: first version
+
+
+%post
+    export DEBIAN_FRONTEND="noninteractive"
+    export TZ="Europe/Berlin"
+    apt-get -y update
+#    apt-get -y install software-properties-common build-essential
+    apt-get -y install vim git rsync pkg-config
+    apt-get -y install parallel
+    # self-update pip before installing python packages
+    python3 -m pip install --upgrade pip
+    python3 -m pip install protobuf
+    # add CMake and pytest for building/running XGBoost examples
+    python3 -m pip install --upgrade cmake
+    # uproot with xxhash for lz4 compression support
+    # uproot3 is for compatibility with writing files (not suppported in uproot4)
+    # seaborn for extra output plots, pyyaml for YAML support
+    # python3 -m pip install --upgrade setuptools
+    python3 -m pip install pytest uproot lz4 scikit-learn xxhash awkward cython uproot3 seaborn pyyaml zstandard pyod
+    python3 -m pip install optuna thop pynvml
+
+    # pytorch with GPU support
+    python3 -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.4.2
+
+    python3 -m pip install tensorflow combo xgboost
+
+    # ONNX runtime for possible export of torch models to O2
+    python3 -m pip install onnxruntime-gpu onnx
+    python3 -m pip install onnxconverter-common

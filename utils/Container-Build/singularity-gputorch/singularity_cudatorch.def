@@ -1,0 +1,41 @@
+Bootstrap: docker
+From: nvidia/cuda:11.4.3-base-ubuntu20.04
+
+%labels
+
+    Maintainer "Jeremy Wilkinson" <jeremy.wilkinson@cern.ch>
+    Maintainer "Christian Sonnabend" <christian.sonnabend@cern.ch>
+    Architecture x86_64
+    Version 1.0.2-devel 
+
+%help
+Minimal container for running Pytorch including NVidia GPU support with CUDA 11.0. Based on the official CUDA image from NVidia, https://hub.docker.com/r/nvidia/cuda. 
+NOTE: In order to access the NVidia drivers the container must be invoked with the --nv switch (e.g. "singularity exec --nv [COMMAND]") in order to access the driver binaries on the host machine.
+version 1.0.2: add ONNX python library
+
+%post
+    export DEBIAN_FRONTEND="noninteractive"
+    export TZ="Europe/Berlin"
+    apt update
+#    apt -y install software-properties-common build-essential
+    apt -y install python3 python3-pip vim git pkg-config
+    # self-update pip before installing python packages
+    python3 -m pip install --upgrade pip
+
+    # add CMake and pytest for building/running XGBoost examples
+    python3 -m pip install --upgrade cmake
+    # uproot with xxhash for lz4 compression support
+    # uproot3 is for compatibility with writing files (not suppported in uproot4)
+    # seaborn for extra output plots, pyyaml for YAML support
+    python3 -m pip install --upgrade setuptools
+    python3 -m pip install pytest uproot lz4 scikit-learn xxhash awkward cython uproot3 seaborn pyyaml zstandard pyod protobuf==3.20.2
+    python3 -m pip install optuna thop pynvml
+
+    # pytorch with GPU support
+    pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu113
+
+    python3 -m pip install tensorflow combo xgboost
+
+    # ONNX runtime for possible export of torch models to O2
+    python3 -m pip install onnxruntime-gpu onnx
+    python3 -m pip install onnxconverter-common

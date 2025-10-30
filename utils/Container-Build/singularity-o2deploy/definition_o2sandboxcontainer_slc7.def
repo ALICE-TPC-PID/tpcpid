@@ -1,0 +1,40 @@
+Bootstrap: docker
+From: alisw/slc7-builder
+
+%labels
+
+    Maintainer "Jeremy Wilkinson" <jeremy.wilkinson@cern.ch>
+    Maintainer "Christian Sonnabend" <christian.sonnabend@cern.ch>
+    Architecture x86_64
+    Version 1.0.5
+%help
+Container of alisw SLC build environment for deployment
+version 1.0.5: fix pip commands
+
+%environment
+
+
+%files
+#    alice-system-deps.repo /etc/yum.repos.d/
+
+%post
+    echo "installing build tools"
+    # ALICE system deps from alice-doc.github.io
+    yum update -y
+#    yum install -y alice-o2-full-deps alibuild
+    
+    yum -y install vim git pkg-config rsync
+    
+    yum -y install python3 python3-devel python3-pip 
+    python3 -m pip install --upgrade pip
+    python3 -m pip install alibuild
+
+    # Install GNU Parallel for Run3 validation framework
+    yum -y install parallel
+
+    mkdir -p /opt/alibuild
+    cd /opt/alibuild
+    aliBuild analytics off
+    aliBuild init
+    aliBuild init O2 --defaults o2
+    aliBuild init O2Physics --defaults o2

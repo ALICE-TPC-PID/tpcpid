@@ -1,0 +1,3 @@
+- ResNetImg: ResNet for image classification, e.g. CIFAR10, taken from https://towardsdatascience.com/residual-network-implementing-resnet-a7da63c7b278
+- ResNetGrid_1: ResNet for grid structure, batchnorm and fully connected layers
+- UNetGrid_1: UNet structure: first upsample, then downsample and skip connections to later upsampling layers

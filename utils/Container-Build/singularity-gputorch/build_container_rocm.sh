@@ -1,0 +1,13 @@
+#!/bin/bash
+####################################################
+#                                                  #
+#  Simple build script for singularity container   #
+#                                                  #
+####################################################
+
+# Keep singularity cache local to this folder
+#export SINGULARITY_CACHEDIR=$PWD/cache
+#export SINGULARITY_TMPDIR=$PWD/tmp
+
+#run singularity build
+singularity build --fakeroot rocm_torch_env.sif singularity_rocmtorch.def 
