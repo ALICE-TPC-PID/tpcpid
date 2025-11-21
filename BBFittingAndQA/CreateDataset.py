@@ -1,24 +1,21 @@
 import os
 import sys
 from datetime import datetime
-
+import json
 import numpy as np
 import scipy as sc
 from scipy import stats
 import matplotlib.pyplot as plt
-
-from tqdm import tqdm
-
 import matplotlib as mpl
 from matplotlib import cm
+import tqdm
 import matplotlib.colors as mcolors
 import pandas as pd
 sys.path.append("../Neural-Network-Class/NeuralNetworkClasses")
 from extract_from_root import *
-
 import argparse
-
 import mplhep as hep
+
 plt.style.use(hep.style.ALICE)
 for key in mpl.rcParams.keys():
     if key.startswith('legend.'):
@@ -42,18 +39,25 @@ parser.add_argument("-sg","--sigmathreshold", type= int, default=3, help= "Defin
 parser.add_argument("-sa","--sampleamount", type= int, default=6e7, help= "Define the max amount of events before downsampling")
 args = parser.parse_args()
 
-if args.full_input_path == ";;" and (args.period == ";;" or args.apass == ";;"):
-    print("Please provide either a full path or period and apass.")
-    sys.exit()
+# if args.full_input_path == ";;" and (args.period == ";;" or args.apass == ";;"):
+#     print("Please provide either a full path or period and apass.")
+#     sys.exit()
 
-if args.full_input_path == ";;":
-    period = args.period
-    apass = args.apass
-    dir_tree = "/lustre/alice/users/msalvan/o2-tpcpid-parametrisation/BBfitAndQA/{0}_{1}/outputFits/SkimmedTree_UpdatednSigmaAndExpdEdx_Single_{0}_{1}.root".format(period, apass)
-else:
-    period = "default"
-    apass = "default"
-    dir_tree = args.full_input_path
+# if args.full_input_path == ";;":
+#     period = args.period
+#     apass = args.apass
+#     dir_tree = "/lustre/alice/users/msalvan/o2-tpcpid-parametrisation/BBfitAndQA/{0}_{1}/outputFits/SkimmedTree_UpdatednSigmaAndExpdEdx_Single_{0}_{1}.root".format(period, apass)
+# else:
+#     period = "default"
+#     apass = "default"
+#     dir_tree = args.full_input_path
+
+path_config = "../Running/configuration.json"
+configs_file = open(path_config, "r")
+CONFIG = json.load(configs_file)
+
+period = CONFIG['dataset']['period']
+apass = CONFIG['dataset']['pass']
 
 date = datetime.today().strftime('%d%m%Y')
 output_path = os.path.join(args.output_path, "{2}/{0}_{2}_{1}/{0}_{2}/merged_tree.root".format(period, date, apass))
@@ -61,7 +65,8 @@ plot_path = os.path.join(args.output_path, "{2}/{0}_{2}_{1}/{0}_{2}/plots".forma
 if not os.path.exists(plot_path):
     os.makedirs(plot_path)
 
-print("Period:", args.period, "; apass:", args.apass, "; input is:", dir_tree)
+dir_tree = CONFIG['paths']['Skimmedtree_shiftedNsigma']
+print("Period:", period, "; apass:", apass, "; input is:", dir_tree)
 
 
 ### Functions
@@ -236,16 +241,15 @@ def plot_cuts(**kwargs):
 
 ## Loading data and models
 
-particles = ['Electrons', 'Pions', 'Kaons', 'Protons', 'Deuterons', 'Tritons']
-masses = [0.000510998950, 0.13957039, 0.493677, 0.93827208816]
-
+particles = CONFIG['createTrainingDatasetOptions']['particles']
+masses = CONFIG['createTrainingDatasetOptions']['masses']
+LABELS_X = CONFIG['createTrainingDatasetOptions']['labels_x']
+LABELS_Y = CONFIG['createTrainingDatasetOptions']['labels_y']
 cload = load_tree()
 TTree = cload.print_trees(dir_tree)
-LABELS_X = ['fTPCInnerParam', 'fTgl', 'fSigned1Pt', 'fMass', 'fNormMultTPC', 'fNormNClustersTPC','fFt0Occ']
-LABELS_Y = ['fTPCSignal', 'fInvDeDxExpTPC']
 mode = args.loading_mode
 import_labels = [*LABELS_Y, *LABELS_X, 'fPidIndex','fRunNumber']
-
+print(f"[DEBUG]: Import labels are {import_labels}")
 if mode=="full":
     labels, fit_data = cload.load(use_vars=import_labels, limit = 100, path=dir_tree, load_latest=True, verbose=True)
 else:
@@ -361,7 +365,7 @@ else:
 ### Index reordering
 
 reorder_index = []
-for lab in [*LABELS_Y, *LABELS_X, 'fPidIndex','fRunNumber']:
+for lab in import_labels:
     reorder_index.append(np.where(labels==lab)[0][0])
 reorder_index = np.array(reorder_index)
 fit_data = fit_data[:,reorder_index]
@@ -394,7 +398,6 @@ for i, m in enumerate(np.sort(np.unique(new_data.T[labels=='fMass']))):
     full_mask[mask] = np.abs(ratio_data)<sigma_threshold
 
 new_data = new_data[full_mask.astype(bool)]
-particles = ['Electrons', 'Pions', 'Kaons', 'Protons', 'Deuterons', 'Tritons']
 
 def gauss(x, *p):
     A, mu, sigma = p

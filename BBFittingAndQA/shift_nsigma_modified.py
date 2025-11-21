@@ -14,21 +14,19 @@ import json
 
 #Reads the configurations from file
 #Returns the config array
-def read_config():  
-    path_config = "../Running/configuration.json"
-    # print(f"Path to config file = {path_config}") #debug
-    configs_file = open(path_config, "r")
-    CONFIG = json.load(configs_file)
+CONFIG = None   # module-level
 
-    #Here is a slot for DEBUGING
-    # Just enter the path to any root tree, and you will get an overview over the subdirectories, trees and branches
-    # config["Path"]=config["Path"]="/lustre/alice/users/jwitte/tpcpid/o2-tpcpid-parametrisation/BBfitAndQA/BBFitting_Task_pass5/tpcsignal/output/SkimmedTree_UpdatednSigmaAndExpdEdx_LHC2023zzf_pass5_tpcsignal_Run4.root"        
-    
-    # Print all loaded variables
-    # print("Loaded configuration variables:")
-    # for key, value in config.items():
-    #     # print(f"{key} = {value}")
+def read_config():  
+    global CONFIG
+    path_config = "../Running/configuration.json"
+    with open(path_config, "r") as f:
+        CONFIG = json.load(f)
     return CONFIG
+
+def write_config(CONFIG):
+    path_config = "../Running/configuration.json"
+    with open(path_config, "w") as f:
+        json.dump(CONFIG, f, indent=4)
 
 #Reads config and adds the name of the dataset
 def add_name(config):
@@ -63,7 +61,7 @@ def collect_latest_trees(directory, prefix=""):
 #Crashes if there is more than one subdirectory
 #Returns array with tree names and the trees
 def read_tree(config):
-    root_file_path = config['dataset']['input_skimmedtree_path']
+    root_file_path = config['paths']['input_skimmedtree_path']
     if not root_file_path or not os.path.exists(root_file_path):
         raise FileNotFoundError(f"ROOT file not found at path: {root_file_path}")
     else:
@@ -171,12 +169,12 @@ def create_funcBBvsBGNew(BB_params):
     return calculate_dEdx
 
 
-def update_v0_tree(tree, calculate_dEdx):
+def update_v0_tree(tree, calculate_dEdx, output_file):
     """
     Takes a V0 tree, updates the values, and returns a new tree.
     calculate_dEdx: callable func(beta_gamma) -> expected dEdx
     """
-
+    output_file.cd()
     print(f"Using dEdx values from branch {CONFIG['dataset']['dEdxSelection']} for V0 tree")
     
     # Prepare input buffers for SetBranchAddress
@@ -326,15 +324,17 @@ def update_v0_tree(tree, calculate_dEdx):
 
         #writes every single entry to the output root tree
         gTree_V0.Fill()
+    print("[CRITICAL]: Just one tree is saved, they are overwritten")
     print(f"Particles found in V0 tree: Electrons={nElectronV0}, Pions={nPionV0}, Kaons={nKaonV0}, Protons={nProtonV0}, Rest={nRestV0}")
+    gTree_V0.Write()
     return True
 
-def update_tpctof_tree(tree, calculate_dEdx):
+def update_tpctof_tree(tree, calculate_dEdx, output_file):
     """
     Takes a TPCTOF tree, updates the values, and returns a new tree.
     calculate_dEdx: callable func(beta_gamma) -> expected dEdx
     """
-
+    output_file.cd()
     print(f"Using dEdx values from branch {CONFIG['dataset']['dEdxSelection']} for tpctof tree")
 
     # Prepare input buffers for SetBranchAddress
@@ -503,6 +503,7 @@ def update_tpctof_tree(tree, calculate_dEdx):
 
     print(f"Particles found in TPCTOF tree: Electrons={nElectronV0}, Pions={nPionV0}, Kaons={nKaonV0}, Protons={nProtonV0}, Rest={nRestV0}")
     print(f"Rejected particles in TPCTOF tree: RejectedPions={nRejectedPionsV0}, RejectedKaons={nRejectedKaonsV0}, RejectedProtons={nRejectedProtonsV0}")
+    gTree_tpctof.Write()
     return True
 
 
@@ -538,7 +539,7 @@ if __name__ == "__main__":
 
     # Read the configuration
     CONFIG = read_config()       #works, 26.05.25
-    CONFIG['dataset']['Job_dir'] = Job_dir
+    CONFIG["dataset"]["Job_dir"] = Job_dir
 
     # #define to use tpcsignal or tpcdEdxNorm
     # CONFIG['dataset']['dEdxSelection'] = "TPCSignal"
@@ -549,7 +550,7 @@ if __name__ == "__main__":
     CONFIG = add_name(CONFIG)
 
     #Reading 
-    BB_params = read_BB_params(CONFIG)
+    BB_params = CONFIG['fitBBGraphOptions']['BBparameters']
 
     #create function to calculate dEdx values from fit
     calculate_dEdx = create_funcBBvsBGNew(BB_params)
@@ -565,21 +566,26 @@ if __name__ == "__main__":
     # check_trees(trees)
 
     output_file = ROOT.TFile(os.path.join(CONFIG['dataset']['Job_dir'],"outputFits",f"SkimmedTree_UpdatednSigmaAndExpdEdx_{CONFIG['dataset']['name']}.root"), "RECREATE")
+    CONFIG["paths"]["Skimmedtree_shiftedNsigma"] = os.path.join(CONFIG['dataset']['Job_dir'],"outputFits",f"SkimmedTree_UpdatednSigmaAndExpdEdx_{CONFIG['dataset']['name']}.root")
+    write_config(CONFIG)
 
     for name, tree in trees:
         # print(f"DEBUG: MAIN tree '{name}' of type: {type(tree)}")
         if name == CONFIG['general']['V0treename'] or name.endswith(f"/{CONFIG['general']['V0treename']}"):
             success_V0 = False
-            success_V0 = update_v0_tree(tree, calculate_dEdx)
+            success_V0 = update_v0_tree(tree, calculate_dEdx, output_file)
             print(f"Update of NSigma in V0 tree sucessful: {success_V0}")
 
 
         elif name == CONFIG['general']['tpctoftreename'] or name.endswith(f"/{CONFIG['general']['tpctoftreename']}"):
         # if name == "O2tpctofskimwde":
             success_tpctof = False
-            success_tpctof = update_tpctof_tree(tree, calculate_dEdx)
+            success_tpctof = update_tpctof_tree(tree, calculate_dEdx, output_file)
             print(f"Update of NSigma in tpctof tree sucessful: {success_tpctof}")
         else:
             print(f"Unexpected tree {name}")
+
+    output_file.Write()
+    output_file.Close()
 
     print(f"Skimmed Tree with updated NSigma and Cuts is stored in {output_file}")

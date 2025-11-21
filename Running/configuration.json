@@ -1,40 +1,83 @@
 {
-    "dataset":{
-        "year": "24",
-        "period": "ar",
-        "pass": "1",
-        "dEdxSelection": "TPCSignal",
+    "createTrainingDatasetOptions": {
+        "labels_x": [
+            "fTPCInnerParam",
+            "fTgl",
+            "fSigned1Pt",
+            "fMass",
+            "fNormMultTPC",
+            "fNormNClustersTPC",
+            "fFt0Occ"
+        ],
+        "labels_y": [
+            "fTPCSignal",
+            "fInvDeDxExpTPC"
+        ],
+        "masses": [
+            0.000510998950,
+            0.13957039,
+            0.493677,
+            0.93827208816
+        ],
+        "option1": "Proxy",
+        "particles": [
+            "Electrons",
+            "Pions",
+            "Kaons",
+            "Protons",
+            "Deuterons",
+            "Tritons"
+        ]
+    },
+    "dataset": {
         "HadronicRate": "True",
+        "dEdxSelection": "TPCSignal",
         "optTag1": "TestTag1",
         "optTag2": "TestTag2",
-        "input_skimmedtree_path": "/lustre/alice/users/jwitte/tpcpid/LHC24arOleksii/LHC24ar/559781/hy_3030305/AOD/002/AO2D.root"
+        "pass": "1",
+        "period": "ar",
+        "year": "24",
+        "Job_dir": "./",
+        "name": "LHC24ar_pass1_TestTag1_TestTag2_TPCSignal_HR_True"
     },
-    "process": {
-        "skimTreeQA": true,
-        "fitBBGraph": true,
-        "shiftNsigma": true,
-        "createTrainingDataset": true,
-        "trainNeuralNet": true
+    "fitBBGraphOptions": {
+        "BBparameters": [
+            0.18679351282432435,
+            4.255767998444241,
+            0.006739458626342516,
+            2.320840204278507,
+            0.9008160002525909
+        ],
+        "option1": "Proxy"
     },
     "general": {
         "V0treename": "O2tpcskimv0wde",
         "tpctoftreename": "O2tpctofskimwde"
     },
-    "skimTreeQAOptions": {
-        "option1": "Proxy"
+    "paths": {
+        "input_skimmedtree_path": "/lustre/alice/users/jwitte/tpcpid/LHC24arOleksii/LHC24ar/559781/hy_3030305/AOD/002/AO2D.root",
+        "Skimmedtree_shiftedNsigma": "./outputFits/SkimmedTree_UpdatednSigmaAndExpdEdx_LHC24ar_pass1_TestTag1_TestTag2_TPCSignal_HR_True.root"
     },
-    "fitBBGraphOptions": {
-        "option1": "Proxy"
+    "process": {
+        "createTrainingDataset": true,
+        "fitBBGraph": true,
+        "shiftNsigma": true,
+        "skimTreeQA": true,
+        "trainNeuralNet": true
     },
     "shiftNsigmaOptions": {
         "option1": "Proxy"
     },
-    "createTrainingDatasetOptions": {
+    "skimTreeQAOptions": {
         "option1": "Proxy"
     },
     "trainNeuralNetOptions": {
+        "numberOfEpochs": "200",
         "option1": "Proxy",
-        "trainingBranches": "['fHadronicRate', 'fFT0Occ', 'fNormMultTPC']",
-        "numberOfEpochs": "200"
+        "trainingBranches": [
+            "fHadronicRate",
+            "fFT0Occ",
+            "fNormMultTPC"
+        ]
     }
 }

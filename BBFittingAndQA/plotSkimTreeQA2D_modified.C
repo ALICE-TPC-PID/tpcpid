@@ -52,7 +52,7 @@ void plotSkimTreeQA2D_modified(){
   std::string cfgHadronicRate = CONFIG["dataset"]["HadronicRate"].get<std::string>();
   std::string cfgTag1 = CONFIG["dataset"]["optTag1"].get<std::string>();
   std::string cfgTag2 = CONFIG["dataset"]["optTag2"].get<std::string>();
-  std::string cfgSkimPath = CONFIG["dataset"]["input_skimmedtree_path"].get<std::string>();
+  std::string cfgSkimPath = CONFIG["paths"]["input_skimmedtree_path"].get<std::string>();
   std::string cgfV0treename = CONFIG["general"]["V0treename"];
   std::string cgfTPCTOFtreename = CONFIG["general"]["tpctoftreename"];
 

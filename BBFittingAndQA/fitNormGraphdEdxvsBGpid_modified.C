@@ -51,7 +51,7 @@ void fitNormGraphdEdxvsBGpid_modified(){
   std::string cfgHadronicRate = CONFIG["dataset"]["HadronicRate"].get<std::string>();
   std::string cfgTag1 = CONFIG["dataset"]["optTag1"].get<std::string>();
   std::string cfgTag2 = CONFIG["dataset"]["optTag2"].get<std::string>();
-  std::string cfgSkimPath = CONFIG["dataset"]["input_skimmedtree_path"].get<std::string>();
+  std::string cfgSkimPath = CONFIG["paths"]["input_skimmedtree_path"].get<std::string>();
   std::string cgfV0treename = CONFIG["general"]["V0treename"];
   std::string cgfTPCTOFtreename = CONFIG["general"]["tpctoftreename"];
 
@@ -932,43 +932,11 @@ void fitNormGraphdEdxvsBGpid_modified(){
   Double_t params[6] = {0,};
   funcBBvsBGThisPass->GetParameters(params);
 
-  // This is just for the Comparison of the Cutting effects
-  // Including a dynamic filename to account for the variable A11 cut
-  // Base filename with dataset name, using Form for formatting
-  // TString baseFilename = Form("outputFits/BBparameters_%s", sDataSet.Data());
-  // TString baseFilename = Form("outputFits/BBfitcomparison/BBparameters_%s", sDataSet.Data());
-  // // Add appendix based on sectorA11cut, dynamically adjusting the middle part of the filename
-  // if (sectorA11cut == 1) {
-  //     baseFilename += "_noA11";
-  // } else if (sectorA11cut == 2) {
-  //     baseFilename += "_onlyA11";
-  // } else {
-  //     baseFilename += "_allSectors";
-  // }
-
-  // // Complete filename with .txt extension
-  // baseFilename += ".txt";
-
-  // // Open the file
-  // ofstream outTxt(baseFilename.Data());  // Use Data() to convert TString to C-string
-
-
-  ofstream outTxt(Form("outputFits/BBparameters_%s.txt",sDataSet.Data()));
-  
-  cout<<" BB parameters: ";
-  for(int i=0;i<5;i++){
-    cout<<params[i];
-    outTxt<<params[i];
-    
-    if(i<4){
-      cout<<", ";
-      outTxt<<" ";
-    }
+  CONFIG["fitBBGraphOptions"]["BBparameters"] = nlohmann::json::array();
+  for (int i = 0; i < 5; i++) {
+    CONFIG["fitBBGraphOptions"]["BBparameters"].push_back(params[i]);
   }
-
-  cout<<"\n";
-  outTxt<<"\n";
-  outTxt.close();
+  writeConfig();
 
 
   
