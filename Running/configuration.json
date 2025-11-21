@@ -1,12 +1,13 @@
 {
     "dataset":{
-        "year": "27",
-        "period": "abc",
-        "pass": "12",
+        "year": "24",
+        "period": "ar",
+        "pass": "1",
         "dEdxSelection": "TPCSignal",
+        "HadronicRate": "True",
         "optTag1": "TestTag1",
         "optTag2": "TestTag2",
-        "input_skimmedtree_path": "/lustre/alice/users/marin/R3A/TPCTrees/TPCTrees_LHC23zzf_241218/AO2D_merge_241218_LHC23zzf.root"
+        "input_skimmedtree_path": "/lustre/alice/users/jwitte/tpcpid/LHC24arOleksii/LHC24ar/559781/hy_3030305/AOD/002/AO2D.root"
     },
     "process": {
         "skimTreeQA": true,
@@ -16,8 +17,8 @@
         "trainNeuralNet": true
     },
     "general": {
-        "V0treename": "O2tpcskimv0tree",
-        "tpctoftreename": "O2tpctofskimtree"
+        "V0treename": "O2tpcskimv0wde",
+        "tpctoftreename": "O2tpctofskimwde"
     },
     "skimTreeQAOptions": {
         "option1": "Proxy"

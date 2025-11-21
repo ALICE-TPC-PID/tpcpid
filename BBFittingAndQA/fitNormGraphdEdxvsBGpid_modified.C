@@ -1,6 +1,5 @@
-#include "/lustre/alice/users/jwitte/tpcpid/o2-tpcpid-parametrisation/headerfunction.h"
+#include "../utils/headerfunction.h"
 #include "./read_config.C"
-// extern std::string dEdxSelection;
 // This macro was modified to automatically use the provided pathtoskimtree when entering the name (f.e. LHC23zzk)
 
 ///Global Parameter for Canvas
@@ -44,11 +43,21 @@ void fitNormGraphdEdxvsBGpid_modified(){
   // cout << "DEBUG Path without " << Path << endl;
   // cout << "DEBUG Path Data " << Path.Data() << endl;
 
+    // Construct the dataset name and path from JSON config
+  std::string cfgYear = CONFIG["dataset"]["year"].get<std::string>();
+  std::string cfgPeriod = CONFIG["dataset"]["period"].get<std::string>();
+  std::string cfgPass = CONFIG["dataset"]["pass"].get<std::string>();
+  std::string cfgDedxSelection = CONFIG["dataset"]["dEdxSelection"].get<std::string>();
+  std::string cfgHadronicRate = CONFIG["dataset"]["HadronicRate"].get<std::string>();
+  std::string cfgTag1 = CONFIG["dataset"]["optTag1"].get<std::string>();
+  std::string cfgTag2 = CONFIG["dataset"]["optTag2"].get<std::string>();
+  std::string cfgSkimPath = CONFIG["dataset"]["input_skimmedtree_path"].get<std::string>();
+  std::string cgfV0treename = CONFIG["general"]["V0treename"];
+  std::string cgfTPCTOFtreename = CONFIG["general"]["tpctoftreename"];
 
-  // Construct the dataset name
-  TString sDataSet = TString::Format("LHC%s%s", Year.c_str(), Period.c_str());
-  TString sDataSetlong = TString::Format("LHC%s%s_pass%d_%s_%s_%s", Year.c_str(), Period.c_str(), Pass, Tag1.c_str(), Tag2.c_str(), dEdxSelection.c_str());
-  TString path2file = TString::Format("%s", Path.c_str());
+  TString sDataSet = TString::Format("LHC%s%s_pass%s_%s_%s_%s_HR_%s", cfgYear.c_str(), cfgPeriod.c_str(), cfgPass.c_str(), cfgTag1.c_str(), cfgTag2.c_str(), cfgDedxSelection.c_str(), cfgHadronicRate.c_str());
+  TString path2file = TString::Format("%s", cfgSkimPath.c_str());
+  
   
   gStyle->SetOptStat(0000);
   gStyle->SetImageScaling(50.);
@@ -76,7 +85,7 @@ void fitNormGraphdEdxvsBGpid_modified(){
   
   cout << "This is the filename " << fileName.Data() << endl;
   cout << "This is the sDataSet " << sDataSet.Data() << endl;
-  cout << "This is the sDataSetlong " << sDataSetlong.Data() << endl;
+  
 
   // Open the file
   ifstream intxt;
@@ -224,9 +233,11 @@ void fitNormGraphdEdxvsBGpid_modified(){
   TH2F *hdEdxvsMomDataV0Elec   =  new TH2F("hdEdxvsMomDataV0ElecPos","dE/dx vs #beta#gamma  e^{#pm}  (Data)",icNbinX,profBins,4000,0,4000);
   TH2F *hdEdxvsMomDataV0Pion   =  new TH2F("hdEdxvsMomDataV0PionPos","dE/dx vs #beta#gamma #pi^{#pm} (Data)",icNbinX,profBins,4000,0,4000);
   TH2F *hdEdxvsMomDataV0Prot   =  new TH2F("hdEdxvsMomDataV0ProtPos","dE/dx vs #beta#gamma  p#bar{p} (Data)",icNbinX,profBins,4000,0,4000);
+  TH2F *hdEdxvsMomDataV0Kaon   =  new TH2F("hdEdxvsMomDataV0KaonPos","dE/dx vs #beta#gamma  K^{#pm} (Data)",icNbinX,profBins,4000,0,4000);
   TH2F *hdEdxvsMomDataV0ElecNeg = new TH2F("hdEdxvsMomDataV0ElecNeg","dE/dx vs #beta#gamma  e^{#pm}  (Data)",icNbinX,profBins,4000,0,4000);
   TH2F *hdEdxvsMomDataV0PionNeg = new TH2F("hdEdxvsMomDataV0PionNeg","dE/dx vs #beta#gamma #pi^{#pm} (Data)",icNbinX,profBins,4000,0,4000);
   TH2F *hdEdxvsMomDataV0ProtNeg = new TH2F("hdEdxvsMomDataV0ProtNeg","dE/dx vs #beta#gamma  p#bar{p} (Data)",icNbinX,profBins,5000,0,5000);      
+  TH2F *hdEdxvsMomDataV0KaonNeg = new TH2F("hdEdxvsMomDataV0KaonNeg","dE/dx vs #beta#gamma  K^{#pm} (Data)",icNbinX,profBins,4000,0,4000);      
 
   //Selected with TPC,TOF 
   TH2F *hNormdEdxvsMomDataPion   =  new TH2F("hNormdEdxvsMomDataPionTPCTOFPos","dE/dx vs #beta#gamma #pi^{+}(Data)",icNbinX,profBins,200,0.5,1.5);  
@@ -240,9 +251,11 @@ void fitNormGraphdEdxvsBGpid_modified(){
   TH2F *hNormdEdxvsMomDataV0Elec   =  new TH2F("hNormdEdxvsMomDataV0ElecPos","dE/dx vs #beta#gamma  e^{+}  (Data)",icNbinX,profBins,200,0.5,1.5);
   TH2F *hNormdEdxvsMomDataV0Pion   =  new TH2F("hNormdEdxvsMomDataV0PionPos","dE/dx vs #beta#gamma #pi^{+} (Data)",icNbinX,profBins,200,0.5,1.5);
   TH2F *hNormdEdxvsMomDataV0Prot   =  new TH2F("hNormdEdxvsMomDataV0ProtPos","dE/dx vs #beta#gamma   prot  (Data)",icNbinX,profBins,200,0.5,1.5);
+  TH2F *hNormdEdxvsMomDataV0Kaon   =  new TH2F("hNormdEdxvsMomDataV0KaonPos","dE/dx vs #beta#gamma  K^{+}  (Data)",icNbinX,profBins,200,0.5,1.5);
   TH2F *hNormdEdxvsMomDataV0ElecNeg = new TH2F("hNormdEdxvsMomDataV0ElecNeg","dE/dx vs #beta#gamma  e^{-}  (Data)",icNbinX,profBins,200,0.5,1.5);
   TH2F *hNormdEdxvsMomDataV0PionNeg = new TH2F("hNormdEdxvsMomDataV0PionNeg","dE/dx vs #beta#gamma #pi^{-} (Data)",icNbinX,profBins,200,0.5,1.5);
   TH2F *hNormdEdxvsMomDataV0ProtNeg = new TH2F("hNormdEdxvsMomDataV0ProtNeg","dE/dx vs #beta#gamma #bar{p} (Data)",icNbinX,profBins,200,0.5,1.5);
+  TH2F *hNormdEdxvsMomDataV0KaonNeg = new TH2F("hNormdEdxvsMomDataV0KaonNeg","dE/dx vs #beta#gamma  K^{-}  (Data)",icNbinX,profBins,200,0.5,1.5);
 
 
   //// Now Merging All Pions:
@@ -265,7 +278,7 @@ void fitNormGraphdEdxvsBGpid_modified(){
   Int_t nTotTrk = 0;
   Int_t nV0Trk = 0;
   Int_t ntrkPion=0,ntrkKaon=0,ntrkProt=0,ntrkDeut=0;
-  Int_t ntrkPionV0=0,ntrkElecV0=0,ntrkProtV0=0;
+  Int_t ntrkPionV0=0,ntrkElecV0=0,ntrkProtV0=0,ntrkKaonV0=0;
   
   Int_t oldRun = 0, thisRun;
   Double_t dBBtheo=0;
@@ -276,10 +289,10 @@ void fitNormGraphdEdxvsBGpid_modified(){
 
   // checking weather to use the TPCSignal or TPCdEdxNorm
   // The values are replaced before filling the histograms
-  if (dEdxSelection == "TPCdEdxNorm"){
+  if (cfgDedxSelection == "TPCdEdxNorm"){
     std::cout <<"\nFor the BB fitting the dEdx values from the TPCdEdxNorm branch are used." << std::endl;
   }
-  else if (dEdxSelection == "TPCSignal")
+  else if (cfgDedxSelection == "TPCSignal")
   {
     std::cout <<"\nFor the BB fitting the dEdx values from the TPCSignal branch are used." << std::endl;
   }
@@ -297,7 +310,7 @@ void fitNormGraphdEdxvsBGpid_modified(){
     TDirectory *dir = (TDirectory*)f1->Get(Form("%s:/%s",f1->GetName(),dirName.Data()));
 
     
-    dir->GetObject("O2tpctofskimwde",treeTPC);
+    dir->GetObject(cgfTPCTOFtreename.c_str(),treeTPC);
    
     if (treeTPC){
       fChain = treeTPC;
@@ -366,7 +379,7 @@ void fitNormGraphdEdxvsBGpid_modified(){
 	dBBtheo = funcBBvsBGReference->Eval(fBetaGamma);
 
   // In case of usage of the TPCdEdxNorm, replace fTPCSignal with fTPCdEdxNorm
-  if (dEdxSelection == "TPCdEdxNorm"){
+  if (cfgDedxSelection == "TPCdEdxNorm"){
     fTPCSignal = fTPCdEdxNorm;
   }
 	if(ch>0){
@@ -416,7 +429,7 @@ void fitNormGraphdEdxvsBGpid_modified(){
 
     ///Now Read the V0 tree:
     
-    dir->GetObject("O2tpcskimv0wde",treeV0);
+    dir->GetObject(cgfV0treename.c_str(),treeV0);
     
     if(treeV0){
       //cout<<" Found the V0 Tree "<<endl;
@@ -480,7 +493,7 @@ void fitNormGraphdEdxvsBGpid_modified(){
 
 	dBBtheo = funcBBvsBGReference->Eval(fBetaGamma);
 	// In case of usage of the TPCdEdxNorm, replace fTPCSignal with fTPCdEdxNorm
-  if (dEdxSelection == "TPCdEdxNorm"){
+  if (cfgDedxSelection == "TPCdEdxNorm"){
     fTPCSignal = fTPCdEdxNorm;
   }
 	if(ch>0){
@@ -495,6 +508,11 @@ void fitNormGraphdEdxvsBGpid_modified(){
 	    hNormdEdxvsMomDataV0Pion->Fill(fBetaGamma,fTPCSignal/dBBtheo);
 	    ntrkPionV0++;
 	  }
+    else if(fabs(ipid)==3 && fabs(fNSigTPC)<5.0){
+      hdEdxvsMomDataV0Kaon->Fill(fBetaGamma,fTPCSignal);
+      hNormdEdxvsMomDataV0Kaon->Fill(fBetaGamma,fTPCSignal/dBBtheo);
+      ntrkKaonV0++;
+    }
 	  else if(fabs(ipid)==4 && fabs(fNSigTPC)<5.0){
 	    hdEdxvsMomDataV0Prot->Fill(fBetaGamma,fTPCSignal);
 	    hdEdxDataProtPosMerged->Fill(fBetaGamma,fTPCSignal);
@@ -514,6 +532,11 @@ void fitNormGraphdEdxvsBGpid_modified(){
 	    hNormdEdxvsMomDataV0PionNeg->Fill(fBetaGamma,fTPCSignal/dBBtheo);
 	    ntrkPionV0++;
 	  }
+    else if(fabs(ipid)==3 && fabs(fNSigTPC)<5.0){
+      hdEdxvsMomDataV0KaonNeg->Fill(fBetaGamma,fTPCSignal);
+      hNormdEdxvsMomDataV0KaonNeg->Fill(fBetaGamma,fTPCSignal/dBBtheo);
+      ntrkKaonV0++;
+    }
 	  else if(fabs(ipid)==4 && fabs(fNSigTPC)<5.0){
 	    hdEdxvsMomDataV0ProtNeg->Fill(fBetaGamma,fTPCSignal);
 	    hdEdxDataProtNegMerged->Fill(fBetaGamma,fTPCSignal);
@@ -569,6 +592,9 @@ void fitNormGraphdEdxvsBGpid_modified(){
   hNormdEdxvsMomDataV0Prot->FitSlicesY();
   TH1D *hMeandEdxvsMomDataV0Prot  = (TH1D*) gDirectory->Get("hNormdEdxvsMomDataV0ProtPos_1");
   TH1D *hSigmadEdxvsMomDataV0Prot = (TH1D*) gDirectory->Get("hNormdEdxvsMomDataV0ProtPos_2");
+  hNormdEdxvsMomDataV0Kaon->FitSlicesY();
+  TH1D *hMeandEdxvsMomDataV0Kaon  = (TH1D*) gDirectory->Get("hNormdEdxvsMomDataV0KaonPos_1");
+  TH1D *hSigmadEdxvsMomDataV0Kaon = (TH1D*) gDirectory->Get("hNormdEdxvsMomDataV0KaonPos_2");
   //V0-Selections, -Ve tracks:
   hNormdEdxvsMomDataV0ElecNeg->FitSlicesY();
   TH1D *hMeandEdxvsMomDataV0ElecNeg  = (TH1D*) gDirectory->Get("hNormdEdxvsMomDataV0ElecNeg_1");
@@ -579,6 +605,9 @@ void fitNormGraphdEdxvsBGpid_modified(){
   hNormdEdxvsMomDataV0ProtNeg->FitSlicesY();
   TH1D *hMeandEdxvsMomDataV0ProtNeg  = (TH1D*) gDirectory->Get("hNormdEdxvsMomDataV0ProtNeg_1");
   TH1D *hSigmadEdxvsMomDataV0ProtNeg = (TH1D*) gDirectory->Get("hNormdEdxvsMomDataV0ProtNeg_2");
+  hNormdEdxvsMomDataV0KaonNeg->FitSlicesY();
+  TH1D *hMeandEdxvsMomDataV0KaonNeg  = (TH1D*) gDirectory->Get("hNormdEdxvsMomDataV0KaonNeg_1");
+  TH1D *hSigmadEdxvsMomDataV0KaonNeg = (TH1D*) gDirectory->Get("hNormdEdxvsMomDataV0KaonNeg_2");
 
 
 
@@ -634,6 +663,8 @@ void fitNormGraphdEdxvsBGpid_modified(){
   fillMyGraphReNorm(graphdEdxMeanVsBG, hMeandEdxvsMomDataV0PionNeg,funcBBvsBGReference, 1.4, 15.0,ig);  
   fillMyGraphReNorm(graphdEdxMeanVsBG, hMeandEdxvsMomDataV0Prot,   funcBBvsBGReference, 0.10, 2.0, ig);  
   fillMyGraphReNorm(graphdEdxMeanVsBG, hMeandEdxvsMomDataV0ProtNeg,funcBBvsBGReference, 0.10, 2.0, ig);
+  fillMyGraphReNorm(graphdEdxMeanVsBG, hMeandEdxvsMomDataV0Kaon,   funcBBvsBGReference, 0.40, 2.0, ig);
+  fillMyGraphReNorm(graphdEdxMeanVsBG, hMeandEdxvsMomDataV0KaonNeg,funcBBvsBGReference, 0.40, 2.0, ig);
   ///TPC-TOF Particles:
   fillMyGraphReNorm(graphdEdxMeanVsBG, hMeandEdxvsMomDataKaon,   funcBBvsBGReference, 0.40, 2.00, ig);   
   fillMyGraphReNorm(graphdEdxMeanVsBG, hMeandEdxvsMomDataKaonNeg,funcBBvsBGReference, 0.40, 2.00, ig);   
@@ -655,6 +686,8 @@ void fitNormGraphdEdxvsBGpid_modified(){
   TGraphErrors *graphdEdxMeanVsBGV0PionNeg = new TGraphErrors();
   TGraphErrors *graphdEdxMeanVsBGV0ElecNeg = new TGraphErrors();
   TGraphErrors *graphdEdxMeanVsBGV0ProtNeg = new TGraphErrors();
+  TGraphErrors *graphdEdxMeanVsBGV0KaonPos = new TGraphErrors();
+  TGraphErrors *graphdEdxMeanVsBGV0KaonNeg = new TGraphErrors();
 
   Int_t iV0elp=0,iV0eln=0,iV0pip=0,iV0pin=0,iV0prp=0,iV0prn=0; 
   fillMyGraphReNorm(graphdEdxMeanVsBGV0ElecPos, hMeandEdxvsMomDataV0Elec,   hSigmadEdxvsMomDataV0Elec,   funcBBvsBGReference, 4E2, 10E4, iV0elp);
@@ -663,6 +696,9 @@ void fitNormGraphdEdxvsBGpid_modified(){
   fillMyGraphReNorm(graphdEdxMeanVsBGV0PionNeg, hMeandEdxvsMomDataV0PionNeg,hSigmadEdxvsMomDataV0PionNeg,funcBBvsBGReference, 1.4, 15.0, iV0pin);
   fillMyGraphReNorm(graphdEdxMeanVsBGV0ProtPos, hMeandEdxvsMomDataV0Prot,   hSigmadEdxvsMomDataV0Prot,   funcBBvsBGReference, 0.10, 2.0, iV0prp);
   fillMyGraphReNorm(graphdEdxMeanVsBGV0ProtNeg, hMeandEdxvsMomDataV0ProtNeg,hSigmadEdxvsMomDataV0ProtNeg,funcBBvsBGReference, 0.10, 2.0, iV0prn);
+  Int_t iV0Kap=0,iV0Kan=0;
+  fillMyGraphReNorm(graphdEdxMeanVsBGV0KaonPos, hMeandEdxvsMomDataV0Kaon,   hSigmadEdxvsMomDataV0Kaon,   funcBBvsBGReference, 0.40, 2.0, iV0Kap);
+  fillMyGraphReNorm(graphdEdxMeanVsBGV0KaonNeg, hMeandEdxvsMomDataV0KaonNeg,hSigmadEdxvsMomDataV0KaonNeg,funcBBvsBGReference, 0.40, 2.0, iV0Kan);
   
   //tpc-tof particles:
   TGraphErrors *graphdEdxMeanVsBGPionPos = new TGraphErrors();
@@ -733,7 +769,7 @@ void fitNormGraphdEdxvsBGpid_modified(){
   legend->AddEntry(funcBBvsBGThisPass,Form("Runs: %s",runFill.Data()),"");  
   legend->Draw(); 
   drawMyTextNDC(0.65, 0.455,0.04,Form("#chi^{2}/NDF: %3.1f / %3.0f",fchi2,fndf)); 
-  if(Print) Canvas->SaveAs(Form("./figurePlots/RealGraphFitdEdxvsBG%s.pdf",sDataSet.Data()));
+  if(Print) Canvas->SaveAs(Form("./figurePlots/RealGraphFitdEdxvsBG_%s.pdf",sDataSet.Data()));
 
 
 
@@ -762,6 +798,10 @@ void fitNormGraphdEdxvsBGpid_modified(){
   graphdEdxMeanVsBGV0ElecPos->Draw("PSAMEX");
   SetMarkerTH1(graphdEdxMeanVsBGV0ElecNeg,"",30,0.8,kYellow-1,kYellow-1);
   graphdEdxMeanVsBGV0ElecNeg->Draw("PSAMEX");  
+  SetMarkerTH1(graphdEdxMeanVsBGV0KaonPos,"",32,0.85,kOrange+7,kOrange+7);
+  graphdEdxMeanVsBGV0KaonPos->Draw("PSAMEX");
+  SetMarkerTH1(graphdEdxMeanVsBGV0KaonNeg,"",32,0.7,kOrange-3,kOrange-3);
+  graphdEdxMeanVsBGV0KaonNeg->Draw("PSAMEX");
 
   ///V0 and TPC-TOF selections:
   SetMarkerTH1(graphdEdxMeanVsBGPionPos,"",24,0.75,kBlue+1,kBlue+1);
@@ -789,6 +829,7 @@ void fitNormGraphdEdxvsBGpid_modified(){
   legend->SetTextSize(0.0425);
   legend->AddEntry(graphdEdxMeanVsBGV0ElecNeg,"","");
   legend->AddEntry(graphdEdxMeanVsBGV0ElecNeg,"e V0-daut","P");
+  legend->AddEntry(graphdEdxMeanVsBGV0KaonNeg,"K V0-daut","P");
   legend->AddEntry(graphdEdxMeanVsBGPionNeg,"#pi V0,TPC-TOF","P");  
   legend->AddEntry(graphdEdxMeanVsBGProtNeg,"p V0, TPC-TOF","P");
   legend->AddEntry(graphdEdxMeanVsBGKaonNeg,"K TPC-TOF","P");
@@ -801,6 +842,7 @@ void fitNormGraphdEdxvsBGpid_modified(){
   legend->SetTextSize(0.0425);
   legend->AddEntry(graphdEdxMeanVsBGV0ElecPos,Form("%s",sDataSet.Data()),"");
   legend->AddEntry(graphdEdxMeanVsBGV0ElecPos,"e V0-daut","P");
+  legend->AddEntry(graphdEdxMeanVsBGV0KaonPos,"K V0-daut","P");
   legend->AddEntry(graphdEdxMeanVsBGPionPos,"#pi V0,TPC-TOF","P");  
   legend->AddEntry(graphdEdxMeanVsBGProtPos,"p V0, TPC-TOF","P");
   legend->AddEntry(graphdEdxMeanVsBGKaonPos,"K TPC-TOF","P");
@@ -814,7 +856,7 @@ void fitNormGraphdEdxvsBGpid_modified(){
   drawMyTextNDC(0.65, 0.45,0.04,Form("#chi^{2}/NDF: %3.1f / %3.0f",fchi2,fndf));
   drawMyTextNDC(0.625, 0.680,0.04,Form("Runs: %s",runFill.Data()));
 
-  if(Print) Canvas2->SaveAs(Form("./figurePlots/GraphFitdEdxvsBG%s.pdf",sDataSet.Data()));
+  if(Print) Canvas2->SaveAs(Form("./figurePlots/GraphFitdEdxvsBG_%s.pdf",sDataSet.Data()));
     
   
   Double_t ScorePion[2] = {0,};
@@ -824,6 +866,7 @@ void fitNormGraphdEdxvsBGpid_modified(){
   Double_t ScoreElecV0[2] = {0,};
   Double_t ScorePionV0[2] = {0,};
   Double_t ScoreProtV0[2] = {0,};
+  Double_t ScoreKaonV0[2] = {0,};
 
   
   ///Ratios with TPC-TOF:
@@ -840,22 +883,27 @@ void fitNormGraphdEdxvsBGpid_modified(){
   RenormHistogram(hMeandEdxvsMomDataV0ProtNeg, funcBBvsBGReference);
   RenormHistogram(hMeandEdxvsMomDataV0Elec, funcBBvsBGReference);
   RenormHistogram(hMeandEdxvsMomDataV0ElecNeg, funcBBvsBGReference); 
+  RenormHistogram(hMeandEdxvsMomDataV0Kaon, funcBBvsBGReference);
+  RenormHistogram(hMeandEdxvsMomDataV0KaonNeg, funcBBvsBGReference); 
   
 
   //plotPID2D(hdEdxvsMomDataPion, hMeandEdxvsMomDataPion, hMeandEdxvsMomDataPionNeg, "TPCToF_Pions", 0.140, 24, EColor::kRed, sDataSet,funcBBvsBGDefault,funcBBvsBGThisPass,ScorePion, 22,240,Print); // this function shows only tpc-tof particles canvas.
   //plotPID2D(hdEdxvsMomDataProt, hMeandEdxvsMomDataProt, hMeandEdxvsMomDataProtNeg, "TPCToF_ppbar", 0.938, 24, EColor::kRed, sDataSet,funcBBvsBGDefault,funcBBvsBGThisPass, ScoreProt,22,4.8E3,Print); // this function shows only tpc-tof particles in canvas.
 
   xpos+=150;
-  plotPID2DMerged(hdEdxDataPionPosMerged, hMeandEdxvsMomDataPion, hMeandEdxvsMomDataPionNeg, hMeandEdxvsMomDataV0Pion, hMeandEdxvsMomDataV0PionNeg, "All_Pions", 0.140, 24, EColor::kRed, sDataSet,funcBBvsBGDefault,funcBBvsBGThisPass,ScorePion, 22,240,Print); // this function shows merged tpc-tof and V0 in canvas.
+  plotPID2DMerged(hdEdxDataPionPosMerged, hMeandEdxvsMomDataPion, hMeandEdxvsMomDataPionNeg, hMeandEdxvsMomDataV0Pion, hMeandEdxvsMomDataV0PionNeg, "All_Pions_", 0.140, 24, EColor::kRed, sDataSet,funcBBvsBGDefault,funcBBvsBGThisPass,ScorePion, 22,240,Print); // this function shows merged tpc-tof and V0 in canvas.
 
   xpos+=150;
-  plotPID2D(hdEdxvsMomDataKaon, hMeandEdxvsMomDataKaon, hMeandEdxvsMomDataKaonNeg, "TPCToF_Kaons", 0.495, 24,  EColor::kRed, sDataSet,funcBBvsBGDefault,funcBBvsBGThisPass, ScoreKaon, 22,2.4E3,Print);  
+  plotPID2D(hdEdxvsMomDataKaon, hMeandEdxvsMomDataKaon, hMeandEdxvsMomDataKaonNeg, "TPCToF_Kaons_", 0.495, 24,  EColor::kRed, sDataSet,funcBBvsBGDefault,funcBBvsBGThisPass, ScoreKaon, 22,2.4E3,Print);  
 
   xpos+=150;
-  plotPID2DMerged(hdEdxDataProtPosMerged, hMeandEdxvsMomDataProt, hMeandEdxvsMomDataProtNeg, hMeandEdxvsMomDataV0Prot, hMeandEdxvsMomDataV0ProtNeg, "All_ppbar", 0.938, 24, EColor::kRed, sDataSet,funcBBvsBGDefault,funcBBvsBGThisPass, ScoreProt,22,4.8E3,Print); // this function shows merged tpc-tof and V0 in canvas.
+  plotPID2DMerged(hdEdxDataProtPosMerged, hMeandEdxvsMomDataProt, hMeandEdxvsMomDataProtNeg, hMeandEdxvsMomDataV0Prot, hMeandEdxvsMomDataV0ProtNeg, "All_ppbar_", 0.938, 24, EColor::kRed, sDataSet,funcBBvsBGDefault,funcBBvsBGThisPass, ScoreProt,22,4.8E3,Print); // this function shows merged tpc-tof and V0 in canvas.
    
   xpos+=150;  
-  plotPID2D(hdEdxvsMomDataV0Elec, hMeandEdxvsMomDataV0Elec, hMeandEdxvsMomDataV0ElecNeg, "V0_elec", 0.000511, 24, EColor::kRed, sDataSet,funcBBvsBGDefault,funcBBvsBGThisPass, ScoreElecV0, 34,240,Print);
+  plotPID2D(hdEdxvsMomDataV0Elec, hMeandEdxvsMomDataV0Elec, hMeandEdxvsMomDataV0ElecNeg, "V0_elec_", 0.000511, 24, EColor::kRed, sDataSet,funcBBvsBGDefault,funcBBvsBGThisPass, ScoreElecV0, 34,240,Print);
+
+  xpos+=150;  
+  plotPID2D(hdEdxvsMomDataV0Kaon, hMeandEdxvsMomDataV0Kaon, hMeandEdxvsMomDataV0KaonNeg, "V0_Kaon_", 0.495, 24, EColor::kRed, sDataSet,funcBBvsBGDefault,funcBBvsBGThisPass, ScoreKaonV0, 22,2.4E3,Print);
 
 
 
@@ -873,10 +921,10 @@ void fitNormGraphdEdxvsBGpid_modified(){
 
 
   Double_t sumScoreTGF = sqrt(ScorePion[0]*ScorePion[0] + ScoreKaon[0]*ScoreKaon[0] + ScoreProt[0]*ScoreProt[0] +
-			      ScoreElecV0[0]*ScoreElecV0[0] + ScorePionV0[0]*ScorePionV0[0] + ScoreProtV0[0]*ScoreProtV0[0]);
+		      ScoreElecV0[0]*ScoreElecV0[0] + ScorePionV0[0]*ScorePionV0[0] + ScoreProtV0[0]*ScoreProtV0[0] + ScoreKaonV0[0]*ScoreKaonV0[0]);
 
   Double_t sumScoreHPO = sqrt(ScorePion[1]*ScorePion[1] + ScoreKaon[1]*ScoreKaon[1] + ScoreProt[1]*ScoreProt[1] +
-			      ScoreElecV0[1]*ScoreElecV0[1] + ScorePionV0[1]*ScorePionV0[1] + ScoreProtV0[1]*ScoreProtV0[1]);
+		      ScoreElecV0[1]*ScoreElecV0[1] + ScorePionV0[1]*ScorePionV0[1] + ScoreProtV0[1]*ScoreProtV0[1] + ScoreKaonV0[1]*ScoreKaonV0[1]);
     
   cout<<" Total Score (All Species) from new BB (TGraph) Fit: "<<sumScoreTGF<<","<<endl;
   cout<<" Total Score (All Species) from Default Old BB par: "<<sumScoreHPO<<" (period)."<<endl;
@@ -905,7 +953,7 @@ void fitNormGraphdEdxvsBGpid_modified(){
   // ofstream outTxt(baseFilename.Data());  // Use Data() to convert TString to C-string
 
 
-  ofstream outTxt(Form("outputFits/BBparameters_%s.txt",sDataSetlong.Data()));
+  ofstream outTxt(Form("outputFits/BBparameters_%s.txt",sDataSet.Data()));
   
   cout<<" BB parameters: ";
   for(int i=0;i<5;i++){
