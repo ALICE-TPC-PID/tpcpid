@@ -15,9 +15,8 @@ pdf files in the outputFigures directory.                            */
 
 // This macro was modified to automatically use the provided pathtoskimtree when entering the name (f.e. LHC23zzk)
 
-#include "/lustre/alice/users/jwitte/tpcpid/o2-tpcpid-parametrisation/headerfunction.h"
-#include "/lustre/alice/users/jwitte/tpcpid/o2-tpcpid-parametrisation/BBfitAndQA/BBFitting_Task_pass5/tpcsignal/macros/read_config.C"
-
+#include "../utils/headerfunction.h"
+#include "./read_config.C"
 
 ///Global Parameter for Canvas:
 Int_t  xpos=20, ypos=20;  //Default Canvas starting Position. Shifted with xpos += <val>; (see later in macro)
@@ -45,9 +44,15 @@ void plotSkimTreeQA2D_modified(){
   
   readConfig();
 
-  // Construct the dataset name
-  TString sDataSet = TString::Format("LHC%s%s", Year.c_str(), Period.c_str());
-  TString path2file = TString::Format("%s", Path.c_str());
+  // Construct the dataset name and path from JSON config
+  std::string cfgYear = CONFIG["dataset"]["year"].get<std::string>();
+  std::string cfgPeriod = CONFIG["dataset"]["period"].get<std::string>();
+  std::string cfgSkimPath = CONFIG["dataset"]["input_skimmedtree_path"].get<std::string>();
+  std::string cgfV0treename = CONFIG["general"]["V0treename"];
+  std::string cgfTPCTOFtreename = CONFIG["general"]["tpctoftreename"];
+
+  TString sDataSet = TString::Format("LHC%s%s", cfgYear.c_str(), cfgPeriod.c_str());
+  TString path2file = TString::Format("%s", cfgSkimPath.c_str());
   
   gStyle->SetOptStat(0000);        //Do not draw Statistics.
   gStyle->SetImageScaling(50.);    //This seems to not work :P
@@ -237,7 +242,7 @@ void plotSkimTreeQA2D_modified(){
     
     TDirectory *dir = (TDirectory*)f1->Get(Form("%s:/%s",f1->GetName(),dirName.Data()));
     
-    dir->GetObject("O2tpctofskimwde",treeTPC);
+    dir->GetObject(cgfTPCTOFtreename.c_str(), treeTPC);
 
     if (treeTPC){
       fChain = treeTPC;
@@ -335,7 +340,7 @@ void plotSkimTreeQA2D_modified(){
 
 
     
-    dir->GetObject("O2tpcskimv0wde",treeV0);
+    dir->GetObject(cgfV0treename.c_str(),treeV0);
     if(treeV0){
       //cout<<" Found the V0 Tree "<<endl;
       fChain = treeV0;

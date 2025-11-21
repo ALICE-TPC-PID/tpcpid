@@ -6,14 +6,18 @@
         "dEdxSelection": "TPCSignal",
         "optTag1": "TestTag1",
         "optTag2": "TestTag2",
-        "input_skimmedtree_path": "path/to/skimmed.root"
+        "input_skimmedtree_path": "/lustre/alice/users/marin/R3A/TPCTrees/TPCTrees_LHC23zzf_241218/AO2D_merge_241218_LHC23zzf.root"
     },
     "process": {
-        "skimTreeQA": "True",
-        "fitBBGraph": "True",
-        "shiftNsigma": "True",
-        "createTrainingDataset": "True",
-        "trainNeuralNet": "True"
+        "skimTreeQA": true,
+        "fitBBGraph": true,
+        "shiftNsigma": true,
+        "createTrainingDataset": true,
+        "trainNeuralNet": true
+    },
+    "general": {
+        "V0treename": "O2tpcskimv0tree",
+        "tpctoftreename": "O2tpctofskimtree"
     },
     "skimTreeQAOptions": {
         "option1": "Proxy"
