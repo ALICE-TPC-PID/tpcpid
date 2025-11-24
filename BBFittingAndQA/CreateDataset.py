@@ -16,6 +16,19 @@ from extract_from_root import *
 import argparse
 import mplhep as hep
 
+import pathlib
+import sys
+sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
+
+from utils.config_tools import (
+    add_name_and_path,
+    read_config,
+    write_config,
+)
+
+
+
+
 plt.style.use(hep.style.ALICE)
 for key in mpl.rcParams.keys():
     if key.startswith('legend.'):
@@ -51,16 +64,18 @@ args = parser.parse_args()
 #     period = "default"
 #     apass = "default"
 #     dir_tree = args.full_input_path
+#################################
 
-path_config = "../Running/configuration.json"
-configs_file = open(path_config, "r")
-CONFIG = json.load(configs_file)
+CONFIG = read_config()
 
 period = CONFIG['dataset']['period']
 apass = CONFIG['dataset']['pass']
 
 date = datetime.today().strftime('%d%m%Y')
-output_path = os.path.join(CONFIG['output']['general']['path'],"trees","merged_tree.root")
+output_path = os.path.join(CONFIG['output']['general']['path'],"trees","merged_tree_for_training.root")
+CONFIG["output"]["createTrainingDataset"]["training_data"] = output_path
+write_config(CONFIG)
+
 plot_path = os.path.join(CONFIG['output']['general']['path'], "QA", "createTrainingDataset")
 if not os.path.exists(plot_path):
     os.makedirs(plot_path)

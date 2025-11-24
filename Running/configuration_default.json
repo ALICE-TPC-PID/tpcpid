@@ -46,7 +46,8 @@
     "general": {
         "base_output_folder": "../output",
         "V0treename": "O2tpcskimv0wde",
-        "tpctoftreename": "O2tpctofskimwde"
+        "tpctoftreename": "O2tpctofskimwde",
+        "training_dir": "../Training-Neural-Networks"
     },
     "process": {
         "createTrainingDataset": true,
@@ -62,8 +63,13 @@
         "option1": "Proxy"
     },
     "trainNeuralNetOptions": {
+        "configurations_file": "configurations.py",
+        "execution_mode": "FULL",
+        "training_file": "train_single_sigma.py",
         "numberOfEpochs": "200",
-        "option1": "Proxy",
+        "num_networks": 1,
+        "qa_file": "training_qa.py",
+        "enable_qa": "True",
         "trainingBranches": [
             "fHadronicRate",
             "fFT0Occ",

@@ -59,7 +59,11 @@ def create_folders(config):
     tree_dir = os.path.join(outdir, "trees")
     os.makedirs(tree_dir, exist_ok=True)
     print(f"[CreateFolders]: Created tree output folder {tree_dir}")
+    training_dir = os.path.join(outdir, "training")
+    os.makedirs(training_dir, exist_ok=True)
+    print(f"[CreateFolders]: Created training output folder {training_dir}")
     config["output"]["general"]["trees"] = tree_dir
+    config["output"]["general"]["training"] = training_dir
     processes = ["skimTreeQA", "fitBBGraph", "createTrainingDataset", "trainNeuralNet"]
     for process in processes:
         if config["process"][process]:
