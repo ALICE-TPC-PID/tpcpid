@@ -19,3 +19,4 @@ void writeConfig() {
     std::ofstream out("../Running/configuration.json");
     out << CONFIG.dump(4);   // 4 = pretty-print with indentation
 }
+
