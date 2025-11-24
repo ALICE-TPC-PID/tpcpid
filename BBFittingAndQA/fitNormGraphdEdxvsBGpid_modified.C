@@ -39,31 +39,27 @@ void fitNormGraphdEdxvsBGpid_modified(){
 
   readConfig();
 
-  // cout << "DEBUG Path string" << Path.c_str() << endl;
-  // cout << "DEBUG Path without " << Path << endl;
-  // cout << "DEBUG Path Data " << Path.Data() << endl;
-
-    // Construct the dataset name and path from JSON config
-  std::string cfgYear = CONFIG["dataset"]["year"].get<std::string>();
-  std::string cfgPeriod = CONFIG["dataset"]["period"].get<std::string>();
-  std::string cfgPass = CONFIG["dataset"]["pass"].get<std::string>();
+  // Construct the dataset name and path from JSON config
+  // std::string cfgYear = CONFIG["dataset"]["year"].get<std::string>();
+  // std::string cfgPeriod = CONFIG["dataset"]["period"].get<std::string>();
+  // std::string cfgPass = CONFIG["dataset"]["pass"].get<std::string>();
   std::string cfgDedxSelection = CONFIG["dataset"]["dEdxSelection"].get<std::string>();
-  std::string cfgHadronicRate = CONFIG["dataset"]["HadronicRate"].get<std::string>();
-  std::string cfgTag1 = CONFIG["dataset"]["optTag1"].get<std::string>();
-  std::string cfgTag2 = CONFIG["dataset"]["optTag2"].get<std::string>();
-  std::string cfgSkimPath = CONFIG["paths"]["input_skimmedtree_path"].get<std::string>();
+  // std::string cfgHadronicRate = CONFIG["dataset"]["HadronicRate"].get<std::string>();
+  // std::string cfgTag1 = CONFIG["dataset"]["optTag1"].get<std::string>();
+  // std::string cfgTag2 = CONFIG["dataset"]["optTag2"].get<std::string>();
+  std::string cfgSkimPath = CONFIG["dataset"]["input_skimmedtree_path"].get<std::string>();
   std::string cgfV0treename = CONFIG["general"]["V0treename"];
   std::string cgfTPCTOFtreename = CONFIG["general"]["tpctoftreename"];
+  std::string dataset_name = CONFIG["output"]["general"]["name"].get<std::string>();
 
-  TString sDataSet = TString::Format("LHC%s%s_pass%s_%s_%s_%s_HR_%s", cfgYear.c_str(), cfgPeriod.c_str(), cfgPass.c_str(), cfgTag1.c_str(), cfgTag2.c_str(), cfgDedxSelection.c_str(), cfgHadronicRate.c_str());
+  // TString sDataSet = TString::Format("LHC%s%s_pass%s_%s_%s_%s_HR_%s", cfgYear.c_str(), cfgPeriod.c_str(), cfgPass.c_str(), cfgTag1.c_str(), cfgTag2.c_str(), cfgDedxSelection.c_str(), cfgHadronicRate.c_str());
+  TString sDataSet = TString::Format("%s", dataset_name.c_str());
   TString path2file = TString::Format("%s", cfgSkimPath.c_str());
   
+  gStyle->SetOptStat(0000);        //Do not draw Statistics.
+  gStyle->SetImageScaling(50.);    //This seems to not work :P
+  Int_t    Print = 1;              // 0 = do not save pdf. > 0 = Draw pdf figures.
   
-  gStyle->SetOptStat(0000);
-  gStyle->SetImageScaling(50.);
-  
-  Int_t Print = 1;        ///0= do not save .pdf figures.
-
   Bool_t LimEntryFit = kFALSE; // Read the following:
   // Warning Limit Entries of pi,k,p,e to ~2 Mil per species for the TGraphFit
   // as some trees (without downsampling / improper downsampling may have huge
@@ -769,7 +765,13 @@ void fitNormGraphdEdxvsBGpid_modified(){
   legend->AddEntry(funcBBvsBGThisPass,Form("Runs: %s",runFill.Data()),"");  
   legend->Draw(); 
   drawMyTextNDC(0.65, 0.455,0.04,Form("#chi^{2}/NDF: %3.1f / %3.0f",fchi2,fndf)); 
-  if(Print) Canvas->SaveAs(Form("./figurePlots/RealGraphFitdEdxvsBG_%s.pdf",sDataSet.Data()));
+  if(Print)
+    {
+      std::string qaPath = CONFIG["output"]["fitBBGraph"]["QApath"].get<std::string>();
+      TString qaPathT = TString::Format("%s", qaPath.c_str());
+      if (!qaPathT.EndsWith("/")) qaPathT += "/";
+      Canvas->SaveAs(Form("%sRealGraphFitdEdxvsBG_%s.pdf", qaPathT.Data(), sDataSet.Data()));
+    }
 
 
 
@@ -856,7 +858,14 @@ void fitNormGraphdEdxvsBGpid_modified(){
   drawMyTextNDC(0.65, 0.45,0.04,Form("#chi^{2}/NDF: %3.1f / %3.0f",fchi2,fndf));
   drawMyTextNDC(0.625, 0.680,0.04,Form("Runs: %s",runFill.Data()));
 
-  if(Print) Canvas2->SaveAs(Form("./figurePlots/GraphFitdEdxvsBG_%s.pdf",sDataSet.Data()));
+  if(Print) 
+    {
+      std::string qaPath = CONFIG["output"]["fitBBGraph"]["QApath"].get<std::string>();
+      TString qaPathT = TString::Format("%s", qaPath.c_str());
+      if (!qaPathT.EndsWith("/")) qaPathT += "/";
+      Canvas2->SaveAs(Form("%sGraphFitdEdxvsBG_%s.pdf", qaPathT.Data(), sDataSet.Data()));
+    }
+  
     
   
   Double_t ScorePion[2] = {0,};
@@ -932,9 +941,9 @@ void fitNormGraphdEdxvsBGpid_modified(){
   Double_t params[6] = {0,};
   funcBBvsBGThisPass->GetParameters(params);
 
-  CONFIG["fitBBGraphOptions"]["BBparameters"] = nlohmann::json::array();
+  CONFIG["output"]["fitBBGraph"]["BBparameters"] = nlohmann::json::array();
   for (int i = 0; i < 5; i++) {
-    CONFIG["fitBBGraphOptions"]["BBparameters"].push_back(params[i]);
+    CONFIG["output"]["fitBBGraph"]["BBparameters"].push_back(params[i]);
   }
   writeConfig();
 
@@ -1426,7 +1435,12 @@ void plotPID2DMerged(TH2 *hdEdx2Ddata, TH1 *hdEdxMeanData, TH1 *hdEdxMeanDataNeg
   
   
   if(Print)
-    Canvas->SaveAs(Form("./figurePlots/dEdxvsBetaGamma%s%s.pdf",name.Data(),passName.Data()));
+    {
+      std::string qaPath = CONFIG["output"]["fitBBGraph"]["QApath"].get<std::string>();
+      TString qaPathT = TString::Format("%s", qaPath.c_str());
+      if (!qaPathT.EndsWith("/")) qaPathT += "/";
+      Canvas->SaveAs(Form("%sdEdxvsBetaGamma%s%s.pdf", qaPathT.Data(), name.Data(),passName.Data()));
+    }
 }
 
 
@@ -1648,7 +1662,12 @@ void plotPID2D(TH2 *hdEdx2Ddata, TH1 *hdEdxMeanData, TH1 *hdEdxMeanDataNeg, TStr
   
   
   if(Print)
-    Canvas->SaveAs(Form("./figurePlots/dEdxvsBetaGamma%s%s.pdf",name.Data(),passName.Data()));
+    {
+      std::string qaPath = CONFIG["output"]["fitBBGraph"]["QApath"].get<std::string>();
+      TString qaPathT = TString::Format("%s", qaPath.c_str());
+      if (!qaPathT.EndsWith("/")) qaPathT += "/";
+      Canvas->SaveAs(Form("%sdEdxvsBetaGamma%s%s.pdf", qaPathT.Data(), name.Data(), passName.Data()));
+    }
 }
 
 

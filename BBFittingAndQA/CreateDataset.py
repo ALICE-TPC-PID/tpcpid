@@ -60,12 +60,12 @@ period = CONFIG['dataset']['period']
 apass = CONFIG['dataset']['pass']
 
 date = datetime.today().strftime('%d%m%Y')
-output_path = os.path.join(args.output_path, "{2}/{0}_{2}_{1}/{0}_{2}/merged_tree.root".format(period, date, apass))
-plot_path = os.path.join(args.output_path, "{2}/{0}_{2}_{1}/{0}_{2}/plots".format(period, date, apass))
+output_path = os.path.join(CONFIG['output']['general']['path'],"trees","merged_tree.root")
+plot_path = os.path.join(CONFIG['output']['general']['path'], "QA", "createTrainingDataset")
 if not os.path.exists(plot_path):
     os.makedirs(plot_path)
 
-dir_tree = CONFIG['paths']['Skimmedtree_shiftedNsigma']
+dir_tree = CONFIG['output']['shiftNsigma']['Skimmedtree_shiftedNsigma_path']
 print("Period:", period, "; apass:", apass, "; input is:", dir_tree)
 
 

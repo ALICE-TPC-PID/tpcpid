@@ -3,6 +3,14 @@ import os
 import array
 import argparse
 import json
+import sys, pathlib
+sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
+
+from utils.config_tools import (
+    add_name_and_path,
+    read_config,
+    write_config,
+)
 
 #This is the python equivalent to shiftNsigma.C
 #This script takes as input the Data tree with the clean samples, and the BB parameters from the fitting macro. 
@@ -16,25 +24,6 @@ import json
 #Returns the config array
 CONFIG = None   # module-level
 
-def read_config():  
-    global CONFIG
-    path_config = "../Running/configuration.json"
-    with open(path_config, "r") as f:
-        CONFIG = json.load(f)
-    return CONFIG
-
-def write_config(CONFIG):
-    path_config = "../Running/configuration.json"
-    with open(path_config, "w") as f:
-        json.dump(CONFIG, f, indent=4)
-
-#Reads config and adds the name of the dataset
-def add_name(config):
-    name = f"LHC{config['dataset']['year']}{config['dataset']['period']}_pass{config['dataset']['pass']}_{config['dataset']['optTag1']}_{config['dataset']['optTag2']}_{config['dataset']['dEdxSelection']}_HR_{config['dataset']['HadronicRate']}"
-    # name = f"LHC{config['Year']}{config['Period']}_pass{config['Pass']}_{config['dEdxSelection']}_{config['Tag1']}_{config['Tag2']}"
-    print(f"Name of dataset = {name}")
-    config['dataset']['name']=name
-    return config
 
 
 def collect_latest_trees(directory, prefix=""):
@@ -61,7 +50,7 @@ def collect_latest_trees(directory, prefix=""):
 #Crashes if there is more than one subdirectory
 #Returns array with tree names and the trees
 def read_tree(config):
-    root_file_path = config['paths']['input_skimmedtree_path']
+    root_file_path = config['dataset']['input_skimmedtree_path']
     if not root_file_path or not os.path.exists(root_file_path):
         raise FileNotFoundError(f"ROOT file not found at path: {root_file_path}")
     else:
@@ -128,22 +117,6 @@ def check_trees(trees):
 
         except Exception as e:
             print(f"  [ERROR] Exception while inspecting tree '{name}': {e}")
-
-#Takes Config array
-#Finds output Bethe Bloch fitting parameters
-#Returns array with Parameters
-def read_BB_params(config):
-    #To be added tomorrow
-    Job_dir = config['dataset']['Job_dir']
-    BB_path = os.path.join(Job_dir,"outputFits",f"BBparameters_{config['dataset']['name']}.txt")
-    # print(f"BB param path = {BB_path}") #DEBUG
-    # Open the BB parameters file and read the content
-    with open(BB_path, "r") as file:
-        content = file.read().strip()
-        # Split the content into a list of floats
-        BB_params = [float(x) for x in content.split()]
-    # print(f"Loaded new BB parameters: {BB_params}")  # Debug
-    return BB_params
 
 def create_funcBBvsBGNew(BB_params):
     """
@@ -546,11 +519,8 @@ if __name__ == "__main__":
     # CONFIG['dataset']['dEdxSelection'] = "TPCdEdxNorm"
     # print(f"Using Hardcoded dEdx values in shiftNSigma {config['dEdxSelection']}")
     
-    #Create name
-    CONFIG = add_name(CONFIG)
-
     #Reading 
-    BB_params = CONFIG['fitBBGraphOptions']['BBparameters']
+    BB_params = CONFIG['output']['fitBBGraph']['BBparameters']
 
     #create function to calculate dEdx values from fit
     calculate_dEdx = create_funcBBvsBGNew(BB_params)
@@ -565,8 +535,8 @@ if __name__ == "__main__":
     # #Check content of trees
     # check_trees(trees)
 
-    output_file = ROOT.TFile(os.path.join(CONFIG['dataset']['Job_dir'],"outputFits",f"SkimmedTree_UpdatednSigmaAndExpdEdx_{CONFIG['dataset']['name']}.root"), "RECREATE")
-    CONFIG["paths"]["Skimmedtree_shiftedNsigma"] = os.path.join(CONFIG['dataset']['Job_dir'],"outputFits",f"SkimmedTree_UpdatednSigmaAndExpdEdx_{CONFIG['dataset']['name']}.root")
+    output_file = ROOT.TFile(os.path.join(CONFIG['output']['general']['path'],"trees",f"SkimmedTree_UpdatednSigmaAndExpdEdx_{CONFIG['output']['general']['name']}.root"), "RECREATE")
+    CONFIG["output"]["shiftNsigma"]["Skimmedtree_shiftedNsigma_path"] = os.path.join(CONFIG['output']['general']['path'],"trees",f"SkimmedTree_UpdatednSigmaAndExpdEdx_{CONFIG['output']['general']['name']}.root")
     write_config(CONFIG)
 
     for name, tree in trees:

@@ -45,18 +45,20 @@ void plotSkimTreeQA2D_modified(){
   readConfig();
 
     // Construct the dataset name and path from JSON config
-  std::string cfgYear = CONFIG["dataset"]["year"].get<std::string>();
-  std::string cfgPeriod = CONFIG["dataset"]["period"].get<std::string>();
-  std::string cfgPass = CONFIG["dataset"]["pass"].get<std::string>();
-  std::string cfgDedxSelection = CONFIG["dataset"]["dEdxSelection"].get<std::string>();
-  std::string cfgHadronicRate = CONFIG["dataset"]["HadronicRate"].get<std::string>();
-  std::string cfgTag1 = CONFIG["dataset"]["optTag1"].get<std::string>();
-  std::string cfgTag2 = CONFIG["dataset"]["optTag2"].get<std::string>();
-  std::string cfgSkimPath = CONFIG["paths"]["input_skimmedtree_path"].get<std::string>();
+  // std::string cfgYear = CONFIG["dataset"]["year"].get<std::string>();
+  // std::string cfgPeriod = CONFIG["dataset"]["period"].get<std::string>();
+  // std::string cfgPass = CONFIG["dataset"]["pass"].get<std::string>();
+  // std::string cfgDedxSelection = CONFIG["dataset"]["dEdxSelection"].get<std::string>();
+  // std::string cfgHadronicRate = CONFIG["dataset"]["HadronicRate"].get<std::string>();
+  // std::string cfgTag1 = CONFIG["dataset"]["optTag1"].get<std::string>();
+  // std::string cfgTag2 = CONFIG["dataset"]["optTag2"].get<std::string>();
+  std::string cfgSkimPath = CONFIG["dataset"]["input_skimmedtree_path"].get<std::string>();
   std::string cgfV0treename = CONFIG["general"]["V0treename"];
   std::string cgfTPCTOFtreename = CONFIG["general"]["tpctoftreename"];
+  std::string dataset_name = CONFIG["output"]["general"]["name"].get<std::string>();
 
-  TString sDataSet = TString::Format("LHC%s%s_pass%s_%s_%s_%s_HR_%s", cfgYear.c_str(), cfgPeriod.c_str(), cfgPass.c_str(), cfgTag1.c_str(), cfgTag2.c_str(), cfgDedxSelection.c_str(), cfgHadronicRate.c_str());
+  // TString sDataSet = TString::Format("LHC%s%s_pass%s_%s_%s_%s_HR_%s", cfgYear.c_str(), cfgPeriod.c_str(), cfgPass.c_str(), cfgTag1.c_str(), cfgTag2.c_str(), cfgDedxSelection.c_str(), cfgHadronicRate.c_str());
+  TString sDataSet = TString::Format("%s", dataset_name.c_str());
   TString path2file = TString::Format("%s", cfgSkimPath.c_str());
   gStyle->SetOptStat(0000);        //Do not draw Statistics.
   gStyle->SetImageScaling(50.);    //This seems to not work :P
@@ -645,7 +647,12 @@ void plotdEdxvsEta(TH2 *hNSigTPCpos=0x0, TH2 *hNSigTPCneg=0x0, TString name="", 
   Canvas->Update() ;
 
   if(Print)
-    Canvas->SaveAs(Form("./figurePlots/dEdxvsEta_%s%s.pdf",name.Data(),passName.Data()));
+    {
+      std::string qaPath = CONFIG["output"]["skimTreeQA"]["QApath"].get<std::string>();
+      TString qaPathT = TString::Format("%s", qaPath.c_str());
+      if (!qaPathT.EndsWith("/")) qaPathT += "/";
+      Canvas->SaveAs(Form("%sdEdxvsEta_%s%s.pdf", qaPathT.Data(), name.Data(), passName.Data()));
+    }
   
 }
 
@@ -854,7 +861,12 @@ void plotNsigmaVsPin(TH2 *hNSigTPCPos=0x0, TH2 *hNSigTPCNeg=0x0, TH2 *hNSigTOFPo
   
   Canvas->Update();
   if(Print)
-    Canvas->SaveAs(Form("./figurePlots/NsigmavsMomentumPin%s%s.pdf",name.Data(),passName.Data()));
+    {
+      std::string qaPath = CONFIG["output"]["skimTreeQA"]["QApath"].get<std::string>();
+      TString qaPathT = TString::Format("%s", qaPath.c_str());
+      if (!qaPathT.EndsWith("/")) qaPathT += "/";
+      Canvas->SaveAs(Form("%sNsigmavsMomentumPin_%s%s.pdf", qaPathT.Data(), name.Data(), passName.Data()));
+    }
 }
 
 ///-------- The above function is for nSigma vs Pin......
@@ -1187,7 +1199,12 @@ void plotNsigmaVsBG(TH2 *hNSigTPCPos=0x0, TH2 *hNSigTPCNeg=0x0, TH2 *hNSigTOFPos
   Canvas->Update() ;
 
   if(Print)
-    Canvas->SaveAs(Form("./figurePlots/NsigmavsBetaGamma%s%s.pdf",name.Data(),passName.Data()));
+    {
+      std::string qaPath = CONFIG["output"]["skimTreeQA"]["QApath"].get<std::string>();
+      TString qaPathT = TString::Format("%s", qaPath.c_str());
+      if (!qaPathT.EndsWith("/")) qaPathT += "/";
+      Canvas->SaveAs(Form("%sNsigmavsBetaGamma_%s%s.pdf", qaPathT.Data(), name.Data(), passName.Data()));
+    }
 }
 
 
