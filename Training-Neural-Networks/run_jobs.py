@@ -62,7 +62,7 @@ def parse_first_level(dir):
 data_dirs = parse_first_level(output_folder)
 scheduler = determine_scheduler()
 
-os.system("python3 {0}/shell_script_creation.py --job-script {1} --scheduler {2} ".format(output_folder, output_folder+"/train.py", scheduler))
-os.system("python3 {0}/shell_script_creation.py --job-script {1} --scheduler {2}  --training-mode QA".format(output_folder, output_folder+"/training_qa.py", scheduler))
+os.system("python3 {0}/shell_script_creation.py --job-script {1} ".format(output_folder, output_folder+"/train.py"))
+os.system("python3 {0}/shell_script_creation.py --job-script {1}  --training-mode QA".format(output_folder, output_folder+"/training_qa.py"))
 for tr_dir in data_dirs:
-    os.system("python3 run_job_single_sigma.py --current-dir {0} --scheduler {1} ".format(tr_dir, scheduler))
+    os.system("python3 run_job_single_sigma.py --current-dir {0} ".format(tr_dir))

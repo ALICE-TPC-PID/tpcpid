@@ -47,7 +47,7 @@
         "base_output_folder": "../output",
         "V0treename": "O2tpcskimv0wde",
         "tpctoftreename": "O2tpctofskimwde",
-        "training_dir": "../Training-Neural-Networks"
+        "training_dir": "/lustre/alice/users/jwitte/tpcpid/clean_new_dir/tpcpid/Training-Neural-Networks"
     },
     "process": {
         "createTrainingDataset": true,
@@ -63,7 +63,6 @@
         "option1": "Proxy"
     },
     "trainNeuralNetOptions": {
-        "configurations_file": "configurations.py",
         "execution_mode": "FULL",
         "training_file": "train_single_sigma.py",
         "numberOfEpochs": "200",
@@ -75,6 +74,27 @@
             "fHadronicRate",
             "fFT0Occ",
             "fNormMultTPC"
-        ]
+        ],
+        "htcondor": {
+            "universe": "vanilla",
+            "+JobFlavour": "workday",
+            "request_cpus": "10",
+            "request_memory": "10GB",
+            "request_disk": "10GB",
+            "notify_user": "christian.sonnabend@cern.ch",
+            "notification": "Complete,Error"
+        },
+        "slurm": {
+            "rocm_container": "/lustre/alice/users/csonnab/TPC/TPC_PRODUCTION/Containers/rocm_torch_env.sif",
+            "cuda_container": "/lustre/alice/users/csonnab/TPC/TPC_PRODUCTION/Containers/cuda_torch_env.sif",
+            "job-name": "TPCPID_test",
+            "partition": "main",
+            "time": 480,
+            "device": "MI100_GPU",
+            "cpus-per-task": 10,
+            "mem": "40G",
+            "mail-type": "END,FAIL,INVALID_DEPEND",
+            "mail-user": ""
+        }
     }
 }
