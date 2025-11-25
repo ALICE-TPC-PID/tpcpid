@@ -70,6 +70,7 @@
         "num_networks": 1,
         "qa_file": "training_qa.py",
         "enable_qa": "True",
+        "scheduler": "slurm",
         "trainingBranches": [
             "fHadronicRate",
             "fFT0Occ",
