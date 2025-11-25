@@ -29,39 +29,37 @@ CONFIG = read_config()
 output_folder   = CONFIG["output"]["general"]["training"]
 
 ### network settings
-execution_mode  = CONF["network"]["execution_mode"]
-training_file   = CONF["network"]["training_file"]
-num_networks	= CONF["network"]["num_networks"]
-enable_qa		= CONF["network"]["enable_qa"]
-
+execution_mode  = CONFIG["trainNeuralNetOptions"]["execution_mode"]
+training_file   = CONFIG["trainNeuralNetOptions"]["training_file"]
+num_networks	= CONFIG["trainNeuralNetOptions"]["num_networks"]
+enable_qa		= CONFIG["trainNeuralNetOptions"]["enable_qa"]
 scheduler = CONFIG["trainNeuralNetOptions"]["scheduler"]
 
 
 if args.scheduler == "slurm":
 
     job_ids = [-1]
-    optional_args   = CONF["submission"]["slurm"]["optional_args"]
 
     if("RUN12" in execution_mode):
-        out = subprocess.check_output("sbatch --output={0}/networks/network_run12/job.out --error={0}/networks/network_run12/job.err {2} {1}/TRAIN.sh RUN12 {0}".format(current_dir.split("/")[-1], output_folder, optional_args), shell=True).decode().strip('\n')
+        out = subprocess.check_output("sbatch --output={0}/networks/network_run12/job.out --error={0}/networks/network_run12/job.err {2} {1}/TRAIN.sh RUN12 {0}".format(current_dir.split("/")[-1], output_folder), shell=True).decode().strip('\n')
         print(out)
         job_ids[0] = str(out.split(" ")[-1])
  
     if ("MEAN" in execution_mode) or (execution_mode=="FULL"):
         ### Submit job for mean calculation
-        out = subprocess.check_output("sbatch --output={0}/networks/network_mean/job.out --error={0}/networks/network_mean/job.err {2} {1}/TRAIN.sh MEAN {0}".format(current_dir.split("/")[-1], output_folder, optional_args), shell=True).decode().strip('\n')
+        out = subprocess.check_output("sbatch --output={0}/networks/network_mean/job.out --error={0}/networks/network_mean/job.err {2} {1}/TRAIN.sh MEAN {0}".format(current_dir.split("/")[-1], output_folder), shell=True).decode().strip('\n')
         print(out)
         job_ids[0] = str(out.split(" ")[-1])
 
     if ("SIGMA" in execution_mode) or (execution_mode=="FULL"):
         ### Submit job for sigma calculation
-        out = subprocess.check_output("sbatch --output={0}/networks/network_sigma/job.out --error={0}/networks/network_sigma/job.err {4} --dependency=afterok: {1}/{2}/TRAIN.sh SIGMA {0}".format(current_dir.split("/")[-1], job_ids[-1], output_folder, optional_args), shell=True).decode().strip('\n')
+        out = subprocess.check_output("sbatch --output={0}/networks/network_sigma/job.out --error={0}/networks/network_sigma/job.err {4} --dependency=afterok: {1}/{2}/TRAIN.sh SIGMA {0}".format(current_dir.split("/")[-1], job_ids[-1], output_folder), shell=True).decode().strip('\n')
         print(out)
         job_ids.append(str(out.split(" ")[-1]))
 
     if execution_mode=="FULL":
         ### Submit job for full network calculation
-        out = subprocess.check_output("sbatch --output={0}/networks/network_full/job.out --error={0}/networks/network_full/job.err {4} --dependency=afterok: {1}/{2}/TRAIN.sh FULL {0}".format(current_dir.split("/")[-1], job_ids[-1], output_folder, optional_args), shell=True).decode().strip('\n')
+        out = subprocess.check_output("sbatch --output={0}/networks/network_full/job.out --error={0}/networks/network_full/job.err {4} --dependency=afterok: {1}/{2}/TRAIN.sh FULL {0}".format(current_dir.split("/")[-1], job_ids[-1], output_folder), shell=True).decode().strip('\n')
         print(out)
         job_ids.append(str(out.split(" ")[-1]))
     
@@ -78,7 +76,7 @@ elif args.scheduler == "htcondor":
     import htcondor
     import htcondor.dags as dags
     
-    condor_settings = CONF["submission"]["htcondor"]
+    condor_settings = CONFIG["trainNeuralNetOptions"]["htcondor"]
     
     dag = dags.DAG()
     dag_layers = list()
