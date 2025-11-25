@@ -32,7 +32,6 @@ output_folder   = CONFIG["output"]["general"]["training"]
 data_file       = CONFIG["output"]["createTrainingDataset"]["training_data"]
 
 ### network settings
-configurations  = CONFIG["trainNeuralNetOptions"]["configurations_file"]
 execution_mode  = CONFIG["trainNeuralNetOptions"]["execution_mode"]
 training_file   = CONFIG["trainNeuralNetOptions"]["training_file"]
 qa_file         = CONFIG["trainNeuralNetOptions"]["qa_file"]
@@ -72,4 +71,6 @@ for file in glob.glob(data_file, recursive=True):
 # os.system('cp {0} {1}'.format(args.config, os.path.join(output_folder, 'config.json')))
 os.system('cp {0} {1}'.format(training_file, os.path.join(output_folder, 'train.py')))
 os.system('cp {0} {1}'.format(qa_file, os.path.join(output_folder, 'training_qa.py')))
-os.system('cp {0} {1}'.format(configurations, os.path.join(output_folder, 'configurations.py')))
+os.system('cp {0} {1}'.format("configurations.py", os.path.join(output_folder, 'configurations.py')))
+os.system('cp {0} {1}'.format("run_job_single_sigma.py", os.path.join(output_folder, 'run_job_single_sigma.py')))
+os.system('cp {0} {1}'.format("shell_script_creation.py", os.path.join(output_folder, 'shell_script_creation.py')))

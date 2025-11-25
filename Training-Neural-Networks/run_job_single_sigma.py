@@ -34,7 +34,7 @@ execution_mode  = CONFIG["trainNeuralNetOptions"]["execution_mode"]
 training_file   = CONFIG["trainNeuralNetOptions"]["training_file"]
 num_networks	= CONFIG["trainNeuralNetOptions"]["num_networks"]
 enable_qa		= CONFIG["trainNeuralNetOptions"]["enable_qa"]
-scheduler = CONFIG["trainNeuralNetOptions"]["scheduler"]
+scheduler       = CONFIG["trainNeuralNetOptions"]["scheduler"]
 
 
 if scheduler == "slurm":
