@@ -70,6 +70,9 @@
         "qa_file": "training_qa.py",
         "enable_qa": "True",
         "scheduler": "slurm",
+        "save_as_pt": "True",
+        "save_as_onnx": "True",
+        "save_loss_in_files": "True",
         "trainingBranches": [
             "fHadronicRate",
             "fFT0Occ",

@@ -27,7 +27,6 @@ from utils.config_tools import (
 CONFIG = read_config()
 
 ### directory settings
-training_dir    = CONFIG["general"]["training_dir"]
 output_folder   = CONFIG["output"]["general"]["training"]
 data_file       = CONFIG["output"]["createTrainingDataset"]["training_data"]
 
