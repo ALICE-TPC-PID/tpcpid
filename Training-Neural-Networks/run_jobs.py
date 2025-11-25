@@ -20,7 +20,7 @@ from utils.config_tools import (
 )
 
 verbose = False
-CONFIG = read_config()
+CONFIG = read_config(path="../Running/configuration.json")
 
 ### execution settings
 output_folder   = CONFIG["output"]["general"]["training"]

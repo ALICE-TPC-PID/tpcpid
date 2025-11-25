@@ -9,9 +9,11 @@ from utils.config_tools import (
     read_config,
     write_config,
     create_folders,
+    copy_config,
 )
 
-config = read_config()
+config = read_config(path="configuration.json")
 config = add_name_and_path(config)
 create_folders(config)
-write_config(config)
+write_config(path="configuration.json")
+copy_config(config)

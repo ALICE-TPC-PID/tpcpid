@@ -13,20 +13,48 @@
             "fTPCSignal",
             "fInvDeDxExpTPC"
         ],
-        "masses": [
-            0.000510998950,
-            0.13957039,
-            0.493677,
-            0.93827208816
-        ],
-        "option1": "Proxy",
+        "option1": "Proxy"
+    },
+    "particle_info": {
         "particles": [
             "Electrons",
+            "Muons",
             "Pions",
             "Kaons",
             "Protons",
-            "Deuterons",
-            "Tritons"
+            "Deuteron",
+            "Triton",
+            "Helium3"
+        ],
+        "particle_labels": [
+            "e",
+            "$\\mu$",
+            "$\\pi$",
+            "$K$",
+            "$p$",
+            "$d$",
+            "$t$",
+            "$^3$He"
+        ],
+        "masses": [
+            0.000510998950,
+            0.1056583755,
+            0.13957039,
+            0.493677,
+            0.93827208816,
+            1.875613115,
+            2.8089211,
+            2.8083916
+        ],
+        "charges": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            2.0
         ]
     },
     "dataset": {
@@ -65,7 +93,7 @@
     "trainNeuralNetOptions": {
         "execution_mode": "FULL",
         "training_file": "train_single_sigma.py",
-        "numberOfEpochs": "200",
+        "numberOfEpochs": "5",
         "num_networks": 1,
         "qa_file": "training_qa.py",
         "enable_qa": "True",

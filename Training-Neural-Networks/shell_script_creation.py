@@ -9,10 +9,7 @@ import sys
 import os
 import json
 import argparse
-import pathlib
-sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
-
-from utils.config_tools import (
+from config_tools import (
     add_name_and_path,
     read_config,
     write_config,
@@ -161,6 +158,7 @@ time singularity exec %(cuda_container)s python3 %(job_script)s --train-mode $1 
         
         if job_dict["device"] == "EPN": ### Setup to submit to EPN nodes
             bash_file = open(path.join(full_path_out, "QA.sh"), "w")
+            bash_file.write(
    
 """#!/bin/bash
 #SBATCH --job-name=%(job-name)s                                                 # Task name
@@ -175,43 +173,11 @@ time singularity exec %(cuda_container)s python3 %(job_script)s --train-mode $1 
 time python3.9 %(actual_job_script)s --local-training-dir $1
 
 """ % {**job_dict, 'actual_job_script': actual_job_script})
-            else:
-                bash_file.write(
-"""#!/bin/bash
-#SBATCH --job-name=%(job-name)s                                                 # Task name
-#SBATCH --chdir=%(chdir)s                                                       # Working directory on shared storage
-#SBATCH --time=10                                                               # Run time limit 
-#SBATCH --mem=30G                                                               # job memory
-#SBATCH --cpus-per-task=5                                                       # cpus per task
-#SBATCH --partition=prod                                                        # job partition (debug, main)
-#SBATCH --mail-type=%(mail-type)s                                               # notify via email
-#SBATCH --mail-user=%(mail-user)s                                               # recipient
-
-time python3.9 %(actual_job_script)s --local-training-dir $1
-
-""" % {**job_dict, 'actual_job_script': actual_job_script})
-            bash_file.close()
 
         else:
 
             bash_file = open(path.join(full_path_out, "QA.sh"), "w")
-            if bb_param:
-                bash_file.write(
-"""#!/bin/bash
-#SBATCH --job-name=%(job-name)s                                                 # Task name
-#SBATCH --chdir=%(chdir)s                                                       # Working directory on shared storage
-#SBATCH --time=10                                                               # Run time limit 
-#SBATCH --mem=30G                                                               # job memory
-#SBATCH --cpus-per-task=5                                                       # cpus per task
-#SBATCH --partition=main                                                        # job partition (debug, main)
-#SBATCH --mail-type=%(mail-type)s                                               # notify via email
-#SBATCH --mail-user=%(mail-user)s                                               # recipient
-
-time singularity exec %(cuda_container)s python3 %(actual_job_script)s --local-training-dir $1
-
-""" % {**job_dict, 'actual_job_script': actual_job_script})
-            else:
-                bash_file.write(
+            bash_file.write(
 """#!/bin/bash
 #SBATCH --job-name=%(job-name)s                                                 # Task name
 #SBATCH --chdir=%(chdir)s                                                       # Working directory on shared storage

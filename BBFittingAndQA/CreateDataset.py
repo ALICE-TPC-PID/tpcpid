@@ -256,8 +256,8 @@ def plot_cuts(**kwargs):
 
 ## Loading data and models
 
-particles = CONFIG['createTrainingDatasetOptions']['particles']
-masses = CONFIG['createTrainingDatasetOptions']['masses']
+particles = CONFIG['particle_info']['particles']
+masses = CONFIG['particle_info']['masses']
 LABELS_X = CONFIG['createTrainingDatasetOptions']['labels_x']
 LABELS_Y = CONFIG['createTrainingDatasetOptions']['labels_y']
 cload = load_tree()
