@@ -80,8 +80,6 @@ CONFIG["output"]["createTrainingDataset"]["training_data"] = output_path
 write_config(CONFIG)
 
 plot_path = os.path.join(CONFIG['output']['general']['path'], "QA", "createTrainingDataset")
-if not os.path.exists(plot_path):
-    os.makedirs(plot_path)
 
 dir_tree = CONFIG['output']['shiftNsigma']['Skimmedtree_shiftedNsigma_path']
 print("Period:", period, "; apass:", apass, "; input is:", dir_tree)
@@ -287,7 +285,7 @@ else:
     plt.text(0.7,0.07, horizontalalignment='center', verticalalignment='center', fontsize=35, s=r"$\Lambda$", c="white")
     plt.colorbar(aspect=30, pad=0.01)
     plot_cuts(**cut_dict)
-    plt.savefig(os.path.join(args.output_path, "ArmenterosPodolanski_LHC24ar.pdf"), bbox_inches='tight')
+    plt.savefig(os.path.join(plot_path, "ArmenterosPodolanski_LHC24ar.pdf"), bbox_inches='tight')
 
     del alphaQt_d, alphaQt_l
 
@@ -301,10 +299,12 @@ else:
 # Normalize fFT0Occ by a factor of 60000
 ft0occ_index = np.where(labels == 'fFt0Occ')[0][0]  # Locate the index of fFT0Occ in labels
 fit_data[:, ft0occ_index] /= 60000
+samplesize = int(CONFIG['createTrainingDatasetOptions']['samplesize'])
+print(f"samplesize is {samplesize}")
 
-if len(fit_data) >= args.sampleamount:
-    ### Downsampling at 100 mio. points...
-    keep = args.sampleamount/len(fit_data) # Keep that many percent of the original data: Here keeping 60 mio., aribtrary but reasonable
+if len(fit_data) >= samplesize:
+    ### Downsampling to defined sample size
+    keep = samplesize/len(fit_data) # Keep that many percent of the original data: Here keeping 60 mio., aribtrary but reasonable
     mask_downsample = np.random.uniform(low=0.0, high=1.0, size=len(fit_data)) < keep
     fit_data = fit_data[mask_downsample]
 
@@ -407,7 +407,7 @@ def gauslin(x, mu1, sigma1, scale1, a, b):
 ### Kinematic selections
 new_data = fit_data
 # Initial 3 sigma selection
-sigma_threshold = args.sigmathreshold
+sigma_threshold = int(CONFIG['createTrainingDatasetOptions']['sigmarange'])
 full_mask = np.zeros(len(new_data))
 
 for i, m in enumerate(np.sort(np.unique(new_data.T[labels=='fMass']))):
@@ -537,7 +537,7 @@ percentages = []
 for i, m in enumerate(np.sort(np.unique(new_data.T[labels=='fMass']))):
     percentages.append(np.sum(new_data.T[labels=='fMass'].flatten() == m)*100/np.shape(new_data)[0])
 
-desired_size = eval(args.output_size)
+desired_size = int(CONFIG['createTrainingDatasetOptions']['samplesize'])
 num_particles = np.shape(np.unique(fit_data.T[labels=='fMass']))[0]
 
 if len(np.unique(new_data.T[labels=='fMass']))==5:

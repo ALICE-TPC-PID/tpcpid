@@ -13,7 +13,8 @@
             "fTPCSignal",
             "fInvDeDxExpTPC"
         ],
-        "option1": "Proxy"
+        "samplesize": "10000000",
+        "sigmarange": "3"
     },
     "particle_info": {
         "particles": [
@@ -60,12 +61,11 @@
     "dataset": {
         "HadronicRate": "True",
         "dEdxSelection": "TPCSignal",
-        "optTag1": "TestTag1",
-        "optTag2": "TestTag2",
+        "optTag1": "Remove",
+        "optTag2": "lustre",
         "pass": "1",
         "period": "ar",
         "year": "24",
-        "Job_dir": "./",
         "input_skimmedtree_path": "/lustre/alice/users/jwitte/tpcpid/LHC24arOleksii/LHC24ar/559781/hy_3030305/AOD/002/AO2D.root"
     },
     "fitBBGraphOptions": {
