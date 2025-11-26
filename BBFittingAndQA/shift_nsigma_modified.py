@@ -3,10 +3,7 @@ import os
 import array
 import argparse
 import json
-import sys, pathlib
-sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
-
-from utils.config_tools import (
+from config_tools import (
     add_name_and_path,
     read_config,
     write_config,
@@ -536,6 +533,7 @@ if __name__ == "__main__":
     # check_trees(trees)
 
     output_file = ROOT.TFile(os.path.join(CONFIG['output']['general']['path'],"trees",f"SkimmedTree_UpdatednSigmaAndExpdEdx_{CONFIG['output']['general']['name']}.root"), "RECREATE")
+    CONFIG["output"].setdefault('shiftNsigma', {})
     CONFIG["output"]["shiftNsigma"]["Skimmedtree_shiftedNsigma_path"] = os.path.join(CONFIG['output']['general']['path'],"trees",f"SkimmedTree_UpdatednSigmaAndExpdEdx_{CONFIG['output']['general']['name']}.root")
     write_config(CONFIG)
 

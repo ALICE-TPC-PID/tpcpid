@@ -14,8 +14,12 @@ import json
 import onnxruntime as ort
 import torch
 import glob
-
 from sklearn.model_selection import train_test_split
+from config_tools import (
+    add_name_and_path,
+    read_config,
+    write_config,
+)
 
 ########### Load the configurations from config.json ###########
 
@@ -26,25 +30,20 @@ parser.add_argument("-jid", "--job-id", default=-1, help="ID of the submitted sl
 parser.add_argument("-locdir", "--local-training-dir", default=".", help="Local directory for training of the neural network")
 args = parser.parse_args()
 
-### External json settings
-configs_file = open("config.json", "r")
-CONF = json.load(configs_file)
+CONFIG = read_config()
 
 ### directory settings
-training_dir        = CONF["directories"]["training_dir"]
-output_folder       = CONF["directories"]["output_folder"]
-data_file           = CONF["directories"]["data_file"]
+output_folder   = CONFIG["output"]["general"]["training"]
+data_file       = CONFIG["output"]["createTrainingDataset"]["training_data"]
 
 ### network settings
-train_mode          = CONF["network"]["execution_mode"]
-num_networks        = CONF["network"]["num_networks"]
-save_as_pt          = CONF["network"]["save_as_pt"]
-save_as_onnx        = CONF["network"]["save_as_onnx"]
-save_loss_in_files  = CONF["network"]["save_loss_in_files"]
+train_mode      = CONFIG["trainNeuralNetOptions"]["execution_mode"]
+num_networks    = CONFIG["trainNeuralNetOptions"]["num_networks"]
+training_file   = CONFIG["trainNeuralNetOptions"]["training_file"]
+save_as_pt          = CONFIG["trainNeuralNetOptions"]["save_as_pt"]
+save_as_onnx        = CONFIG["trainNeuralNetOptions"]["save_as_onnx"]
+save_loss_in_files  = CONFIG["trainNeuralNetOptions"]["save_loss_in_files"]
 
-configs_file.close()
-
-training_file = glob.glob(args.local_training_dir+"/*.*")[0]
 
 ########### Print the date, time and location for identification ###########
 
@@ -54,14 +53,15 @@ print("Info:\n")
 print("SLURM job ID:", args.job_id)
 print("Date (dd/mm/yyyy):",date.strftime('%02d/%02m/%04Y'))
 print("Time (hh/mm/ss):", time.strftime('%02H:%02M:%02S'))
-print("Output-folder:", training_dir+"/"+output_folder+"/"+args.local_training_dir)
+print("Output-folder:", output_folder+"/"+args.local_training_dir)
 
 hardware = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 ########### Import the Neural Network class ###########
 
-NN_dir = training_dir + "/../Neural-Network-Class/NeuralNetworkClasses"
-sys.path.append(NN_dir)
+neuralNetClass_dir = os.path.join(CONFIG['output']['general']['base_folder'],"..","Neural-Network-Class","NeuralNetworkClasses")
+sys.path.append(neuralNetClass_dir)
+print("[CRITICAL]: Please make sure this neuralNetClass path actually works")
 
 from extract_from_root import load_tree
 from dataset_loading import DataLoading
@@ -120,8 +120,7 @@ NeuralNet.training(data, **dict_config["NET_TRAINING"])
 NeuralNet.eval()
 if save_as_pt == "True":
     NeuralNet.save_net(path=args.local_training_dir+'/networks/network_'+str(train_mode).lower()+'/net_torch_'+str(train_mode).lower()+'.pt',avoid_q=True)
-    #NeuralNet.save_jit_script(path=training_dir+"/"+output_folder+"/"+tr_dir+'/networks/network_'+str(train_mode).lower()+'/net_'+str(train_mode).lower()+'_jit.pt')
-if save_as_onnx == "True":
+   if save_as_onnx == "True":
     NeuralNet.save_onnx(example_data=torch.tensor(np.array([X[0]]),requires_grad=True).float(),
                         path=args.local_training_dir+'/networks/network_'+str(train_mode).lower()+'/net_onnx_'+str(train_mode).lower()+'.onnx')
     NeuralNet.check_onnx(path=args.local_training_dir+'/networks/network_'+str(train_mode).lower()+'/net_onnx_'+str(train_mode).lower()+'.onnx')

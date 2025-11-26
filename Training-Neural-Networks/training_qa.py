@@ -16,50 +16,28 @@ from matplotlib.colors import ListedColormap, LogNorm
 import scipy as sc
 import json
 import torch
+from config_tools import (
+    add_name_and_path,
+    read_config,
+    write_config,
+)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-locdir", "--local-training-dir", default=".", help="Directory with the trained networks")
 parser.add_argument("-outdir", "--output-dir", default=";", help="Directory for saving the QA output")
 parser.add_argument("-data", "--data-file", default=";", help="Data-file on which to make QA") # Default value is placeholder
-parser.add_argument("-BB", "--BBparameters", help="Path to txt file with fitted BB params for the dataset")
 args = parser.parse_args()
 
-### External json settings
-configs_file = open("config.json", "r")
-CONF = json.load(configs_file)
+CONFIG = read_config()
 
-NN_dir = CONF["directories"]["training_dir"] + "/../Neural-Network-Class/NeuralNetworkClasses"
-sys.path.append(NN_dir)
+neuralNetClass_dir = os.path.join(CONFIG['output']['general']['base_folder'],"..","Neural-Network-Class","NeuralNetworkClasses")
+sys.path.append(neuralNetClass_dir)
+print("[CRITICAL]: Please make sure this neuralNetClass path actually works")
+
 sys.path.append(os.getcwd())
 
 import configurations
-
-### execution settings
-training_dir        = CONF["directories"]["training_dir"]
-
-NN_dir = training_dir + "/../Neural-Network-Class/NeuralNetworkClasses"
-sys.path.append(NN_dir)
-
 from extract_from_root import load_tree
-
-configs_file.close()
-
-
-#This method is used for interactively using newest BB parameters
-#Takes Bethe Bloch fitting parameters as txt
-#Returns array with Parameters
-def read_BB_params(BB_path):
-    BB_path=args.BBparameters
-    # BB_path = "/lustre/alice/users/jwitte/tpcpid/o2-tpcpid-parametrisation/BBfitAndQA/BBFitting_Task_pass5/tpcsignal/JOBS/zzh/20250515/31619587/1/outputFits/BBparameters_LHC2023zzh_pass5_tpcsignal_250514.txt"
-    # print(f"BB param path = {BB_path}") #DEBUG
-    # Open the BB parameters file and read the content
-    with open(BB_path, "r") as file:
-        content = file.read().strip()
-        # Split the content into a list of floats
-        BB_params = [float(x) for x in content.split()]
-    # print(f"Loaded new BB parameters: {BB_params}")  # Debug
-    return BB_params
-
 
 ### Data preparation
 
@@ -78,26 +56,20 @@ def BetheBlochAleph(bg, params):
 
 ## Loading data and models
 
-particles = ['Electrons', 'Muons', 'Pions', 'Kaons', 'Protons', 'Deuteron', 'Triton', r'Helium3']
-particle_labels = ['e', r'$\mu$', r'$\pi$', r'$K$', r'$p$', r'$d$', r'$t$', r'$^3$He']
-masses = [0.000510998950, 0.1056583755, 0.13957039, 0.493677, 0.93827208816, 1.875613115, 2.8089211, 2.8083916]
-charges = [1.,1.,1.,1.,1.,1.,1.,2.]
+particles = CONFIG["particle_info"]["particles"]
+particle_labels = CONFIG["particle_info"]["particle_labels"]
+masses = CONFIG["particle_info"]["masses"]
+charges = CONFIG["particle_info"]["charges"]
 dict_particles_masses = dict(zip(particles, masses))
 
 ### Neural Network
 
-if args.data_file == ";":
-    data_path = args.local_training_dir + "/training_data.root"
-else:
-    data_path = args.data_file
+output_folder   = CONFIG["output"]["general"]["training"] #general output dir for training
+data_path       = output_dir + "/training_data.root"
+output_dir      = CONFIG["output"]["trainNeuralNet"]["QApath"] #output directory for QA plots
 
-if args.output_dir == ";":
-    output_dir = args.local_training_dir+'/QA'
-else:
-    output_dir = args.output_dir
-
-LABELS_X = ['fTPCInnerParam', 'fTgl', 'fSigned1Pt', 'fMass', 'fNormMultTPC', 'fNormNClustersTPC', 'fFt0Occ']
-LABELS_Y = ['fTPCSignal', 'fInvDeDxExpTPC']
+LABELS_X = CONFIG["createTrainingDatasetOptions"]["labels_x"]
+LABELS_Y = CONFIG["createTrainingDatasetOptions"]["labels_y"]
 
 ### General
 
@@ -268,18 +240,14 @@ def separation_power(useNN=0, useMassAssumption=0, momentumSelection=[0.3,0.4],
     input = fit_data.copy()
     selection = (input[:,labels=='fTPCInnerParam'].flatten() > 0.3) * (input[:,labels=='fTPCInnerParam'].flatten() < 0.4)
     input = input[selection]
-    print(f"Default BB params: {configurations.BB_PARAMS}")
-    if args.BBparameters:
-        print("Looking for provided BB params")
-        BBparams = read_BB_params(args.BBparameters)
-        #Using extension to account for christians syntax
-        BBparams.extend([50,2.3])
-        print(f"Found BB params {BBparams}")
-        input[:,labels=='fInvDeDxExpTPC'] = (1./BetheBlochAleph(fit_data[selection,labels=='fTPCInnerParam'].flatten()/masses[useMassAssumption], params = BBparams)).reshape(-1,1)
-        print(f"Used fitted BB params {BBparams}")
-    else:
-        print("Using default BBparams")
-        input[:,labels=='fInvDeDxExpTPC'] = (1./BetheBlochAleph(fit_data[selection,labels=='fTPCInnerParam'].flatten()/masses[useMassAssumption], params = configurations.BB_PARAMS)).reshape(-1,1)
+    print("Looking for provided BB params")
+    BBparams = CONFIG["output"]["fitBBGraph"]["BBparameters"]
+    #Using extension to account for christians syntax
+    BBparams.extend([50,2.3])
+    print(f"Found BB params {BBparams}")
+    input[:,labels=='fInvDeDxExpTPC'] = (1./BetheBlochAleph(fit_data[selection,labels=='fTPCInnerParam'].flatten()/masses[useMassAssumption], params = BBparams)).reshape(-1,1)
+    print(f"Used fitted BB params {BBparams}")
+
     input[:,labels=='fMass'] = masses[useMassAssumption]
     fit_bounds_double_gauss = ([0.,-10.,0.,0.,-10.,0.],[np.inf,10.,3.,np.inf,10.,3.])
 
@@ -337,3 +305,5 @@ separation_power(useNN=1, useMassAssumption=0)
 separation_power(useNN=0, useMassAssumption=0)
 separation_power(useNN=1, useMassAssumption=2)
 separation_power(useNN=0, useMassAssumption=2)
+
+print("[CRITICAL]: Just the old plots are created. Please implement functionality of October version")

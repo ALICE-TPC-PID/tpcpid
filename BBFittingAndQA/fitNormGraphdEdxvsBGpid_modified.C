@@ -1,4 +1,4 @@
-#include "../utils/headerfunction.h"
+#include "./headerfunction.h"
 #include "./read_config.C"
 // This macro was modified to automatically use the provided pathtoskimtree when entering the name (f.e. LHC23zzk)
 

@@ -11,10 +11,19 @@ from matplotlib import cm
 import tqdm
 import matplotlib.colors as mcolors
 import pandas as pd
-sys.path.append("../Neural-Network-Class/NeuralNetworkClasses")
-from extract_from_root import *
 import argparse
 import mplhep as hep
+import pathlib
+import sys
+
+from config_tools import (
+    add_name_and_path,
+    read_config,
+    write_config,
+)
+
+
+
 
 plt.style.use(hep.style.ALICE)
 for key in mpl.rcParams.keys():
@@ -51,19 +60,26 @@ args = parser.parse_args()
 #     period = "default"
 #     apass = "default"
 #     dir_tree = args.full_input_path
+#################################
 
-path_config = "../Running/configuration.json"
-configs_file = open(path_config, "r")
-CONFIG = json.load(configs_file)
+CONFIG = read_config()
+
+neuralNetClass_dir = os.path.join(CONFIG['output']['general']['base_folder'],"Neural-Network-Class","NeuralNetworkClasses")
+sys.path.append(neuralNetClass_dir)
+# print(f"files in folder neuralNetClass_dir = {os.listdir(neuralNetClass_dir)}")
+print("[CRITICAL]: Please make sure this neuralNetClass path actually works")
+from extract_from_root import *
+
 
 period = CONFIG['dataset']['period']
 apass = CONFIG['dataset']['pass']
 
 date = datetime.today().strftime('%d%m%Y')
-output_path = os.path.join(CONFIG['output']['general']['path'],"trees","merged_tree.root")
+output_path = os.path.join(CONFIG['output']['general']['path'],"trees","merged_tree_for_training.root")
+CONFIG["output"]["createTrainingDataset"]["training_data"] = output_path
+write_config(CONFIG)
+
 plot_path = os.path.join(CONFIG['output']['general']['path'], "QA", "createTrainingDataset")
-if not os.path.exists(plot_path):
-    os.makedirs(plot_path)
 
 dir_tree = CONFIG['output']['shiftNsigma']['Skimmedtree_shiftedNsigma_path']
 print("Period:", period, "; apass:", apass, "; input is:", dir_tree)
@@ -241,8 +257,8 @@ def plot_cuts(**kwargs):
 
 ## Loading data and models
 
-particles = CONFIG['createTrainingDatasetOptions']['particles']
-masses = CONFIG['createTrainingDatasetOptions']['masses']
+particles = CONFIG['particle_info']['particles']
+masses = CONFIG['particle_info']['masses']
 LABELS_X = CONFIG['createTrainingDatasetOptions']['labels_x']
 LABELS_Y = CONFIG['createTrainingDatasetOptions']['labels_y']
 cload = load_tree()
@@ -269,7 +285,7 @@ else:
     plt.text(0.7,0.07, horizontalalignment='center', verticalalignment='center', fontsize=35, s=r"$\Lambda$", c="white")
     plt.colorbar(aspect=30, pad=0.01)
     plot_cuts(**cut_dict)
-    plt.savefig(os.path.join(args.output_path, "ArmenterosPodolanski_LHC24ar.pdf"), bbox_inches='tight')
+    plt.savefig(os.path.join(plot_path, "ArmenterosPodolanski_LHC24ar.pdf"), bbox_inches='tight')
 
     del alphaQt_d, alphaQt_l
 
@@ -283,10 +299,12 @@ else:
 # Normalize fFT0Occ by a factor of 60000
 ft0occ_index = np.where(labels == 'fFt0Occ')[0][0]  # Locate the index of fFT0Occ in labels
 fit_data[:, ft0occ_index] /= 60000
+samplesize = int(CONFIG['createTrainingDatasetOptions']['samplesize'])
+print(f"samplesize is {samplesize}")
 
-if len(fit_data) >= args.sampleamount:
-    ### Downsampling at 100 mio. points...
-    keep = args.sampleamount/len(fit_data) # Keep that many percent of the original data: Here keeping 60 mio., aribtrary but reasonable
+if len(fit_data) >= samplesize:
+    ### Downsampling to defined sample size
+    keep = samplesize/len(fit_data) # Keep that many percent of the original data: Here keeping 60 mio., aribtrary but reasonable
     mask_downsample = np.random.uniform(low=0.0, high=1.0, size=len(fit_data)) < keep
     fit_data = fit_data[mask_downsample]
 
@@ -389,7 +407,7 @@ def gauslin(x, mu1, sigma1, scale1, a, b):
 ### Kinematic selections
 new_data = fit_data
 # Initial 3 sigma selection
-sigma_threshold = args.sigmathreshold
+sigma_threshold = int(CONFIG['createTrainingDatasetOptions']['sigmarange'])
 full_mask = np.zeros(len(new_data))
 
 for i, m in enumerate(np.sort(np.unique(new_data.T[labels=='fMass']))):
@@ -519,7 +537,7 @@ percentages = []
 for i, m in enumerate(np.sort(np.unique(new_data.T[labels=='fMass']))):
     percentages.append(np.sum(new_data.T[labels=='fMass'].flatten() == m)*100/np.shape(new_data)[0])
 
-desired_size = eval(args.output_size)
+desired_size = int(CONFIG['createTrainingDatasetOptions']['samplesize'])
 num_particles = np.shape(np.unique(fit_data.T[labels=='fMass']))[0]
 
 if len(np.unique(new_data.T[labels=='fMass']))==5:
