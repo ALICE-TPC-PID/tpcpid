@@ -70,4 +70,4 @@ os.system('cp {0} {1}'.format(qa_file, os.path.join(output_folder, 'training_qa.
 os.system('cp {0} {1}'.format("configurations.py", os.path.join(output_folder, 'configurations.py')))
 os.system('cp {0} {1}'.format("run_job_single_sigma.py", os.path.join(output_folder, 'run_job_single_sigma.py')))
 os.system('cp {0} {1}'.format("shell_script_creation.py", os.path.join(output_folder, 'shell_script_creation.py')))
-os.system('cp {0} {1}'.format("../utils/config_tools.py", os.path.join(output_folder, 'config_tools.py')))
+os.system('cp {0} {1}'.format("config_tools.py", os.path.join(output_folder, 'config_tools.py')))
