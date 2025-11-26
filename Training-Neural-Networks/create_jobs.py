@@ -12,10 +12,7 @@ import json
 import glob
 import argparse
 import pathlib
-import sys
-sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
-
-from utils.config_tools import (
+from config_tools import (
     add_name_and_path,
     read_config,
     write_config,
@@ -24,7 +21,7 @@ from utils.config_tools import (
 
 #################################
 
-CONFIG = read_config(path="../Running/configuration.json")
+CONFIG = read_config()
 
 ### directory settings
 output_folder   = CONFIG["output"]["general"]["training"]

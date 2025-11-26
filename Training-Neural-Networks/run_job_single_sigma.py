@@ -10,10 +10,7 @@ import sys
 import os
 import argparse
 import subprocess
-import pathlib
-sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
-
-from utils.config_tools import (
+from config_tools import (
     add_name_and_path,
     read_config,
     write_config,

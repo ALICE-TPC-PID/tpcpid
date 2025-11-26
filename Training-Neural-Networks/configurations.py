@@ -5,10 +5,7 @@ import torch.optim as optim
 import sys
 import json
 from custom_loss_functions import *
-import pathlib
-sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
-
-from utils.config_tools import (
+from config_tools import (
     add_name_and_path,
     read_config,
     write_config,

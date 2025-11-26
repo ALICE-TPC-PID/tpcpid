@@ -59,9 +59,9 @@ hardware = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 ########### Import the Neural Network class ###########
 
-print("[CRITICAL]: Directory of Neural-Network-Class is hardcoded")
-NN_dir = "/lustre/alice/users/jwitte/tpcpid/clean_new_dir/tpcpid/Neural-Network-Class/NeuralNetworkClasses"
-sys.path.append(NN_dir)
+neuralNetClass_dir = os.path.join(CONFIG['output']['general']['base_folder'],"..","Neural-Network-Class","NeuralNetworkClasses")
+sys.path.append(neuralNetClass_dir)
+print("[CRITICAL]: Please make sure this neuralNetClass path actually works")
 
 from extract_from_root import load_tree
 from dataset_loading import DataLoading

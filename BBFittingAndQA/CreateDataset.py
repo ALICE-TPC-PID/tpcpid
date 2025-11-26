@@ -11,16 +11,13 @@ from matplotlib import cm
 import tqdm
 import matplotlib.colors as mcolors
 import pandas as pd
-sys.path.append("../Neural-Network-Class/NeuralNetworkClasses")
 from extract_from_root import *
 import argparse
 import mplhep as hep
-
 import pathlib
 import sys
-sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
 
-from utils.config_tools import (
+from config_tools import (
     add_name_and_path,
     read_config,
     write_config,
@@ -67,6 +64,11 @@ args = parser.parse_args()
 #################################
 
 CONFIG = read_config()
+
+neuralNetClass_dir = os.path.join(CONFIG['output']['general']['base_folder'],"..","Neural-Network-Class","NeuralNetworkClasses")
+sys.path.append(neuralNetClass_dir)
+print("[CRITICAL]: Please make sure this neuralNetClass path actually works")
+
 
 period = CONFIG['dataset']['period']
 apass = CONFIG['dataset']['pass']

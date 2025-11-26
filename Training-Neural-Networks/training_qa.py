@@ -16,9 +16,7 @@ from matplotlib.colors import ListedColormap, LogNorm
 import scipy as sc
 import json
 import torch
-sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
-
-from utils.config_tools import (
+from config_tools import (
     add_name_and_path,
     read_config,
     write_config,
@@ -32,9 +30,9 @@ args = parser.parse_args()
 
 CONFIG = read_config()
 
-print("[CRITICAL]: Directory of Neural-Network-Class is hardcoded")
-NN_dir = "/lustre/alice/users/jwitte/tpcpid/clean_new_dir/tpcpid/Neural-Network-Class/NeuralNetworkClasses"
-sys.path.append(NN_dir)
+neuralNetClass_dir = os.path.join(CONFIG['output']['general']['base_folder'],"..","Neural-Network-Class","NeuralNetworkClasses")
+sys.path.append(neuralNetClass_dir)
+print("[CRITICAL]: Please make sure this neuralNetClass path actually works")
 
 sys.path.append(os.getcwd())
 

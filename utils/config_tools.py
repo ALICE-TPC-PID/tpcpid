@@ -12,7 +12,7 @@ def read_config(path="../configuration.json"):
 
 
 def write_config(CONFIG, path = "../configuration.json"):
-    path_config = "../configuration.json"
+    path_config = path
     with open(path_config, "w") as f:
         json.dump(CONFIG, f, indent=4)
 
@@ -81,6 +81,7 @@ def copy_scripts(config):
     os.system('cp {0} {1}'.format(os.path.join(bbfitting_path,"*.py"), config["output"]["general"]["job"]))
     os.system('cp {0} {1}'.format(os.path.join(NNtraining_path,"*.py"), config["output"]["general"]["job"]))
     os.system('cp {0} {1}'.format(os.path.join(config["output"]["general"]["base_folder"],"utils","config_tools.py"), config["output"]["general"]["job"]))
+    os.system('cp {0} {1}'.format(os.path.join(config["output"]["general"]["base_folder"],"utils","headerfunction.h"), config["output"]["general"]["job"]))
     os.system('cp {0} {1}'.format("configuration.json", config["output"]["general"]["path"]))
     
     print("Copied scripts and config to job directory")
