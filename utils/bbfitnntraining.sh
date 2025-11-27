@@ -1,13 +1,13 @@
 #!/bin/bash
 
 #SBATCH --job-name=BBFittingAndNNTraining
-#SBATCH --partition=debug
+#SBATCH --partition=main
 #SBATCH --array=1
-#SBATCH --time=30
+#SBATCH --time=300
 #SBATCH --mem=32G   # job memory
 #SBATCH --cpus-per-task=2  # cpus per task
-#SBATCH --output=BBNNTask_%x-%A_%a.out
-#SBATCH --error=BBNNTask_%x-%A_%a.err
+#SBATCH --output=%x-%A_%a.out
+#SBATCH --error=%x-%A_%a.err
 
 #This script should be copied to the job_script_directory by the setup.py and then be submitted as batch job with run.sh
 parent_dir="$1"
