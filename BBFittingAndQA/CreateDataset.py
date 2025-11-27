@@ -67,7 +67,6 @@ CONFIG = read_config()
 neuralNetClass_dir = os.path.join(CONFIG['output']['general']['base_folder'],"Neural-Network-Class","NeuralNetworkClasses")
 sys.path.append(neuralNetClass_dir)
 # print(f"files in folder neuralNetClass_dir = {os.listdir(neuralNetClass_dir)}")
-print("[CRITICAL]: Please make sure this neuralNetClass path actually works")
 from extract_from_root import *
 
 
@@ -299,6 +298,15 @@ else:
 # Normalize fFT0Occ by a factor of 60000
 ft0occ_index = np.where(labels == 'fFt0Occ')[0][0]  # Locate the index of fFT0Occ in labels
 fit_data[:, ft0occ_index] /= 60000
+
+if CONFIG['dataset']['HadronicRate'].strip().lower() == "true":
+    print(f"[DEBUG]: Using Hadronic Rate option {HadronicRateString} in CreateDataset and normalise HadronicRate branch")
+    print("[DEBUG]: Hadronic Rate values will be normalised by 50")
+    # Normalize fHadronicRate by a factor of 50
+    fHadronicRate_index = np.where(labels == 'fHadronicRate')[0][0]  # Locate the index of fHadronicRate in labels
+    fit_data[:, fHadronicRate_index] /= 50
+
+
 samplesize = int(CONFIG['createTrainingDatasetOptions']['samplesize'])
 print(f"samplesize is {samplesize}")
 

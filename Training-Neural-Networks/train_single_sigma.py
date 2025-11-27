@@ -62,7 +62,6 @@ hardware = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 neuralNetClass_dir = os.path.join(CONFIG['output']['general']['base_folder'],"Neural-Network-Class","NeuralNetworkClasses")
 sys.path.append(neuralNetClass_dir)
 # print(f"files in folder neuralNetClass_dir = {os.listdir(neuralNetClass_dir)}")
-print("[CRITICAL]: Please make sure this neuralNetClass path actually works")
 
 from extract_from_root import load_tree
 from dataset_loading import DataLoading

@@ -1,0 +1,132 @@
+Bootstrap: docker
+From: rootproject/root:6.30.04-ubuntu22.04
+
+%labels
+    Maintainer Jonathan Witte <jonathan.witte@cern.ch>
+    Maintainer "Christian Sonnabend" <christian.sonnabend@cern.ch>
+    Description "Unified TPC PID QA + NN training stack"
+    BaseImage ghcr.io/root-project/root:6.30.04-ubuntu22.04
+    BuildDate "2025-11-27"
+
+%help
+    Singularity/Apptainer definition for the TPC PID Bethe-Bloch fitting,
+    QA, dataset creation and NN training workflow. Ships:
+      * ROOT 6.30.04 (from upstream base image) with PyROOT enabled
+      * System libs for plotting, JSON parsing, OpenGL/X11 forwarding
+      * Python 3 virtualenv with numpy/scipy/pandas/matplotlib/mplhep
+      * Uproot/awkward + Torch/ONNX/ONNXRuntime CPU wheels
+      * Slurm client tools for job submission from inside the container
+
+    Usage example (build):
+        apptainer build bbframework.sif framework_container.def
+    Interactive shell binding your repo:
+        apptainer exec --bind /lustre/alice/users/jwitte/tpcpid:/workspace bbframework.sif /bin/bash
+
+%environment
+    export DEBIAN_FRONTEND=noninteractive
+    export VENV_DIR=/opt/venvs/tpcpid
+    export TPCPID_HOME=/opt/tpcpid
+    export PATH=${VENV_DIR}/bin:${PATH}
+    export PYTHONPATH=${TPCPID_HOME}/Neural-Network-Class/NeuralNetworkClasses:${PYTHONPATH}
+    export MPLCONFIGDIR=${TPCPID_HOME}/.config/matplotlib
+    export LC_ALL=C.UTF-8
+    export LANG=C.UTF-8
+
+%post
+    set -eu
+    export DEBIAN_FRONTEND=noninteractive
+    VENV_DIR=${VENV_DIR:-/opt/venvs/tpcpid}
+    TPCPID_HOME=${TPCPID_HOME:-/opt/tpcpid}
+    MPLCONFIGDIR=${MPLCONFIGDIR:-${TPCPID_HOME}/.config/matplotlib}
+
+    echo "[system] Updating apt index"
+    apt-get update -y
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        cmake \
+        curl \
+        git \
+        gnupg \
+        wget \
+        unzip \
+        zip \
+        pkg-config \
+        python3 \
+        python3-venv \
+        python3-pip \
+        python3-dev \
+        libssl-dev \
+        libffi-dev \
+        libgl1 \
+        libglu1-mesa \
+        libxrender1 \
+        libxext6 \
+        libsm6 \
+        libfontconfig1 \
+        libfreetype6 \
+        nlohmann-json3-dev \
+        graphviz \
+        slurm-client \
+        openssh-client \
+        vim \
+        less
+    rm -rf /var/lib/apt/lists/*
+
+    echo "[python] Creating virtual environment"
+    mkdir -p /opt/venvs
+    python3 -m venv ${VENV_DIR}
+    . ${VENV_DIR}/bin/activate
+    python -m pip install --upgrade pip setuptools wheel
+
+    echo "[python] Installing scientific stack"
+    python -m pip install \
+        numpy \
+        scipy \
+        pandas \
+        matplotlib \
+        mplhep \
+        seaborn \
+        tqdm \
+        scikit-learn \
+        uproot \
+        awkward \
+        onnx \
+        onnxruntime \
+        tensorboard \
+        ipykernel \
+        jsonschema \
+        rich \
+        python-dateutil \
+        typing_extensions
+
+    echo "[python] Installing Torch CPU wheels"
+    python -m pip install --index-url https://download.pytorch.org/whl/cpu \
+        torch==2.3.1 \
+        torchvision==0.18.1 \
+        torchaudio==2.3.1
+
+    echo "[filesystem] Preparing workspace skeleton"
+    mkdir -p ${TPCPID_HOME} /workspace ${MPLCONFIGDIR}
+    chmod 777 /workspace ${MPLCONFIGDIR}
+
+    cat <<'EOF' > ${TPCPID_HOME}/README-container.txt
+TPC PID container layout
+========================
+
+Bind your checked-out repo into /workspace, e.g.:
+
+    apptainer exec --bind /lustre/alice/users/jwitte/tpcpid:/workspace bbframework.sif /bin/bash
+
+Convenience environment variables:
+  * TPCPID_HOME -> /opt/tpcpid (mount target or staging area)
+  * VENV_DIR    -> /opt/venvs/tpcpid (Python virtual environment)
+
+After starting the container, run:
+    source ${VENV_DIR}/bin/activate
+    cd /workspace/tpcpid
+    python3 Running/setup.py
+EOF
+
+%runscript
+    exec /bin/bash "$@"

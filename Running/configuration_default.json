@@ -7,7 +7,8 @@
             "fMass",
             "fNormMultTPC",
             "fNormNClustersTPC",
-            "fFt0Occ"
+            "fFt0Occ",
+            "fHadronicRate"
         ],
         "labels_y": [
             "fTPCSignal",
@@ -61,12 +62,12 @@
     "dataset": {
         "HadronicRate": "True",
         "dEdxSelection": "TPCSignal",
-        "optTag1": "Remove",
-        "optTag2": "lustre",
-        "pass": "1",
-        "period": "ar",
-        "year": "24",
-        "input_skimmedtree_path": "/lustre/alice/users/jwitte/tpcpid/LHC24arOleksii/LHC24ar/559781/hy_3030305/AOD/002/AO2D.root"
+        "optTag1": "First",
+        "optTag2": "FullTest",
+        "pass": "5",
+        "period": "zzh",
+        "year": "23",
+        "input_skimmedtree_path": "/lustre/alice/users/marin/R3A/TPCTreeswithNN/PbPbapass5_HR_251006/TPCTrees_HR_LHC23zzh_251006/AO2D_merge_LHC23zzh.root"
     },
     "fitBBGraphOptions": {
         "option1": "Proxy"
@@ -74,8 +75,7 @@
     "general": {
         "base_output_folder": "../output",
         "V0treename": "O2tpcskimv0wde",
-        "tpctoftreename": "O2tpctofskimwde",
-        "training_dir": "/lustre/alice/users/jwitte/tpcpid/clean_new_dir/tpcpid/Training-Neural-Networks"
+        "tpctoftreename": "O2tpctofskimwde"
     },
     "process": {
         "createTrainingDataset": true,
@@ -93,10 +93,11 @@
     "trainNeuralNetOptions": {
         "execution_mode": "FULL",
         "training_file": "train_single_sigma.py",
-        "numberOfEpochs": "5",
+        "numberOfEpochs": "200",
         "num_networks": 1,
         "qa_file": "training_qa.py",
         "enable_qa": "True",
+        "isSmallSystem": "False",
         "scheduler": "slurm",
         "save_as_pt": "True",
         "save_as_onnx": "True",
