@@ -80,6 +80,7 @@ def copy_scripts(config):
     os.system('cp {0} {1}'.format(os.path.join(bbfitting_path,"*.C"), config["output"]["general"]["job"]))
     os.system('cp {0} {1}'.format(os.path.join(bbfitting_path,"*.py"), config["output"]["general"]["job"]))
     os.system('cp {0} {1}'.format(os.path.join(NNtraining_path,"*.py"), config["output"]["general"]["job"]))
+    os.system('cp {0} {1}'.format(os.path.join(config["output"]["general"]["base_folder"],"utils","bbfitnntraining.sh"), config["output"]["general"]["job"]))
     os.system('cp {0} {1}'.format(os.path.join(config["output"]["general"]["base_folder"],"utils","config_tools.py"), config["output"]["general"]["job"]))
     os.system('cp {0} {1}'.format(os.path.join(config["output"]["general"]["base_folder"],"utils","headerfunction.h"), config["output"]["general"]["job"]))
     os.system('cp {0} {1}'.format("configuration.json", config["output"]["general"]["path"]))

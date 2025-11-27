@@ -7,7 +7,8 @@
             "fMass",
             "fNormMultTPC",
             "fNormNClustersTPC",
-            "fFt0Occ"
+            "fFt0Occ",
+            "fHadronicRate"
         ],
         "labels_y": [
             "fTPCSignal",
@@ -74,8 +75,7 @@
     "general": {
         "base_output_folder": "../output",
         "V0treename": "O2tpcskimv0wde",
-        "tpctoftreename": "O2tpctofskimwde",
-        "training_dir": "/lustre/alice/users/jwitte/tpcpid/clean_new_dir/tpcpid/Training-Neural-Networks"
+        "tpctoftreename": "O2tpctofskimwde"
     },
     "process": {
         "createTrainingDataset": true,

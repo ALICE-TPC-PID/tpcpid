@@ -35,14 +35,14 @@ num_networks    = CONFIG["trainNeuralNetOptions"]["num_networks"]
 enable_qa       = CONFIG["trainNeuralNetOptions"]["enable_qa"]
 
 
-if os.path.exists(output_folder):
-    response = input("Jobs directory ({}) exists.  Overwrite it? (y/n) ".format(output_folder))
-    if response == 'y':
-        os.system('rm -rf {0}'.format(output_folder))
-        os.makedirs(output_folder)
-    else:
-        print("Stopping macro!")
-        exit()
+# if os.path.exists(output_folder):
+#     response = input("Jobs directory ({}) exists.  Overwrite it? (y/n) ".format(output_folder))
+#     if response == 'y':
+#         os.system('rm -rf {0}'.format(output_folder))
+#         os.makedirs(output_folder)
+#     else:
+#         print("Stopping macro!")
+#         exit()
 
 for file in glob.glob(data_file, recursive=True):
     if os.path.isfile(file):
