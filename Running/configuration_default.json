@@ -97,6 +97,7 @@
         "num_networks": 1,
         "qa_file": "training_qa.py",
         "enable_qa": "True",
+        "isSmallSystem": "False",
         "scheduler": "slurm",
         "save_as_pt": "True",
         "save_as_onnx": "True",
