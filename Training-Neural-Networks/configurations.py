@@ -3,11 +3,13 @@ import itertools
 import torch.nn as nn
 import torch.optim as optim
 import sys
+import os
 import json
-
-from custom_loss_functions import *
-
-##### Setting the parameters for the training #####
+from config_tools import (
+    add_name_and_path,
+    read_config,
+    write_config,
+)
 
 def network_def(n_neurons_input, n_neurons_intermediate, n_neurons_output, n_layers):
 
@@ -17,12 +19,26 @@ def network_def(n_neurons_input, n_neurons_intermediate, n_neurons_output, n_lay
 
     return h_sizes, layer_types, activation
 
-LABELS_X = ['fTPCInnerParam', 'fTgl', 'fSigned1Pt', 'fMass', 'fNormMultTPC', 'fNormNClustersTPC','fFt0Occ']
-#LABELS_X: ['fTPCInnerParam', 'fTgl', 'fSigned1Pt', 'fMass', 'fNormNClustersTPC']
-LABELS_Y = ['fTPCSignal', 'fInvDeDxExpTPC']
+CONFIG = read_config()
+LABELS_X = CONFIG['createTrainingDatasetOptions']['labels_x']
+LABELS_Y = CONFIG['createTrainingDatasetOptions']['labels_y']
+BB_PARAMS = CONFIG['output']['fitBBGraph']['BBparameters']
+EPOCHS = CONFIG['trainNeuralNetOptions']['numberOfEpochs']
+# LABELS_X = ['fTPCInnerParam', 'fTgl', 'fSigned1Pt', 'fMass', 'fNormMultTPC', 'fNormNClustersTPC','fFt0Occ']
+# #LABELS_X: ['fTPCInnerParam', 'fTgl', 'fSigned1Pt', 'fMass', 'fNormNClustersTPC']
+# LABELS_Y = ['fTPCSignal', 'fInvDeDxExpTPC']
 
-BB_PARAMS = [0.228007, 3.93226, 0.0122857, 2.26946, 0.861199, 50, 2.3]
+# BB_PARAMS = [0.228007, 3.93226, 0.0122857, 2.26946, 0.861199, 50, 2.3]
 
+
+########### Import the Neural Network class ###########
+
+neuralNetClass_dir = os.path.join(CONFIG['output']['general']['base_folder'],"Neural-Network-Class","NeuralNetworkClasses")
+sys.path.append(neuralNetClass_dir)
+# print(f"files in folder neuralNetClass_dir = {os.listdir(neuralNetClass_dir)}")
+print("[CRITICAL]: Please make sure this neuralNetClass path actually works")
+
+from custom_loss_functions import *
 
 DICT_MEAN = {
     "DATA_SPLIT": {
@@ -49,7 +65,7 @@ DICT_MEAN = {
         "verbose": True
     },
     "NET_TRAINING": {
-        "epochs": 200,
+        "epochs": EPOCHS,
         "epochs_ls": [0,30,50,80],
         "weights": False,
         "optimizer": optim.Adam,
@@ -89,7 +105,7 @@ DICT_SIGMA = {
         "verbose": True
     },
     "NET_TRAINING": {
-        "epochs": 200,
+        "epochs": EPOCHS,
         "epochs_ls": [0,30,50,80],
         "weights": False,
         "optimizer": optim.Adam,
@@ -129,7 +145,7 @@ DICT_FULL = {
         "verbose": True
     },
     "NET_TRAINING": {
-        "epochs": 220,
+        "epochs": EPOCHS,
         "epochs_ls": [0,30,50,80],
         "weights": False,
         "optimizer": optim.Adam,

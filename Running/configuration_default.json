@@ -1,0 +1,131 @@
+{
+    "createTrainingDatasetOptions": {
+        "labels_x": [
+            "fTPCInnerParam",
+            "fTgl",
+            "fSigned1Pt",
+            "fMass",
+            "fNormMultTPC",
+            "fNormNClustersTPC",
+            "fFt0Occ"
+        ],
+        "labels_y": [
+            "fTPCSignal",
+            "fInvDeDxExpTPC"
+        ],
+        "samplesize": "10000000",
+        "sigmarange": "3"
+    },
+    "particle_info": {
+        "particles": [
+            "Electrons",
+            "Muons",
+            "Pions",
+            "Kaons",
+            "Protons",
+            "Deuteron",
+            "Triton",
+            "Helium3"
+        ],
+        "particle_labels": [
+            "e",
+            "$\\mu$",
+            "$\\pi$",
+            "$K$",
+            "$p$",
+            "$d$",
+            "$t$",
+            "$^3$He"
+        ],
+        "masses": [
+            0.000510998950,
+            0.1056583755,
+            0.13957039,
+            0.493677,
+            0.93827208816,
+            1.875613115,
+            2.8089211,
+            2.8083916
+        ],
+        "charges": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            2.0
+        ]
+    },
+    "dataset": {
+        "HadronicRate": "True",
+        "dEdxSelection": "TPCSignal",
+        "optTag1": "Remove",
+        "optTag2": "lustre",
+        "pass": "1",
+        "period": "ar",
+        "year": "24",
+        "input_skimmedtree_path": "/lustre/alice/users/jwitte/tpcpid/LHC24arOleksii/LHC24ar/559781/hy_3030305/AOD/002/AO2D.root"
+    },
+    "fitBBGraphOptions": {
+        "option1": "Proxy"
+    },
+    "general": {
+        "base_output_folder": "../output",
+        "V0treename": "O2tpcskimv0wde",
+        "tpctoftreename": "O2tpctofskimwde",
+        "training_dir": "/lustre/alice/users/jwitte/tpcpid/clean_new_dir/tpcpid/Training-Neural-Networks"
+    },
+    "process": {
+        "createTrainingDataset": true,
+        "fitBBGraph": true,
+        "shiftNsigma": true,
+        "skimTreeQA": true,
+        "trainNeuralNet": true
+    },
+    "shiftNsigmaOptions": {
+        "option1": "Proxy"
+    },
+    "skimTreeQAOptions": {
+        "option1": "Proxy"
+    },
+    "trainNeuralNetOptions": {
+        "execution_mode": "FULL",
+        "training_file": "train_single_sigma.py",
+        "numberOfEpochs": "5",
+        "num_networks": 1,
+        "qa_file": "training_qa.py",
+        "enable_qa": "True",
+        "scheduler": "slurm",
+        "save_as_pt": "True",
+        "save_as_onnx": "True",
+        "save_loss_in_files": "True",
+        "trainingBranches": [
+            "fHadronicRate",
+            "fFT0Occ",
+            "fNormMultTPC"
+        ],
+        "htcondor": {
+            "universe": "vanilla",
+            "+JobFlavour": "workday",
+            "request_cpus": "10",
+            "request_memory": "10GB",
+            "request_disk": "10GB",
+            "notify_user": "christian.sonnabend@cern.ch",
+            "notification": "Complete,Error"
+        },
+        "slurm": {
+            "rocm_container": "/lustre/alice/users/csonnab/TPC/TPC_PRODUCTION/Containers/rocm_torch_env.sif",
+            "cuda_container": "/lustre/alice/users/csonnab/TPC/TPC_PRODUCTION/Containers/cuda_torch_env.sif",
+            "job-name": "TPCPID_test",
+            "partition": "main",
+            "time": 480,
+            "device": "MI100_GPU",
+            "cpus-per-task": 10,
+            "mem": "40G",
+            "mail-type": "END,FAIL,INVALID_DEPEND",
+            "mail-user": ""
+        }
+    }
+}

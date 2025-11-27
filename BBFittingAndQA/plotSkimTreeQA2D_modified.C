@@ -15,9 +15,8 @@ pdf files in the outputFigures directory.                            */
 
 // This macro was modified to automatically use the provided pathtoskimtree when entering the name (f.e. LHC23zzk)
 
-#include "/lustre/alice/users/jwitte/tpcpid/o2-tpcpid-parametrisation/headerfunction.h"
-#include "/lustre/alice/users/jwitte/tpcpid/o2-tpcpid-parametrisation/BBfitAndQA/BBFitting_Task_pass5/tpcsignal/macros/read_config.C"
-
+#include "./headerfunction.h"
+#include "./read_config.C"
 
 ///Global Parameter for Canvas:
 Int_t  xpos=20, ypos=20;  //Default Canvas starting Position. Shifted with xpos += <val>; (see later in macro)
@@ -45,10 +44,22 @@ void plotSkimTreeQA2D_modified(){
   
   readConfig();
 
-  // Construct the dataset name
-  TString sDataSet = TString::Format("LHC%s%s", Year.c_str(), Period.c_str());
-  TString path2file = TString::Format("%s", Path.c_str());
-  
+    // Construct the dataset name and path from JSON config
+  // std::string cfgYear = CONFIG["dataset"]["year"].get<std::string>();
+  // std::string cfgPeriod = CONFIG["dataset"]["period"].get<std::string>();
+  // std::string cfgPass = CONFIG["dataset"]["pass"].get<std::string>();
+  // std::string cfgDedxSelection = CONFIG["dataset"]["dEdxSelection"].get<std::string>();
+  // std::string cfgHadronicRate = CONFIG["dataset"]["HadronicRate"].get<std::string>();
+  // std::string cfgTag1 = CONFIG["dataset"]["optTag1"].get<std::string>();
+  // std::string cfgTag2 = CONFIG["dataset"]["optTag2"].get<std::string>();
+  std::string cfgSkimPath = CONFIG["dataset"]["input_skimmedtree_path"].get<std::string>();
+  std::string cgfV0treename = CONFIG["general"]["V0treename"];
+  std::string cgfTPCTOFtreename = CONFIG["general"]["tpctoftreename"];
+  std::string dataset_name = CONFIG["output"]["general"]["name"].get<std::string>();
+
+  // TString sDataSet = TString::Format("LHC%s%s_pass%s_%s_%s_%s_HR_%s", cfgYear.c_str(), cfgPeriod.c_str(), cfgPass.c_str(), cfgTag1.c_str(), cfgTag2.c_str(), cfgDedxSelection.c_str(), cfgHadronicRate.c_str());
+  TString sDataSet = TString::Format("%s", dataset_name.c_str());
+  TString path2file = TString::Format("%s", cfgSkimPath.c_str());
   gStyle->SetOptStat(0000);        //Do not draw Statistics.
   gStyle->SetImageScaling(50.);    //This seems to not work :P
   Int_t    Print = 1;              // 0 = do not save pdf. > 0 = Draw pdf figures.
@@ -175,6 +186,8 @@ void plotSkimTreeQA2D_modified(){
   
   TH2F *hNsigTPCvsBGDataV0ElecNeg = new TH2F("hNsigTPCvsBGDataV0ElecNeg","N#sigma vs BG  e^{-}  (Data)",icNbinX,profBins,200,-10,10);
   TH2F *hNsigTPCvsBGDataV0ElecPos = new TH2F("hNsigTPCvsBGDataV0ElecPos","N#sigma vs BG  e^{+}  (Data)",icNbinX,profBins,200,-10,10);
+  TH2F *hNsigTPCvsBGDataV0KaonPos = new TH2F("hNsigTPCvsBGDataV0KaonPos","N#sigma vs BG  K^{+}  (Data)",icNbinX,profBins,200,-10,10);
+  TH2F *hNsigTPCvsBGDataV0KaonNeg = new TH2F("hNsigTPCvsBGDataV0KaonNeg","N#sigma vs BG  K^{-}  (Data)",icNbinX,profBins,200,-10,10);
   //left here for home... 31/10/23
   
   /// NsigmaTOF vs \beta\gamma 
@@ -187,6 +200,8 @@ void plotSkimTreeQA2D_modified(){
   
   TH2F *hNsigTOFvsBGDataV0ElecPos = new TH2F("hNsigTOFvsBGDataV0ElecPos","N#sigma vs BG  e^{#pm}  (Data)",icNbinX,profBins,200,-10,10);
   TH2F *hNsigTOFvsBGDataV0ElecNeg = new TH2F("hNsigTOFvsBGDataV0ElecNeg","N#sigma vs BG  e^{#pm}  (Data)",icNbinX,profBins,200,-10,10);
+  TH2F *hNsigTOFvsBGDataV0KaonPos = new TH2F("hNsigTOFvsBGDataV0KaonPos","N#sigma vs BG  K^{#pm}  (Data)",icNbinX,profBins,200,-10,10);
+  TH2F *hNsigTOFvsBGDataV0KaonNeg = new TH2F("hNsigTOFvsBGDataV0KaonNeg","N#sigma vs BG  K^{#pm}  (Data)",icNbinX,profBins,200,-10,10);
   
   ////dEdx vs Eta:
   TH2F *hdEdxvsEtaPionPosTPC = new TH2F("hdEdxvsEtaPionPosTPC","hdEdxvsEta, 1<#beta#gamma<2 #pi^{+} (TPC)",100,-1,1,200,10,210);
@@ -203,12 +218,15 @@ void plotSkimTreeQA2D_modified(){
   TH2F *hdEdxvsEtaElecNegV0 = new TH2F("hdEdxvsEtaElecNegV0","hdEdxvsEta, 1<#beta#gamma<2   e^{-} (V0)",100,-1,1,200,10,210);
   TH2F *hdEdxvsEtaProtPosV0 = new TH2F("hdEdxvsEtaProtPosV0","hdEdxvsEta, 1<#beta#gamma<2   prot  (V0)",100,-1,1,200,10,210);
   TH2F *hdEdxvsEtaProtNegV0 = new TH2F("hdEdxvsEtaProtNegV0","hdEdxvsEta, 1<#beta#gamma<2 #bar{p} (V0)",100,-1,1,200,10,210);
+  TH2F *hdEdxvsEtaKaonPosV0 = new TH2F("hdEdxvsEtaKaonPosV0","hdEdxvsEta, 1<#beta#gamma<2  K^{+} (V0)",100,-1,1,200,10,210);
+  TH2F *hdEdxvsEtaKaonNegV0 = new TH2F("hdEdxvsEtaKaonNegV0","hdEdxvsEta, 1<#beta#gamma<2  K^{-} (V0)",100,-1,1,200,10,210);
 
 
   TH2F *hNsigmaTPCvsPinProtTPC = new TH2F("hNsigmaTPCvsPinProtTPC","tpc-tof prot;P_{in} (GeV/c);N#sigma_{TPC}",nBinsPin,profBinsPin,200,-10,10);
   TH2F *hNsigmaTPCvsPinPionTPC = new TH2F("hNsigmaTPCvsPinPionTPC","tpc-tof #pi^{+};P_{in}(GeV/c);N#sigma_{TPC}",nBinsPin,profBinsPin,200,-10,10);   
   TH2F *hNsigmaTPCvsPinProtV0 = new TH2F("hNsigmaTPCvsPinProtV0","V0 Prot;P_{in} (GeV/c);N#sigma_{TPC}",nBinsPin,profBinsPin,200,-10,10);
   TH2F *hNsigmaTPCvsPinPionV0 = new TH2F("hNsigmaTPCvsPinPionV0","V0 Pion;P_{in} (GeV/c);N#sigma_{TPC}",nBinsPin,profBinsPin,200,-10,10);
+  TH2F *hNsigmaTPCvsPinKaonV0 = new TH2F("hNsigmaTPCvsPinKaonV0","V0 Kaon;P_{in} (GeV/c);N#sigma_{TPC}",nBinsPin,profBinsPin,200,-10,10);
   TH2F *hNsigmaTOFvsPinProtV0 = new TH2F("hNsigmaTOFvsPinProtV0","V0 Prot;P_{in} (GeV/c);N#sigma_{TOF}",nBinsPin,profBinsPin,200,-10,10);
 
   //return;
@@ -237,7 +255,7 @@ void plotSkimTreeQA2D_modified(){
     
     TDirectory *dir = (TDirectory*)f1->Get(Form("%s:/%s",f1->GetName(),dirName.Data()));
     
-    dir->GetObject("O2tpctofskimwde",treeTPC);
+    dir->GetObject(cgfTPCTOFtreename.c_str(), treeTPC);
 
     if (treeTPC){
       fChain = treeTPC;
@@ -335,7 +353,7 @@ void plotSkimTreeQA2D_modified(){
 
 
     
-    dir->GetObject("O2tpcskimv0wde",treeV0);
+    dir->GetObject(cgfV0treename.c_str(),treeV0);
     if(treeV0){
       //cout<<" Found the V0 Tree "<<endl;
       fChain = treeV0;
@@ -373,6 +391,12 @@ void plotSkimTreeQA2D_modified(){
 	    else
 	      hdEdxvsEtaElecNegV0->Fill(fEta,fTPCSignal);
 	  }
+    if(fBetaGamma>1 && fBetaGamma<2){
+      if(fabs(ipid)==3){
+        if(ch>0) hdEdxvsEtaKaonPosV0->Fill(fEta,fTPCSignal);
+        else hdEdxvsEtaKaonNegV0->Fill(fEta,fTPCSignal);
+      }
+    }
 	}	
 	if(ch>0){
 	  if(fabs(ipid)==0 && fabs(fNSigTPC)<4.0){
@@ -383,6 +407,11 @@ void plotSkimTreeQA2D_modified(){
 	    //hdEdxvsMomDataV0Pion->Fill(fBetaGamma,fTPCSignal);
 	    hNsigmaTPCvsPinPionV0->Fill(fTPCInnerMom,fNSigTPC);
 	  }
+    else if(fabs(ipid)==3 && fabs(fNSigTPC)<4.0){
+      hNsigTPCvsBGDataV0KaonPos->Fill(fBetaGamma,fNSigTPC);
+      hNsigTOFvsBGDataV0KaonPos->Fill(fBetaGamma,fNSigTOF);
+      hNsigmaTPCvsPinKaonV0->Fill(fTPCInnerMom,fNSigTPC);
+    }
 	  else if(fabs(ipid)==4){
 	    //hdEdxvsMomDataV0Prot->Fill(fBetaGamma,fTPCSignal);
 	    hNsigmaTPCvsPinProtV0->Fill(fTPCInnerMom,fNSigTPC);
@@ -398,6 +427,10 @@ void plotSkimTreeQA2D_modified(){
 	  else if(fabs(ipid)==2 && fabs(fNSigTPC)<4.0){
 	    //hdEdxvsMomDataV0PionNeg->Fill(fBetaGamma,fTPCSignal);
 	  }
+    else if(fabs(ipid)==3 && fabs(fNSigTPC)<4.0){
+      hNsigTPCvsBGDataV0KaonNeg->Fill(fBetaGamma,fNSigTPC);
+      hNsigTOFvsBGDataV0KaonNeg->Fill(fBetaGamma,fNSigTOF);
+    }
 	  else if(fabs(ipid)==4){
 	    //hdEdxvsMomDataV0ProtNeg->Fill(fBetaGamma,fTPCSignal);
 	    
@@ -430,6 +463,8 @@ void plotSkimTreeQA2D_modified(){
   hdEdxvsEtaProtNegTPC->RebinX(2);
   hdEdxvsEtaElecPosV0->RebinX(2);
   hdEdxvsEtaElecNegV0->RebinX(2);
+  hdEdxvsEtaKaonPosV0->RebinX(2);
+  hdEdxvsEtaKaonNegV0->RebinX(2);
     
   plotdEdxvsEta(hdEdxvsEtaPionPosTPC, hdEdxvsEtaPionNegTPC,"Pion_TPC", 0.140, sDataSet, 38, 124, Print);
   xpos+=100;
@@ -438,6 +473,8 @@ void plotSkimTreeQA2D_modified(){
   plotdEdxvsEta(hdEdxvsEtaProtPosTPC, hdEdxvsEtaProtNegTPC,"Prot_TPC", 0.140, sDataSet, 38, 124, Print);
   xpos+=100;
   plotdEdxvsEta(hdEdxvsEtaElecPosV0, hdEdxvsEtaElecNegV0, "Elec_V0", 0.140, sDataSet, 38, 124, Print);
+  xpos+=100;
+  plotdEdxvsEta(hdEdxvsEtaKaonPosV0, hdEdxvsEtaKaonNegV0, "Kaon_V0", 0.140, sDataSet, 38, 124, Print);
 
   
   //return;
@@ -450,12 +487,16 @@ void plotSkimTreeQA2D_modified(){
   plotNsigmaVsBG(hNsigTPCvsBGDataProtPos, hNsigTPCvsBGDataProtNeg, hNsigTOFvsBGDataProtPos, hNsigTOFvsBGDataProtNeg, "Prot_TPCToF", 0.938, sDataSet, -3.6, 4.2, Print);
   xpos+=100;
   plotNsigmaVsBG(hNsigTPCvsBGDataV0ElecPos, hNsigTPCvsBGDataV0ElecNeg, hNsigTOFvsBGDataV0ElecPos, hNsigTOFvsBGDataV0ElecNeg,"Elec_V0",0.511E-3,sDataSet,-3.6,4.2, Print);
+  xpos+=100;
+  plotNsigmaVsBG(hNsigTPCvsBGDataV0KaonPos, hNsigTPCvsBGDataV0KaonNeg, hNsigTOFvsBGDataV0KaonPos, hNsigTOFvsBGDataV0KaonNeg,"Kaon_V0",0.495,sDataSet,-3.6,4.2, Print);
 
 
   //plotNsigmavsPin
   ypos+=100;
   xpos =50;
   plotNsigmaVsPin(hNsigmaTPCvsPinProtV0, hNsigmaTPCvsPinProtTPC, hNsigmaTPCvsPinPionV0, hNsigmaTPCvsPinPionTPC, "Pion_Prot", 0.140, sDataSet, -3.6, 3.4, Print);
+  xpos+=100;
+  plotNsigmaVsPin(hNsigmaTPCvsPinKaonV0, hNsigmaTPCvsPinPionTPC, hNsigmaTPCvsPinKaonV0, hNsigmaTPCvsPinKaonV0, "Kaon_V0", 0.495, sDataSet, -3.6, 3.4, Print);
 
 
 
@@ -606,7 +647,12 @@ void plotdEdxvsEta(TH2 *hNSigTPCpos=0x0, TH2 *hNSigTPCneg=0x0, TString name="", 
   Canvas->Update() ;
 
   if(Print)
-    Canvas->SaveAs(Form("./figurePlots/dEdxvsEta_%s%s.pdf",name.Data(),passName.Data()));
+    {
+      std::string qaPath = CONFIG["output"]["skimTreeQA"]["QApath"].get<std::string>();
+      TString qaPathT = TString::Format("%s", qaPath.c_str());
+      if (!qaPathT.EndsWith("/")) qaPathT += "/";
+      Canvas->SaveAs(Form("%sdEdxvsEta_%s%s.pdf", qaPathT.Data(), name.Data(), passName.Data()));
+    }
   
 }
 
@@ -815,7 +861,12 @@ void plotNsigmaVsPin(TH2 *hNSigTPCPos=0x0, TH2 *hNSigTPCNeg=0x0, TH2 *hNSigTOFPo
   
   Canvas->Update();
   if(Print)
-    Canvas->SaveAs(Form("./figurePlots/NsigmavsMomentumPin%s%s.pdf",name.Data(),passName.Data()));
+    {
+      std::string qaPath = CONFIG["output"]["skimTreeQA"]["QApath"].get<std::string>();
+      TString qaPathT = TString::Format("%s", qaPath.c_str());
+      if (!qaPathT.EndsWith("/")) qaPathT += "/";
+      Canvas->SaveAs(Form("%sNsigmavsMomentumPin_%s%s.pdf", qaPathT.Data(), name.Data(), passName.Data()));
+    }
 }
 
 ///-------- The above function is for nSigma vs Pin......
@@ -1148,7 +1199,12 @@ void plotNsigmaVsBG(TH2 *hNSigTPCPos=0x0, TH2 *hNSigTPCNeg=0x0, TH2 *hNSigTOFPos
   Canvas->Update() ;
 
   if(Print)
-    Canvas->SaveAs(Form("./figurePlots/NsigmavsBetaGamma%s%s.pdf",name.Data(),passName.Data()));
+    {
+      std::string qaPath = CONFIG["output"]["skimTreeQA"]["QApath"].get<std::string>();
+      TString qaPathT = TString::Format("%s", qaPath.c_str());
+      if (!qaPathT.EndsWith("/")) qaPathT += "/";
+      Canvas->SaveAs(Form("%sNsigmavsBetaGamma_%s%s.pdf", qaPathT.Data(), name.Data(), passName.Data()));
+    }
 }
 
 

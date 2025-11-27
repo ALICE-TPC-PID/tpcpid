@@ -14,6 +14,11 @@ import json
 import onnxruntime as ort
 import torch
 import glob
+from config_tools import (
+    add_name_and_path,
+    read_config,
+    write_config,
+)
 
 from sklearn.model_selection import train_test_split
 
@@ -26,25 +31,19 @@ parser.add_argument("-jid", "--job-id", default=-1, help="ID of the submitted sl
 parser.add_argument("-locdir", "--local-training-dir", default=".", help="Local directory for training of the neural network")
 args = parser.parse_args()
 
-### External json settings
-configs_file = open("config.json", "r")
-CONF = json.load(configs_file)
+CONFIG = read_config()
 
 ### directory settings
-training_dir        = CONF["directories"]["training_dir"]
-output_folder       = CONF["directories"]["output_folder"]
-data_file           = CONF["directories"]["data_file"]
+output_folder   = CONFIG["output"]["general"]["training"]
+data_file       = CONFIG["output"]["createTrainingDataset"]["training_data"]
 
 ### network settings
-train_mode          = CONF["network"]["execution_mode"]
-num_networks        = CONF["network"]["num_networks"]
-save_as_pt          = CONF["network"]["save_as_pt"]
-save_as_onnx        = CONF["network"]["save_as_onnx"]
-save_loss_in_files  = CONF["network"]["save_loss_in_files"]
-
-configs_file.close()
-
-training_file = glob.glob(args.local_training_dir+"/*.*")[0]
+train_mode      = CONFIG["trainNeuralNetOptions"]["execution_mode"]
+num_networks    = CONFIG["trainNeuralNetOptions"]["num_networks"]
+training_file   = CONFIG["trainNeuralNetOptions"]["training_file"]
+save_as_pt          = CONFIG["trainNeuralNetOptions"]["save_as_pt"]
+save_as_onnx        = CONFIG["trainNeuralNetOptions"]["save_as_onnx"]
+save_loss_in_files  = CONFIG["trainNeuralNetOptions"]["save_loss_in_files"]
 
 ########### Print the date, time and location for identification ###########
 
@@ -54,14 +53,16 @@ print("Info:\n")
 print("SLURM job ID:", args.job_id)
 print("Date (dd/mm/yyyy):",date.strftime('%02d/%02m/%04Y'))
 print("Time (hh/mm/ss):", time.strftime('%02H:%02M:%02S'))
-print("Output-folder:", training_dir+"/"+output_folder+"/"+args.local_training_dir)
+print("Output-folder:", output_folder+"/"+args.local_training_dir)
 
 hardware = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 ########### Import the Neural Network class ###########
 
-NN_dir = training_dir + "/../Neural-Network-Class/NeuralNetworkClasses"
-sys.path.append(NN_dir)
+neuralNetClass_dir = os.path.join(CONFIG['output']['general']['base_folder'],"Neural-Network-Class","NeuralNetworkClasses")
+sys.path.append(neuralNetClass_dir)
+# print(f"files in folder neuralNetClass_dir = {os.listdir(neuralNetClass_dir)}")
+print("[CRITICAL]: Please make sure this neuralNetClass path actually works")
 
 from extract_from_root import load_tree
 from dataset_loading import DataLoading
@@ -71,11 +72,11 @@ import configurations
 
 ########### Import the data ###########
 
-if training_file.split(".")[-1] == "root":
+if data_file.split(".")[-1] == "root":
     cload = load_tree()
-    labels, fit_data = cload.load(use_vars=configurations.LABELS_X+configurations.LABELS_Y, path=training_file)
-elif training_file.split(".")[-1] == "txt":
-    labels, fit_data = np.loadtxt(training_file, dtype='S')
+    labels, fit_data = cload.load(use_vars=configurations.LABELS_X+configurations.LABELS_Y, path=data_file)
+elif data_file.split(".")[-1] == "txt":
+    labels, fit_data = np.loadtxt(data_file, dtype='S')
 else:
     print("Error: Allowed file type is one of ['ROOT','TXT'].")
 
@@ -114,20 +115,6 @@ elif args.train_mode=="FULL":
     
     dict_config = configurations.DICT_FULL
 
-    #ort_sess_mean = ort.InferenceSession(training_dir+"/"+output_folder+"/networks/network_mean/net_onnx_mean.onnx", providers=['MIGraphXExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider'])
-    #ort_sess_sig_pos = ort.InferenceSession(training_dir+"/"+output_folder+"/networks/network_sigma_pos/net_onnx_sigma_pos.onnx", providers=['MIGraphXExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider'])
-    #ort_sess_sig_neg = ort.InferenceSession(training_dir+"/"+output_folder+"/networks/network_sigma_neg/net_onnx_sigma_neg.onnx", providers=['MIGraphXExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider'])
-
-    ### Creating mean, sigma_pos and sigma_neg for each datapoint in V0 sample: Populating phase-space
-    ### This could be replaced by a regular grid-sampling for better population and faster training...
-    #mean = run_network(X, ort_sess_mean).T[0]
-    #sig_pos = run_network(X, ort_sess_sig_pos).T[0]
-    #sig_neg = run_network(X, ort_sess_sig_neg).T[0]
-
-    # mean = np.loadtxt('/lustre/alice/users/csonnab/TPC/NeuralNetworks/TrainingNetworks/TEMP/mean.txt').astype(float).reshape(-1,1)#[:limit]
-    # sig_pos = np.loadtxt('/lustre/alice/users/csonnab/TPC/NeuralNetworks/TrainingNetworks/TEMP/sig_pos.txt').astype(float).reshape(-1,1)#[:limit]
-    # sig_neg = np.loadtxt('/lustre/alice/users/csonnab/TPC/NeuralNetworks/TrainingNetworks/TEMP/sig_neg.txt').astype(float).reshape(-1,1)#[:limit]
-
     net_mean = torch.load(args.local_training_dir+"/networks/network_mean/net_torch_mean.pt", map_location=torch.device('cpu'))
     net_sigma = torch.load(args.local_training_dir+"/networks/network_sigma/net_torch_sigma.pt", map_location=torch.device('cpu'))
     
@@ -135,10 +122,6 @@ elif args.train_mode=="FULL":
     sigma = torch.flatten(net_sigma(torch.tensor(X).float())).detach().numpy()
     
     y = np.vstack((mean, mean+sigma)).T
-
-    ### net_mean = torch.load(args.local_training_dir+"/networks/network_mean/net_torch_mean.pt", map_location=torch.device(hardware))
-    ### mean_data = torch.tensor(X).float().to(hardware)
-    ### y = torch.tensor( np.vstack(( y, np.abs(y - (net_mean(mean_data).float().cpu().detach().numpy()).flatten()*np.sqrt(np.pi/2.)) )).T ).float().to(hardware)
 
 else:
 

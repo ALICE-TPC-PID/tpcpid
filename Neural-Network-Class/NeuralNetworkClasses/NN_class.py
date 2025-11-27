@@ -174,7 +174,7 @@ class NN():
     def training(self, data, epochs=1, epochs_ls=[0],
                  optimizer=optim.Adam, scheduler=optim.lr_scheduler.ReduceLROnPlateau,
                  learning_rate=0.01, weight_decay=0, loss_function=nn.MSELoss(), weights=False,
-                 verbose=True, nsamples=np.infty, set_num_threads = 0, patience=5, factor=0.5):
+                 verbose=True, nsamples=np.inf, set_num_threads = 0, patience=5, factor=0.5):
 
         print("\n============ Neural Network training ============\n")
 

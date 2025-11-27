@@ -1,24 +1,30 @@
 import os
 import sys
 from datetime import datetime
-
+import json
 import numpy as np
 import scipy as sc
 from scipy import stats
 import matplotlib.pyplot as plt
-
-from tqdm import tqdm
-
 import matplotlib as mpl
 from matplotlib import cm
+import tqdm
 import matplotlib.colors as mcolors
 import pandas as pd
-sys.path.append("../Neural-Network-Class/NeuralNetworkClasses")
-from extract_from_root import *
-
 import argparse
-
 import mplhep as hep
+import pathlib
+import sys
+
+from config_tools import (
+    add_name_and_path,
+    read_config,
+    write_config,
+)
+
+
+
+
 plt.style.use(hep.style.ALICE)
 for key in mpl.rcParams.keys():
     if key.startswith('legend.'):
@@ -42,26 +48,41 @@ parser.add_argument("-sg","--sigmathreshold", type= int, default=3, help= "Defin
 parser.add_argument("-sa","--sampleamount", type= int, default=6e7, help= "Define the max amount of events before downsampling")
 args = parser.parse_args()
 
-if args.full_input_path == ";;" and (args.period == ";;" or args.apass == ";;"):
-    print("Please provide either a full path or period and apass.")
-    sys.exit()
+# if args.full_input_path == ";;" and (args.period == ";;" or args.apass == ";;"):
+#     print("Please provide either a full path or period and apass.")
+#     sys.exit()
 
-if args.full_input_path == ";;":
-    period = args.period
-    apass = args.apass
-    dir_tree = "/lustre/alice/users/msalvan/o2-tpcpid-parametrisation/BBfitAndQA/{0}_{1}/outputFits/SkimmedTree_UpdatednSigmaAndExpdEdx_Single_{0}_{1}.root".format(period, apass)
-else:
-    period = "default"
-    apass = "default"
-    dir_tree = args.full_input_path
+# if args.full_input_path == ";;":
+#     period = args.period
+#     apass = args.apass
+#     dir_tree = "/lustre/alice/users/msalvan/o2-tpcpid-parametrisation/BBfitAndQA/{0}_{1}/outputFits/SkimmedTree_UpdatednSigmaAndExpdEdx_Single_{0}_{1}.root".format(period, apass)
+# else:
+#     period = "default"
+#     apass = "default"
+#     dir_tree = args.full_input_path
+#################################
+
+CONFIG = read_config()
+
+neuralNetClass_dir = os.path.join(CONFIG['output']['general']['base_folder'],"Neural-Network-Class","NeuralNetworkClasses")
+sys.path.append(neuralNetClass_dir)
+# print(f"files in folder neuralNetClass_dir = {os.listdir(neuralNetClass_dir)}")
+print("[CRITICAL]: Please make sure this neuralNetClass path actually works")
+from extract_from_root import *
+
+
+period = CONFIG['dataset']['period']
+apass = CONFIG['dataset']['pass']
 
 date = datetime.today().strftime('%d%m%Y')
-output_path = os.path.join(args.output_path, "{2}/{0}_{2}_{1}/{0}_{2}/merged_tree.root".format(period, date, apass))
-plot_path = os.path.join(args.output_path, "{2}/{0}_{2}_{1}/{0}_{2}/plots".format(period, date, apass))
-if not os.path.exists(plot_path):
-    os.makedirs(plot_path)
+output_path = os.path.join(CONFIG['output']['general']['path'],"trees","merged_tree_for_training.root")
+CONFIG["output"]["createTrainingDataset"]["training_data"] = output_path
+write_config(CONFIG)
 
-print("Period:", args.period, "; apass:", args.apass, "; input is:", dir_tree)
+plot_path = os.path.join(CONFIG['output']['general']['path'], "QA", "createTrainingDataset")
+
+dir_tree = CONFIG['output']['shiftNsigma']['Skimmedtree_shiftedNsigma_path']
+print("Period:", period, "; apass:", apass, "; input is:", dir_tree)
 
 
 ### Functions
@@ -236,16 +257,15 @@ def plot_cuts(**kwargs):
 
 ## Loading data and models
 
-particles = ['Electrons', 'Pions', 'Kaons', 'Protons', 'Deuterons', 'Tritons']
-masses = [0.000510998950, 0.13957039, 0.493677, 0.93827208816]
-
+particles = CONFIG['particle_info']['particles']
+masses = CONFIG['particle_info']['masses']
+LABELS_X = CONFIG['createTrainingDatasetOptions']['labels_x']
+LABELS_Y = CONFIG['createTrainingDatasetOptions']['labels_y']
 cload = load_tree()
 TTree = cload.print_trees(dir_tree)
-LABELS_X = ['fTPCInnerParam', 'fTgl', 'fSigned1Pt', 'fMass', 'fNormMultTPC', 'fNormNClustersTPC','fFt0Occ']
-LABELS_Y = ['fTPCSignal', 'fInvDeDxExpTPC']
 mode = args.loading_mode
 import_labels = [*LABELS_Y, *LABELS_X, 'fPidIndex','fRunNumber']
-
+print(f"[DEBUG]: Import labels are {import_labels}")
 if mode=="full":
     labels, fit_data = cload.load(use_vars=import_labels, limit = 100, path=dir_tree, load_latest=True, verbose=True)
 else:
@@ -265,7 +285,7 @@ else:
     plt.text(0.7,0.07, horizontalalignment='center', verticalalignment='center', fontsize=35, s=r"$\Lambda$", c="white")
     plt.colorbar(aspect=30, pad=0.01)
     plot_cuts(**cut_dict)
-    plt.savefig(os.path.join(args.output_path, "ArmenterosPodolanski_LHC24ar.pdf"), bbox_inches='tight')
+    plt.savefig(os.path.join(plot_path, "ArmenterosPodolanski_LHC24ar.pdf"), bbox_inches='tight')
 
     del alphaQt_d, alphaQt_l
 
@@ -279,10 +299,12 @@ else:
 # Normalize fFT0Occ by a factor of 60000
 ft0occ_index = np.where(labels == 'fFt0Occ')[0][0]  # Locate the index of fFT0Occ in labels
 fit_data[:, ft0occ_index] /= 60000
+samplesize = int(CONFIG['createTrainingDatasetOptions']['samplesize'])
+print(f"samplesize is {samplesize}")
 
-if len(fit_data) >= args.sampleamount:
-    ### Downsampling at 100 mio. points...
-    keep = args.sampleamount/len(fit_data) # Keep that many percent of the original data: Here keeping 60 mio., aribtrary but reasonable
+if len(fit_data) >= samplesize:
+    ### Downsampling to defined sample size
+    keep = samplesize/len(fit_data) # Keep that many percent of the original data: Here keeping 60 mio., aribtrary but reasonable
     mask_downsample = np.random.uniform(low=0.0, high=1.0, size=len(fit_data)) < keep
     fit_data = fit_data[mask_downsample]
 
@@ -361,7 +383,7 @@ else:
 ### Index reordering
 
 reorder_index = []
-for lab in [*LABELS_Y, *LABELS_X, 'fPidIndex','fRunNumber']:
+for lab in import_labels:
     reorder_index.append(np.where(labels==lab)[0][0])
 reorder_index = np.array(reorder_index)
 fit_data = fit_data[:,reorder_index]
@@ -385,7 +407,7 @@ def gauslin(x, mu1, sigma1, scale1, a, b):
 ### Kinematic selections
 new_data = fit_data
 # Initial 3 sigma selection
-sigma_threshold = args.sigmathreshold
+sigma_threshold = int(CONFIG['createTrainingDatasetOptions']['sigmarange'])
 full_mask = np.zeros(len(new_data))
 
 for i, m in enumerate(np.sort(np.unique(new_data.T[labels=='fMass']))):
@@ -394,7 +416,6 @@ for i, m in enumerate(np.sort(np.unique(new_data.T[labels=='fMass']))):
     full_mask[mask] = np.abs(ratio_data)<sigma_threshold
 
 new_data = new_data[full_mask.astype(bool)]
-particles = ['Electrons', 'Pions', 'Kaons', 'Protons', 'Deuterons', 'Tritons']
 
 def gauss(x, *p):
     A, mu, sigma = p
@@ -516,7 +537,7 @@ percentages = []
 for i, m in enumerate(np.sort(np.unique(new_data.T[labels=='fMass']))):
     percentages.append(np.sum(new_data.T[labels=='fMass'].flatten() == m)*100/np.shape(new_data)[0])
 
-desired_size = eval(args.output_size)
+desired_size = int(CONFIG['createTrainingDatasetOptions']['samplesize'])
 num_particles = np.shape(np.unique(fit_data.T[labels=='fMass']))[0]
 
 if len(np.unique(new_data.T[labels=='fMass']))==5:
