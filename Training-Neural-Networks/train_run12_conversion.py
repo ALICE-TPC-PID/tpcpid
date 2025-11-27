@@ -37,9 +37,9 @@ output_folder   = CONFIG["output"]["general"]["training"]
 data_file       = CONFIG["output"]["createTrainingDataset"]["training_data"]
 
 ### network settings
+training_file   = CONFIG["trainNeuralNetOptions"]["training_file"]
 train_mode      = CONFIG["trainNeuralNetOptions"]["execution_mode"]
 num_networks    = CONFIG["trainNeuralNetOptions"]["num_networks"]
-training_file   = CONFIG["trainNeuralNetOptions"]["training_file"]
 save_as_pt          = CONFIG["trainNeuralNetOptions"]["save_as_pt"]
 save_as_onnx        = CONFIG["trainNeuralNetOptions"]["save_as_onnx"]
 save_loss_in_files  = CONFIG["trainNeuralNetOptions"]["save_loss_in_files"]
@@ -59,8 +59,9 @@ hardware = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 ########### Import the Neural Network class ###########
 
-neuralNetClass_dir = os.path.join(CONFIG['output']['general']['base_folder'],"..","Neural-Network-Class","NeuralNetworkClasses")
+neuralNetClass_dir = os.path.join(CONFIG['output']['general']['base_folder'],"Neural-Network-Class","NeuralNetworkClasses")
 sys.path.append(neuralNetClass_dir)
+# print(f"files in folder neuralNetClass_dir = {os.listdir(neuralNetClass_dir)}")
 print("[CRITICAL]: Please make sure this neuralNetClass path actually works")
 
 from extract_from_root import load_tree
@@ -71,11 +72,11 @@ import configurations
 
 ########### Import the data ###########
 
-if training_file.split(".")[-1] == "root":
+if data_file.split(".")[-1] == "root":
     cload = load_tree()
-    labels, fit_data = cload.load(use_vars=configurations.LABELS_X+configurations.LABELS_Y, path=training_file)
-elif training_file.split(".")[-1] == "txt":
-    labels, fit_data = np.loadtxt(training_file, dtype='S')
+    labels, fit_data = cload.load(use_vars=configurations.LABELS_X+configurations.LABELS_Y, path=data_file)
+elif data_file.split(".")[-1] == "txt":
+    labels, fit_data = np.loadtxt(data_file, dtype='S')
 else:
     print("Error: Allowed file type is one of ['ROOT','TXT'].")
 

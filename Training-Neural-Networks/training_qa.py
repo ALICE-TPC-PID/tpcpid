@@ -30,10 +30,12 @@ args = parser.parse_args()
 
 CONFIG = read_config()
 
-neuralNetClass_dir = os.path.join(CONFIG['output']['general']['base_folder'],"..","Neural-Network-Class","NeuralNetworkClasses")
-sys.path.append(neuralNetClass_dir)
-print("[CRITICAL]: Please make sure this neuralNetClass path actually works")
+########### Import the Neural Network class ###########
 
+neuralNetClass_dir = os.path.join(CONFIG['output']['general']['base_folder'],"Neural-Network-Class","NeuralNetworkClasses")
+sys.path.append(neuralNetClass_dir)
+# print(f"files in folder neuralNetClass_dir = {os.listdir(neuralNetClass_dir)}")
+print("[CRITICAL]: Please make sure this neuralNetClass path actually works")
 sys.path.append(os.getcwd())
 
 import configurations
@@ -65,8 +67,8 @@ dict_particles_masses = dict(zip(particles, masses))
 ### Neural Network
 
 output_folder   = CONFIG["output"]["general"]["training"] #general output dir for training
-data_path       = output_dir + "/training_data.root"
 output_dir      = CONFIG["output"]["trainNeuralNet"]["QApath"] #output directory for QA plots
+data_path       = output_folder + "/training_data.root"
 
 LABELS_X = CONFIG["createTrainingDatasetOptions"]["labels_x"]
 LABELS_Y = CONFIG["createTrainingDatasetOptions"]["labels_y"]
@@ -301,9 +303,9 @@ for i, mass in enumerate(np.sort(np.unique(fit_data[:,labels=='fMass'].flatten()
     QA2D_NSigma_vs_Var(i, mass, plot_against = 'fFt0Occ', log_x = True, range_hists = [[-1.,1.]]*6, xlabel = r'norm. FT0 Occupancy')
     QA2D_NSigma_vs_Var(i, mass, plot_against = 'fFt0Occ', log_x = True, range_hists = [[-1.,1.]]*6, useNN=False, xlabel = r'norm. FT0 Occupancy')
 
-separation_power(useNN=1, useMassAssumption=0)
-separation_power(useNN=0, useMassAssumption=0)
-separation_power(useNN=1, useMassAssumption=2)
-separation_power(useNN=0, useMassAssumption=2)
+# separation_power(useNN=1, useMassAssumption=0)
+# separation_power(useNN=0, useMassAssumption=0)
+# separation_power(useNN=1, useMassAssumption=2)
+# separation_power(useNN=0, useMassAssumption=2)
 
 print("[CRITICAL]: Just the old plots are created. Please implement functionality of October version")
