@@ -300,12 +300,11 @@ ft0occ_index = np.where(labels == 'fFt0Occ')[0][0]  # Locate the index of fFT0Oc
 fit_data[:, ft0occ_index] /= 60000
 
 if CONFIG['dataset']['HadronicRate'].strip().lower() == "true":
-    print(f"[DEBUG]: Using Hadronic Rate option {HadronicRateString} in CreateDataset and normalise HadronicRate branch")
+    print(f"[DEBUG]: Using Hadronic Rate in CreateDataset and normalise HadronicRate branch")
     print("[DEBUG]: Hadronic Rate values will be normalised by 50")
     # Normalize fHadronicRate by a factor of 50
     fHadronicRate_index = np.where(labels == 'fHadronicRate')[0][0]  # Locate the index of fHadronicRate in labels
     fit_data[:, fHadronicRate_index] /= 50
-
 
 samplesize = int(CONFIG['createTrainingDatasetOptions']['samplesize'])
 print(f"samplesize is {samplesize}")
