@@ -62,12 +62,8 @@ def create_folders(config):
     training_dir = os.path.join(outdir, "training")
     os.makedirs(training_dir, exist_ok=True)
     LOG.info(f"Created training output folder {training_dir}")
-    job_dir = os.path.join(outdir, "job_scripts")
-    os.makedirs(job_dir, exist_ok=True)
-    LOG.info(f"Created Job folder with scripts {job_dir}")
     config["output"]["general"]["trees"] = tree_dir
     config["output"]["general"]["training"] = training_dir
-    config["output"]["general"]["job"] = job_dir
     processes = ["skimTreeQA", "fitBBGraph", "createTrainingDataset", "trainNeuralNet"]
     for process in processes:
         if config["process"][process]:
@@ -78,7 +74,7 @@ def create_folders(config):
             config["output"][process]["QApath"] = qa_dir
 
 def copy_config(config):
-    
+
     write_config(config, path=os.path.join(config["output"]["general"]["path"], "configuration.json"))
     LOG.info("Copied scripts and config to job directory")
     return os.path.join(config["output"]["general"]["path"], "configuration.json")

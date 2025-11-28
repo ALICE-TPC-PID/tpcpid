@@ -53,25 +53,23 @@ if scheduler.lower() == "slurm":
             if "ngpus" in job_dict.keys() and int(job_dict['ngpus']) > 8:
                 job_dict['nodes'] = int(job_dict['ngpus']) // 8
                 job_dict['ntasks_per_node'] = 8
-                script += """#SBATCH --nodes=%(nodes)s                              # number of nodes
+                script += """#SBATCH --nodes=%(nodes)s                      # number of nodes
 #SBATCH --gres=gpu:8   		                                                # reservation for GPU
 #SBATCH --ntasks-per-node=%(ntasks_per_node)s                               # number of tasks, for MULTI-GPU training
-#SBATCH --cpus-per-task=4 	                                                # cpus per task
 
-export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 
 time srun /bin/python3.9 python3 %(job_script)s --config $1 --train-mode $2
 """ % job_dict
 
             else:
-                script += """#SBATCH --nodes=%(nodes)s                              # number of nodes
+                script += """#SBATCH --nodes=1                              # number of nodes
 #SBATCH --gres=gpu:%(ngpus)s   		                                        # reservation for GPU
 #SBATCH --ntasks-per-node=%(ngpus)s                                         # number of tasks, for MULTI-GPU training
-#SBATCH --cpus-per-task=4 	                                                # cpus per task
 
-export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 
-time /bin/python3.9 python3 %(job_script)s --config $1 --train-mode $2
+time srun /bin/python3.9 python3 %(job_script)s --config $1 --train-mode $2
 """ % job_dict
 
             bash_file = open(bash_path, "w")
@@ -79,14 +77,14 @@ time /bin/python3.9 python3 %(job_script)s --config $1 --train-mode $2
             bash_file.close()
 
         else: ### Setup for GSI batch farm (default)
-        
+
             if job_dict["device"] == "MI100_GPU":
-                
+
                 bash_path = path.join(full_path_out, "TRAIN.sh")
                 script="""#!/bin/bash
 #SBATCH --job-name=%(job-name)s                                             # Task name
 #SBATCH --chdir=%(chdir)s                                                   # Working directory on shared storage
-#SBATCH --time=%(time)s                                                     # Run time limit 
+#SBATCH --time=%(time)s                                                     # Run time limit
 #SBATCH --mem=%(mem)s                                                       # job memory
 #SBATCH --partition=gpu                                                     # job partition (debug, main)
 #SBATCH --mail-type=%(mail-type)s                                           # notify via email
@@ -96,38 +94,36 @@ time /bin/python3.9 python3 %(job_script)s --config $1 --train-mode $2
                 if "ngpus" in job_dict.keys() and int(job_dict['ngpus']) > 8:
                     job_dict['nodes'] = int(job_dict['ngpus']) // 8
                     job_dict['ntasks_per_node'] = 8
-                    script += """#SBATCH --nodes=%(nodes)s                              # number of nodes
+                    script += """#SBATCH --nodes=%(nodes)s                  # number of nodes
 #SBATCH --gres=gpu:8   		                                                # reservation for GPU
 #SBATCH --ntasks-per-node=%(ntasks_per_node)s                               # number of tasks, for MULTI-GPU training
-#SBATCH --cpus-per-task=4 	                                                # cpus per task
 
-export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 
 time srun singularity exec %(rocm_container)s python3 %(job_script)s --config $1 --train-mode $2
 """ % job_dict
 
                 else:
-                    script += """#SBATCH --nodes=1                              # number of nodes
+                    script += """#SBATCH --nodes=1                          # number of nodes
 #SBATCH --gres=gpu:%(ngpus)s   		                                        # reservation for GPU
 #SBATCH --ntasks-per-node=%(ngpus)s                                         # number of tasks, for MULTI-GPU training
-#SBATCH --cpus-per-task=4 	                                                # cpus per task
 
-export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 
-time singularity exec %(rocm_container)s python3 %(job_script)s --config $1 --train-mode $2
+time srun singularity exec %(rocm_container)s python3 %(job_script)s --config $1 --train-mode $2
 """ % job_dict
 
                 bash_file = open(bash_path, "w")
                 bash_file.write(script)
                 bash_file.close()
-        
+
             elif job_dict["device"] == "MI50_GPU":
-                
+
                 bash_path = path.join(full_path_out, "TRAIN.sh")
                 script="""#!/bin/bash
 #SBATCH --job-name=%(job-name)s                                             # Task name
 #SBATCH --chdir=%(chdir)s                                                   # Working directory on shared storage
-#SBATCH --time=%(time)s                                                     # Run time limit 
+#SBATCH --time=%(time)s                                                     # Run time limit
 #SBATCH --mem=%(mem)s                                                       # job memory
 #SBATCH --partition=gpu                                                     # job partition (debug, main)
 #SBATCH --mail-type=%(mail-type)s                                           # notify via email
@@ -137,25 +133,23 @@ time singularity exec %(rocm_container)s python3 %(job_script)s --config $1 --tr
                 if "ngpus" in job_dict.keys() and int(job_dict['ngpus']) > 8:
                     job_dict['nodes'] = int(job_dict['ngpus']) // 8
                     job_dict['ntasks_per_node'] = 8
-                    script += """#SBATCH --nodes=%(nodes)s                              # number of nodes
+                    script += """#SBATCH --nodes=1                          # number of nodes
 #SBATCH --gres=gpu:8   		                                                # reservation for GPU
 #SBATCH --ntasks-per-node=%(ntasks_per_node)s                               # number of tasks, for MULTI-GPU training
-#SBATCH --cpus-per-task=4 	                                                # cpus per task
 
-export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 
 time srun singularity exec %(rocm_container)s python3 %(job_script)s --config $1 --train-mode $2
 """ % job_dict
 
                 else:
-                    script += """#SBATCH --nodes=1                              # number of nodes
+                    script += """#SBATCH --nodes=1                          # number of nodes
 #SBATCH --gres=gpu:%(ngpus)s   		                                        # reservation for GPU
 #SBATCH --ntasks-per-node=%(ngpus)s                                         # number of tasks, for MULTI-GPU training
-#SBATCH --cpus-per-task=4 	                                                # cpus per task
 
-export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 
-time singularity exec %(rocm_container)s python3 %(job_script)s --config $1 --train-mode $2
+time srun singularity exec %(rocm_container)s python3 %(job_script)s --config $1 --train-mode $2
 """ % job_dict
 
                 bash_file = open(bash_path, "w")
@@ -163,13 +157,13 @@ time singularity exec %(rocm_container)s python3 %(job_script)s --config $1 --tr
                 bash_file.close()
 
             elif job_dict["device"] == "CPU":
-                
+
                 bash_file = open(path.join(full_path_out, "TRAIN.sh".format(train_mode)), "w")
                 bash_file.write(
 """#!/bin/bash
 #SBATCH --job-name=%(job-name)s                                             # Task name
 #SBATCH --chdir=%(chdir)s                                                   # Working directory on shared storage
-#SBATCH --time=%(time)s                                                     # Run time limit 
+#SBATCH --time=%(time)s                                                     # Run time limit
 #SBATCH --mem=%(mem)s                                                       # job memory
 #SBATCH --cpus-per-task=%(cpus-per-task)s                                   # cpus per task
 #SBATCH --partition=%(partition)s                                           # job partition (debug, main)
@@ -185,19 +179,19 @@ time singularity exec %(cuda_container)s python3 %(job_script)s --config $1 --tr
                 print("Choose a given device (GPU or CPU)!")
                 print("Stopping.")
                 exit()
-    
+
     else: ### QA job
- 
+
         actual_job_script = job_script
-        
+
         if job_dict["device"] == "EPN": ### Setup to submit to EPN nodes
             bash_file = open(path.join(full_path_out, "QA.sh"), "w")
             bash_file.write(
-   
+
 """#!/bin/bash
 #SBATCH --job-name=%(job-name)s                                                 # Task name
 #SBATCH --chdir=%(chdir)s                                                       # Working directory on shared storage
-#SBATCH --time=10                                                               # Run time limit 
+#SBATCH --time=10                                                               # Run time limit
 #SBATCH --mem=30G                                                               # job memory
 #SBATCH --cpus-per-task=5                                                       # cpus per task
 #SBATCH --partition=prod                                                        # job partition (debug, main)
@@ -215,7 +209,7 @@ time python3.9 %(actual_job_script)s --config $1
 """#!/bin/bash
 #SBATCH --job-name=%(job-name)s                                                 # Task name
 #SBATCH --chdir=%(chdir)s                                                       # Working directory on shared storage
-#SBATCH --time=10                                                               # Run time limit 
+#SBATCH --time=10                                                               # Run time limit
 #SBATCH --mem=30G                                                               # job memory
 #SBATCH --cpus-per-task=5                                                       # cpus per task
 #SBATCH --partition=main                                                        # job partition (debug, main)
@@ -226,7 +220,7 @@ time singularity exec %(cuda_container)s python3 %(actual_job_script)s --config 
 
 """ % {**job_dict, 'actual_job_script': actual_job_script})
             bash_file.close()
-        
+
 elif scheduler.lower() == "htcondor":
 
     bash_file = open(path.join(full_path_out, "TRAIN.sh".format(train_mode)), "w")
@@ -236,8 +230,8 @@ time python3 %(job_script)s --config $1 --train-mode $2
 """ % job_dict)
     bash_file.close()
     os.system("chmod +x {0}".format(path.join(full_path_out, "TRAIN.sh".format(train_mode)))) # For execution on HTCondor
-        
-    
+
+
 else:
     print("Scheduler unknown! Check config.json file.")
     exit()

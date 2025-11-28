@@ -7,8 +7,7 @@
             "fMass",
             "fNormMultTPC",
             "fNormNClustersTPC",
-            "fFt0Occ",
-            "fHadronicRate"
+            "fFt0Occ"
         ],
         "labels_y": [
             "fTPCSignal",
@@ -25,13 +24,9 @@
         "pass": "5",
         "period": "zzh",
         "year": "23",
-        "input_skimmedtree_path": "/lustre/alice/users/marin/R3A/TPCTreeswithNN/PbPbapass5_HR_251006/TPCTrees_HR_LHC23zzh_251006/AO2D_merge_LHC23zzh.root"
-    },
-    "fitBBGraphOptions": {
-        "option1": "Proxy"
+        "input_skimmedtree_path": "/lustre/alice/users/marin/R3A/TPCTreeswithNN/PbPbapass5_HR_251006/TPCTrees_HR_LHC23zzf_251006/AO2D_merge_LHC23zzf.root"
     },
     "general": {
-        "base_output_folder": "../output",
         "V0treename": "O2tpcskimv0wde",
         "tpctoftreename": "O2tpctofskimwde"
     },
@@ -42,39 +37,17 @@
         "skimTreeQA": true,
         "trainNeuralNet": true
     },
-    "shiftNsigmaOptions": {
-        "option1": "Proxy"
-    },
-    "skimTreeQAOptions": {
-        "option1": "Proxy"
-    },
     "trainNeuralNetOptions": {
         "execution_mode": "FULL",
-        "configuration": "/lustre/alice/users/csonnab/TPC/tpcpid-github-official/framework/training_neural_networks/nnconfig.py",
+        "configuration": "/lustre/alice/users/csonnab/TPC/tpcpid-github-official/running/configs/nnconfig.py",
         "training_file": "train_single_sigma.py",
-        "numberOfEpochs": "200",
+        "numberOfEpochs": "2",
         "num_networks": 1,
         "qa_file": "training_qa.py",
         "enable_qa": "True",
-        "isSmallSystem": "False",
-        "scheduler": "slurm",
         "save_as_pt": "True",
         "save_as_onnx": "True",
         "save_loss_in_files": "True",
-        "trainingBranches": [
-            "fHadronicRate",
-            "fFT0Occ",
-            "fNormMultTPC"
-        ],
-        "htcondor": {
-            "universe": "vanilla",
-            "+JobFlavour": "workday",
-            "request_cpus": "10",
-            "request_memory": "10GB",
-            "request_disk": "10GB",
-            "notify_user": "christian.sonnabend@cern.ch",
-            "notification": "Complete,Error"
-        },
         "slurm": {
             "rocm_container": "/lustre/alice/users/csonnab/TPC/TPC_PRODUCTION/Containers/rocm_torch_env.sif",
             "cuda_container": "/lustre/alice/users/csonnab/TPC/TPC_PRODUCTION/Containers/cuda_torch_env.sif",
@@ -83,9 +56,19 @@
             "time": 480,
             "device": "MI100_GPU",
             "cpus-per-task": 10,
-            "mem": "40G",
+            "mem": "80G",
             "mail-type": "END,FAIL,INVALID_DEPEND",
-            "mail-user": ""
+            "mail-user": "",
+            "ngpus": 8
+        },
+        "htcondor": {
+            "universe": "vanilla",
+            "+JobFlavour": "workday",
+            "request_cpus": "10",
+            "request_memory": "10GB",
+            "request_disk": "10GB",
+            "notify_user": "christian.sonnabend@cern.ch",
+            "notification": "Complete,Error"
         }
     }
 }

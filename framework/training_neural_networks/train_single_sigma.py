@@ -53,14 +53,14 @@ EPOCHS          = CONFIG['trainNeuralNetOptions']['numberOfEpochs']
 date = dt.datetime.now().date()
 time = dt.datetime.now().time()
 job_id = os.environ.get('SLURM_JOB_ID', 'local_run')
+verbose = (int(os.environ.get("SLURM_PROCID", "0"))==0)
 
-print("Info:\n")
-print("SLURM job ID:", job_id)
-print("Date (dd/mm/yyyy):",date.strftime('%02d/%02m/%04Y'))
-print("Time (hh/mm/ss):", time.strftime('%02H:%02M:%02S'))
-print("Output-folder:", output_folder)
-
-hardware = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+if verbose:
+    print("Info:\n")
+    print("SLURM job ID:", job_id)
+    print("Date (dd/mm/yyyy):",date.strftime('%02d/%02m/%04Y'))
+    print("Time (hh/mm/ss):", time.strftime('%02H:%02M:%02S'))
+    print("Output-folder:", output_folder)
 
 ########### Import the data ###########
 
@@ -104,7 +104,7 @@ elif args.train_mode=="SIGMA":
     dict_config["NET_DEF"]["n_neurons_input"] = len(LABELS_X)
     dict_config["NET_TRAINING"]["epochs"] = EPOCHS
     dict_config["NET_TRAINING"]["loss_function"] = weighted_mse_loss
-    
+
     net_mean = torch.load(output_folder+"/networks/network_mean/net_torch_mean.pt", map_location=torch.device('cpu'))
     mean = net_mean(torch.tensor(X).float()).detach().numpy().flatten()
 
@@ -112,7 +112,7 @@ elif args.train_mode=="SIGMA":
     y = (diff_mean*np.sqrt(np.pi/2.)).reshape(-1,1)
 
 elif args.train_mode=="FULL":
-    
+
     dict_config = configurations.DICT_FULL
     dict_config["NET_DEF"]["n_neurons_input"] = len(LABELS_X)
     dict_config["NET_TRAINING"]["epochs"] = EPOCHS
@@ -120,10 +120,10 @@ elif args.train_mode=="FULL":
 
     net_mean = torch.load(output_folder+"/networks/network_mean/net_torch_mean.pt", map_location=torch.device('cpu'))
     net_sigma = torch.load(output_folder+"/networks/network_sigma/net_torch_sigma.pt", map_location=torch.device('cpu'))
-    
+
     mean = torch.flatten(net_mean(torch.tensor(X).float())).detach().numpy()
     sigma = torch.flatten(net_sigma(torch.tensor(X).float())).detach().numpy()
-    
+
     y = np.vstack((mean, mean+sigma)).T
 
 else:
@@ -139,9 +139,9 @@ NeuralNet = NN(General_NN(params = H_SIZES, layer_types = LAYER_TYPES, act_func 
 
 ### data preparation
 X_train, X_test, y_train, y_test = train_test_split(X,y,**dict_config["DATA_SPLIT"])
-data = DataLoading([X_train, y_train], [X_test, y_test], **dict_config["DATA_LOADER"])
+data = DataLoading([X_train, y_train], [X_test, y_test], **dict_config["DATA_LOADER"], verbose=(int(os.environ.get("SLURM_PROCID", "0"))==0))
 
-### evaluate training and validation loss over epochs                   
+### evaluate training and validation loss over epochs
 NeuralNet.training(data, **dict_config["NET_TRAINING"])
 
 ### save the network and the losses

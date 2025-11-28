@@ -26,6 +26,7 @@ sys.path.append(os.path.join(CONFIG["output"]["general"]["base_folder"], "framew
 from base.config_tools import *
 
 ### directory settings
+toplevel        = CONFIG["output"]["general"]["path"]
 output_folder   = CONFIG["output"]["general"]["training"]
 data_file       = CONFIG["output"]["shiftNsigma"]["training_data"]
 
@@ -53,20 +54,19 @@ if os.path.exists(output_folder):
 for file in glob.glob(data_file, recursive=True):
     if os.path.isfile(file):
         file_type = file.split(".")[-1]
-        loc_tr_dir = output_folder
-        print(f"[DEBUG]: loc_tr_dir = {loc_tr_dir}")
-        # os.makedirs(loc_tr_dir)
-        os.makedirs(os.path.join(loc_tr_dir, 'networks'))
+        os.makedirs(os.path.join(output_folder, 'networks'))
         if ("RUN12" in execution_mode):
-            os.makedirs(os.path.join(loc_tr_dir, 'networks', 'network_run12'))
+            os.makedirs(os.path.join(output_folder, 'networks', 'network_run12'))
         if ("MEAN" in execution_mode) or ("FULL" in execution_mode):
-            os.makedirs(os.path.join(loc_tr_dir, 'networks', 'network_mean'))
+            os.makedirs(os.path.join(output_folder, 'networks', 'network_mean'))
         if ("SIGMA" in execution_mode) or ("FULL" in execution_mode):
-            os.makedirs(os.path.join(loc_tr_dir, 'networks', 'network_sigma'))
+            os.makedirs(os.path.join(output_folder, 'networks', 'network_sigma'))
         if "FULL" in execution_mode:
-            os.makedirs(os.path.join(loc_tr_dir, 'networks', 'network_full'))
+            os.makedirs(os.path.join(output_folder, 'networks', 'network_full'))
         if "ENSEMBLE" in execution_mode:
             for i in range(num_networks):
-                os.makedirs(os.path.join(loc_tr_dir, 'networks', 'network_' + str(i)))
+                os.makedirs(os.path.join(output_folder, 'networks', 'network_' + str(i)))
 
 os.system('cp {0} {1}'.format(CONFIG["trainNeuralNetOptions"]["configuration"], os.path.join(output_folder, 'configurations.py')))
+CONFIG["trainNeuralNetOptions"]["configuration"] = os.path.join(output_folder, 'configurations.py')
+write_config(CONFIG, path=os.path.join(toplevel, 'configuration.json'))

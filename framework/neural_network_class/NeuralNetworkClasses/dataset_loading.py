@@ -24,7 +24,7 @@ class dataset(Dataset):
 
     def __getitem__(self, idx):
         return self.list[idx]
-    
+
     def mem_size(self):
         return self.element_size_X*self.length + self.element_size_y*self.length
 
@@ -38,9 +38,9 @@ class DataLoading(dataset):
                      ('box-cox', preprocessing.PowerTransformer(method='box-cox', standardize=True))],
                  y_data_scalers=[
                      ('standard scaler', preprocessing.StandardScaler())],
-                 transform_data=True, shuffle_every_epoch=True):
+                 transform_data=True, shuffle_every_epoch=True, copy_to_device=True, verbose=True):
 
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device('cuda' if (torch.cuda.is_available() and copy_to_device) else 'cpu')
         self.num_workers = num_workers
 
         self.transform_data = transform_data
@@ -50,7 +50,8 @@ class DataLoading(dataset):
 
         self.shuffle_every_epoch = shuffle_every_epoch
 
-        print("\n =============== Data preparation =============== \n")
+        if verbose:
+            print("\n=============== Data preparation ===============\n")
 
         start_time_loader = timeit.default_timer()
 
@@ -62,12 +63,13 @@ class DataLoading(dataset):
                 if not transform_data:
                     self.transformers_X = []
                     self.transformers_Y = []
-                    print("No transformation is performed on training data!")
+                    if verbose:
+                        print("No transformation is performed on training data!")
                 else:
                     self.transformers_X = X_data_scalers
                     self.transformers_Y = y_data_scalers
-                    print("Transforming training data...")
-
+                    if verbose:
+                        print("Transforming training data...")
                 self.scalingX = ScalingX(scalers = self.transformers_X)
                 self.scalingY = ScalingY(scalers = self.transformers_Y)
 
@@ -78,33 +80,38 @@ class DataLoading(dataset):
 
                 self.sizeTS = self.datasetTS.mem_size()
                 self.loadTS = True
-                print("Training data transformed.")
-                print("\nContinuing with validation data...\n")
+                if verbose:
+                    print("Training data transformed.")
+                    print("\nContinuing with validation data...\n")
 
             if not self.loadVS:
 
                 if not transform_data:
-                    print("\nNo transformation is performed on validation data!")
+                    if verbose:
+                        print("\nNo transformation is performed on validation data!")
                 else:
-                    print("\nTransforming validation data...")
+                    if verbose:
+                        print("\nTransforming validation data...")
                 self.datasetVS = dataset(self.scalingX.scale(validation_data[0]).float().to(self.device),
                                          self.scalingY.scale(validation_data[1]).float().to(self.device))
 
                 self.sizeVS = self.datasetVS.mem_size()
                 self.loadVS = True
 
-                print("Validation data transformed.\n")
+                if verbose:
+                    print("Validation data transformed.\n")
 
         end_time_loader = timeit.default_timer()
 
-        print("Duration:", np.round(end_time_loader-start_time_loader, 3), "s")
-        print("Training data:", len(self.datasetTS), "elements - Memory size: ", self.sizeTS/1e6, "MiB\n",
-              "Validation data:", len(self.datasetVS), "elements - Memory size: ", self.sizeVS/1e6, "MiB\n")
-        print("Data is loaded, Training can begin!\n")
-        print("================================================\n")
+        if verbose:
+            print("Duration:", np.round(end_time_loader-start_time_loader, 3), "s")
+            print("Training data:", len(self.datasetTS), "elements - Memory size: ", self.sizeTS/1e6, "MiB\n",
+                  "Validation data:", len(self.datasetVS), "elements - Memory size: ", self.sizeVS/1e6, "MiB\n")
+            print("Data is loaded, Training can begin!\n")
+            print("================================================\n")
 
 class ScalingX:
-    
+
     def __init__(self, scalers=[], newscale=True, copy_to_dev=True):
         self.scalers = scalers
         self.newscale = newscale
@@ -131,14 +138,14 @@ class ScalingX:
 
         if self.copy_to_dev:
             transformed_data = transformed_data.to(self.device)
-        
+
         self.newscale=False
 
         return transformed_data.float()
 
 
 class ScalingY:
-    
+
     def __init__(self, scalers=[], newscale=True, copy_to_dev=True):
         self.scalers = scalers
         self.newscale = newscale
@@ -166,14 +173,14 @@ class ScalingY:
 
         if self.copy_to_dev:
             transformed_data = transformed_data.to(self.device)
-        
+
         self.newscale=False
 
         return transformed_data.float()
 
 
 class InverseScaling:
-    
+
     def __init__(self, scalers_fit, copy_to_dev=True):
         self.scalers_fit = scalers_fit
         self.copy_to_dev = copy_to_dev
