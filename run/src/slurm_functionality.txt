@@ -1,0 +1,291 @@
+### source this file, either in the terminal or in your .bashrc file to keep these commands permanently available
+
+function sscript() {
+    ### Use as: sscript [SLURM_JOB_ID] to give you the location of the executed .sh script that sbatch used to submit the job
+    if [ -z "$1" ]; then
+        echo "Usage: sscript <job_id1>[,<job_id2>,...]"
+        return 1
+    fi
+
+    IFS=',' read -ra jobids <<< "$1"
+
+    for jobid in "${jobids[@]}"; do
+        jobid=$(echo "$jobid" | xargs)  # Trim whitespace
+        if [[ ! "$jobid" =~ ^[0-9]+$ ]]; then
+            echo "Invalid job ID: $jobid"
+            continue
+        fi
+
+        script_path=$(scontrol show job "$jobid" 2>/dev/null | grep -oP 'Command=\K\S+')
+
+        if [ -n "$script_path" ]; then
+            echo "Job $jobid: $script_path"
+        else
+            echo "Job $jobid: Script path not found (job may be finished or invalid)"
+        fi
+    done
+}
+
+function getscripts() {
+    # No arguments: show scripts for all running jobs (previous behavior)
+    if [ $# -eq 0 ]; then
+        sscript "$(myrunningjobs)"
+        return
+    fi
+
+    # With wildcard pattern(s): match job names
+    declare -A match_ids
+    while read -r jid jname; do
+        for pat in "$@"; do
+            if [[ $jname == $pat ]]; then
+                match_ids[$jid]=1
+            fi
+        done
+    done < <(squeue -u "$USER" -h -o "%i %j")
+
+    if [ ${#match_ids[@]} -eq 0 ]; then
+        echo "No jobs match pattern(s): $*"
+        return 1
+    fi
+
+    local ids_csv
+    ids_csv=$(IFS=,; echo "${!match_ids[*]}")
+    sscript "$ids_csv"
+}
+
+function killjobsdir() {
+    if [ -z "$1" ]; then
+        echo "Usage: killjobdir <dir-pattern>"
+        return 1
+    fi
+
+    local dirpattern="$1"
+
+    # Get all scripts for running jobs
+    local matches
+    matches=$(getscripts | grep "$dirpattern")
+
+    if [ -z "$matches" ]; then
+        echo "No running jobs have scripts matching '$dirpattern'"
+        return 0
+    fi
+
+    echo "Matching jobs:"
+    echo "$matches"
+    echo ""
+
+    # Extract job IDs
+    local ids
+    ids=$(echo "$matches" | awk '{print $2}' | sed 's/://')
+
+    echo "Job IDs to cancel: $ids"
+    read -p "Do you want to cancel these jobs? (y/n): " reply
+
+    if [[ "$reply" == "y" ]]; then
+        scancel $ids
+        echo "Cancelled jobs: $ids"
+    else
+        echo "Aborted. No jobs were cancelled."
+    fi
+}
+
+function killjobs() {
+    ### Kills all your jobs. If you want to protect certain ones: export PROTECTED_JOBS="JOB_ID_1,JOB_ID_2,JOB_ID_3,..."
+    # Parse protected jobs into array
+    local -a protected_jobs
+    if [ -n "$PROTECTED_JOBS" ]; then
+        IFS=',' read -ra protected_jobs <<< "$PROTECTED_JOBS"
+    fi
+
+    # Optional first arg switch:
+    #   --kill-protected : skip prompt, always include protected matches
+    #   --no-protected   : skip prompt, never kill protected (default behavior)
+    local mode="prompt"
+    if [ "$1" = "--kill-protected" ]; then
+        mode="yes"
+        shift
+    elif [ "$1" = "--no-protected" ]; then
+        mode="no"
+        shift
+    fi
+
+    if [ $# -lt 1 ]; then
+        # Cancel all jobs of current user
+        local all
+        all=$(squeue -u "$USER" -h -o "%i")
+        if [ -z "$all" ]; then
+            echo "No jobs to cancel."
+            return 0
+        fi
+        echo "About to cancel ALL jobs for $USER:"
+        echo "$all"
+
+        # Determine which protected jobs are present
+        local -a prot_present others
+        for job in $all; do
+            local is_protected=false
+            for pjob in "${protected_jobs[@]}"; do
+                if [ "$job" = "$pjob" ]; then
+                    is_protected=true
+                    prot_present+=("$job")
+                    break
+                fi
+            done
+            if [ "$is_protected" = false ]; then
+                others+=("$job")
+            fi
+        done
+
+        echo "Protected jobs detected (will be kept unless you confirm in second question): ${prot_present[*]:-(none)}"
+        read -r -p "Type 'y' to cancel (non-protected). " ans
+        [ "$ans" != "y" ] && { echo "Aborted."; return 1; }
+
+        local include_prot=false
+        if [ ${#prot_present[@]} -gt 0 ]; then
+            if [ "$mode" = "y" ]; then
+                include_prot=true
+            elif [ "$mode" = "n" ]; then
+                include_prot=false
+            else
+                read -r -p "Also cancel protected jobs? (y/n) " ans2
+                [[ "$ans2" =~ ^[Yy]$ ]] && include_prot=true
+            fi
+        fi
+
+        local -a final_list=("${others[@]}")
+        $include_prot && final_list+=("${prot_present[@]}")
+
+        if [ ${#final_list[@]} -eq 0 ]; then
+            echo "Nothing to cancel."
+            return 0
+        fi
+        echo "Cancelling: ${final_list[*]}"
+        scancel "${final_list[@]}"
+        return
+    fi
+
+    # Pattern-based cancel
+    declare -A to_cancel
+    while read -r jid jname; do
+        for pat in "$@"; do
+            if [[ $jname == $pat ]]; then
+                to_cancel[$jid]=1
+            fi
+        done
+    done < <(squeue -u "$USER" -h -o "%i %j")
+
+    if [ ${#to_cancel[@]} -eq 0 ]; then
+        echo "No jobs match given pattern(s)."
+        return 0
+    fi
+
+    local -a prot_match normal_match
+    for jid in "${!to_cancel[@]}"; do
+        local is_protected=false
+        for pjob in "${protected_jobs[@]}"; do
+            if [ "$jid" = "$pjob" ]; then
+                is_protected=true
+                break
+            fi
+        done
+        if $is_protected; then
+            prot_match+=("$jid")
+        else
+            normal_match+=("$jid")
+        fi
+    done
+
+    local include_prot=false
+    if [ ${#prot_match[@]} -gt 0 ]; then
+        echo "Protected jobs matched: ${prot_match[*]}"
+        case "$mode" in
+            yes) include_prot=true ;;
+            no)  include_prot=false ;;
+            *)
+                read -r -p "Also cancel protected jobs? (y/N) " ans
+                [[ "$ans" =~ ^[Yy]$ ]] && include_prot=true
+                ;;
+        esac
+        if ! $include_prot; then
+            echo "Keeping protected jobs."
+        fi
+    fi
+
+    local -a final_ids=("${normal_match[@]}")
+    $include_prot && final_ids+=("${prot_match[@]}")
+
+    if [ ${#final_ids[@]} -eq 0 ]; then
+        echo "No jobs to cancel after filtering."
+        return 0
+    fi
+
+    echo "Cancelling ${#final_ids[@]} job(s): ${final_ids[*]}"
+    scancel "${final_ids[@]}"
+}
+
+function countjobs() {
+    ### Counts jobs by their names, in case there are multiple with the same name
+    local mode="${1:-0}"  # default mode = 0
+
+    echo "--- Current time: $(date '+%Y-%m-%d %H:%M:%S') ---"
+
+    # First part: job counts including DependencyNeverSatisfied as a separate counter
+    squeue -u "$USER" -t RUNNING,PENDING -h -o "%j %T %r" \
+    | awk '
+        {
+            jobname = $1
+            state = $2
+            reason = $3
+
+            if (state == "RUNNING") {
+                run[jobname]++
+            } else if (state == "PENDING") {
+                pend[jobname]++
+                if (reason ~ /DependencyNeverSatisfied/) depns[jobname]++
+                if (reason ~ /BeginTime/) begintime[jobname]++
+            }
+        }
+        END {
+            for (job in run) if (!(job in pend)) pend[job]=0
+            for (job in pend) if (!(job in run)) run[job]=0
+            for (job in run) if (!(job in depns)) depns[job]=0
+            for (job in depns) if (!(job in run)) run[job]=0
+            for (job in run) if (!(job in begintime)) begintime[job]=0
+            for (job in begintime) if (!(job in run)) run[job]=0
+            for (job in run) {
+                total = run[job] + pend[job]
+                printf "%-20s -> %5d  |  running: %5d, pending: %5d (with DependencyNeverSatisfied: %5d, BeginTime: %5d)\n", \
+                       job, total, run[job], pend[job], depns[job], begintime[job]
+            }
+        }'
+
+    # If mode=1, show DependencyNeverSatisfied and BeginTime jobs with script paths
+    if [ "$mode" -eq 1 ]; then
+        echo
+        echo "--- Pending jobs with DependencyNeverSatisfied ---"
+
+        local dep_jobs
+        dep_jobs=$(squeue -u "$USER" -t PENDING -h -o "%i %r" \
+                    | awk '$2 ~ /DependencyNeverSatisfied/ {print $1}' | paste -sd,)
+
+        if [ -z "$dep_jobs" ]; then
+            echo "None"
+        else
+            sscript "$dep_jobs"
+        fi
+
+        echo
+        echo "--- Pending jobs with BeginTime ---"
+
+        local begin_jobs
+        begin_jobs=$(squeue -u "$USER" -t PENDING -h -o "%i %r" \
+                      | awk '$2 ~ /BeginTime/ {print $1}' | paste -sd,)
+
+        if [ -z "$begin_jobs" ]; then
+            echo "None"
+        else
+            sscript "$begin_jobs"
+        fi
+    fi
+}
+alias cj="countjobs"

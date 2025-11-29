@@ -25,13 +25,22 @@ def write_config(CONFIG, path = "../configuration.json"):
 def add_name_and_path(config):
     # Ensure base_output_folder exists; default to $PWD (fall back to os.getcwd() if not set)
     base_folder = config['paths']['framework']
+    
+    ### Enable HadronicRate flag if present in input features
+    if "fHadronicRate" in config["createTrainingDatasetOptions"]["labels_x"]:
+        config["dataset"]["HadronicRate"] = "True"
+        
     dataset = config.get('dataset', {})
-    required_keys = ['year', 'period', 'pass', 'optTag1', 'optTag2', 'dEdxSelection', 'HadronicRate']
+    required_keys = ['year', 'period', 'pass', 'dEdxSelection']
     missing = [key for key in required_keys if key not in dataset]
     if missing:
         raise KeyError(f"Missing dataset keys required for output metadata: {missing}")
 
-    name = f"LHC{dataset['year']}{dataset['period']}_pass{dataset['pass']}_{dataset['optTag1']}_{dataset['optTag2']}_{dataset['dEdxSelection']}_HR_{dataset['HadronicRate']}"
+    name = f"LHC{dataset['year']}{dataset['period']}_{dataset['pass']}_{dataset['dEdxSelection']}"
+    if 'optTag' in dataset and dataset['optTag']:
+        name += f"_{dataset['optTag']}"
+    if dataset.get("HadronicRate", "False") == "True":
+        name += "_HadronicRate"
     output_section = config.setdefault('output', {})
     output_section['name'] = name
     config["output"].setdefault('general', {})
@@ -42,12 +51,11 @@ def add_name_and_path(config):
     output_path = os.path.join(
         base_output,
         f"LHC{dataset['year']}",
-        f"pass{dataset['pass']}",
         f"{dataset['period']}",
+        f"{dataset['pass']}",
         name,
         date_stamp,
     )
-    os.makedirs(output_path, exist_ok=True)
     LOG.info(f"Framework path = {base_folder}")
     LOG.info(f"Name of dataset = {name}")
     LOG.info(f"Output path = {output_path}")
