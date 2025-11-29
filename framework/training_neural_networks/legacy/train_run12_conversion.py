@@ -59,10 +59,8 @@ hardware = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 ########### Import the Neural Network class ###########
 
-neuralNetClass_dir = os.path.join(CONFIG['output']['general']['base_folder'],"Neural-Network-Class","NeuralNetworkClasses")
+neuralNetClass_dir = os.path.join(CONFIG['paths']['framework'] + "/framework","Neural-Network-Class","NeuralNetworkClasses")
 sys.path.append(neuralNetClass_dir)
-# print(f"files in folder neuralNetClass_dir = {os.listdir(neuralNetClass_dir)}")
-print("[CRITICAL]: Please make sure this neuralNetClass path actually works")
 
 from extract_from_root import load_tree
 from dataset_loading import DataLoading
@@ -114,7 +112,7 @@ NeuralNet = NN(General_NN(params = H_SIZES, layer_types = LAYER_TYPES, act_func 
 X_train, X_test, y_train, y_test = train_test_split(X,y,**dict_config["DATA_SPLIT"])
 data = DataLoading([X_train, y_train], [X_test, y_test], **dict_config["DATA_LOADER"])
 
-### evaluate training and validation loss over epochs                   
+### evaluate training and validation loss over epochs
 NeuralNet.training(data, **dict_config["NET_TRAINING"])
 
 ### save the network and the losses

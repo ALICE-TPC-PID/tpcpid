@@ -23,7 +23,10 @@ train_mode      = str(args.training_mode)
 
 with open(args.config, 'r') as config_file:
     CONFIG = json.load(config_file)
-sys.path.append(os.path.join(CONFIG["output"]["general"]["base_folder"], "framework"))
+sys.path.append(CONFIG['paths']['framework'] + "/framework")
+from base import *
+
+LOG = logger.logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="shell_script_creation")
 
 output_folder   = CONFIG["output"]["general"]["training"]
 scheduler       = CONFIG["trainNeuralNetOptions"]["scheduler"]
@@ -176,8 +179,8 @@ time singularity exec %(cuda_container)s python3 %(job_script)s --config $1 --tr
                 bash_file.close()
 
             else:
-                print("Choose a given device (GPU or CPU)!")
-                print("Stopping.")
+                LOG.info("Choose a given device (GPU or CPU)!")
+                LOG.info("Stopping.")
                 exit()
 
     else: ### QA job
@@ -193,7 +196,6 @@ time singularity exec %(cuda_container)s python3 %(job_script)s --config $1 --tr
 #SBATCH --chdir=%(chdir)s                                                       # Working directory on shared storage
 #SBATCH --time=10                                                               # Run time limit
 #SBATCH --mem=30G                                                               # job memory
-#SBATCH --cpus-per-task=5                                                       # cpus per task
 #SBATCH --partition=prod                                                        # job partition (debug, main)
 #SBATCH --mail-type=%(mail-type)s                                               # notify via email
 #SBATCH --mail-user=%(mail-user)s                                               # recipient
@@ -211,8 +213,7 @@ time python3.9 %(actual_job_script)s --config $1
 #SBATCH --chdir=%(chdir)s                                                       # Working directory on shared storage
 #SBATCH --time=10                                                               # Run time limit
 #SBATCH --mem=30G                                                               # job memory
-#SBATCH --cpus-per-task=5                                                       # cpus per task
-#SBATCH --partition=main                                                        # job partition (debug, main)
+#SBATCH --partition=debug                                                       # job partition (debug, main)
 #SBATCH --mail-type=%(mail-type)s                                               # notify via email
 #SBATCH --mail-user=%(mail-user)s                                               # recipient
 
@@ -233,5 +234,5 @@ time python3 %(job_script)s --config $1 --train-mode $2
 
 
 else:
-    print("Scheduler unknown! Check config.json file.")
+    LOG.info("Scheduler unknown! Check config.json file.")
     exit()

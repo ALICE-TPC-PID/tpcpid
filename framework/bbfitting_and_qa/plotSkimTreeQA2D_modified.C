@@ -242,7 +242,7 @@ void plotSkimTreeQA2D_modified(std::string config_path="../configuration.json"){
   Int_t oldRun = 0, thisRun;
   Double_t dBBtheo;
 
-  cout<<"\nReading Data: "<<sDataSet.Data()<<",\n Read Runs: ";
+  cout<<"\nReading Data: "<<sDataSet.Data()<<",\nRead Runs: ";
 
   //Get the keys from file and loop over them:
   while ((key = (TKey*)keyList())) {
@@ -560,7 +560,7 @@ void plotdEdxvsEta(TH2 *hNSigTPCpos=0x0, TH2 *hNSigTPCneg=0x0, TString name="", 
   TH1D *hMeansHistNeg = (TH1D*) gDirectory->Get(Form("%s_1",histNameNeg));
   TH1D *hSigmaHistNeg = (TH1D*) gDirectory->Get(Form("%s_2",histNameNeg));
 
-  cout<<"\n Done the Slice fits for "<<histNamePos<<" and "<<histNameNeg<<endl;
+  cout<<"Done the Slice fits for "<<histNamePos<<" and "<<histNameNeg<<endl;
 
   //hMeansHist->Draw(); //Debug
   TGraphErrors *graphMeanPos = new TGraphErrors();
@@ -708,7 +708,7 @@ void plotNsigmaVsPin(TH2 *hNSigTPCPos=0x0, TH2 *hNSigTPCNeg=0x0, TH2 *hNSigTOFPo
 
 
 
-  cout<<"\n Done the Slice fits for "<<histNamePos<<" and "<<histNameNeg<<endl;
+  cout<<"Done the Slice fits for "<<histNamePos<<" and "<<histNameNeg<<endl;
 
   //hMeansHist->Draw(); //Debug
   TGraphErrors *graphMeanTPCPos = new TGraphErrors();
@@ -925,7 +925,7 @@ void plotNsigmaVsBG(TH2 *hNSigTPCPos=0x0, TH2 *hNSigTPCNeg=0x0, TH2 *hNSigTOFPos
 
 
 
-  cout<<"\n Done the Slice fits for "<<histNamePos<<" and "<<histNameNeg<<endl;
+  cout<<"Done the Slice fits for "<<histNamePos<<" and "<<histNameNeg<<endl;
 
   //hMeansHist->Draw(); //Debug
   TGraphErrors *graphMeanTPCPos = new TGraphErrors();

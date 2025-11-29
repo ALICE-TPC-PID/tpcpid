@@ -154,7 +154,7 @@ void fitNormGraphdEdxvsBGpid_modified(std::string config_path="../configuration.
   }
 
   if(f1->IsOpen()){
-    cout<<" Opening File: "<<f1->GetName()<<endl;
+    cout<<"Opening File: "<<f1->GetName()<<endl;
   }
   else{
     cout<<" ::: WARNING ::: \n Could not open the file! check path or if file is corrupt? \n Exit!"<<endl; return;

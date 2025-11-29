@@ -26,11 +26,14 @@ args = parser.parse_args()
 
 with open(args.config, 'r') as config_file:
     CONFIG = json.load(config_file)
-sys.path.append(os.path.join(CONFIG["output"]["general"]["base_folder"], "framework"))
-from base.config_tools import *
+sys.path.append(CONFIG['paths']['framework'] + "/framework")
+from base import *
 from neural_network_class.NeuralNetworkClasses.extract_from_root import *
 from neural_network_class.NeuralNetworkClasses.dataset_loading import *
 from neural_network_class.NeuralNetworkClasses.NN_class import *
+
+LOG = logger.logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="train_single_sigma")
+
 configurations = import_from_path(CONFIG["trainNeuralNetOptions"]["configuration"])
 
 ### directory settings
@@ -56,11 +59,10 @@ job_id = os.environ.get('SLURM_JOB_ID', 'local_run')
 verbose = (int(os.environ.get("SLURM_PROCID", "0"))==0)
 
 if verbose:
-    print("Info:\n")
-    print("SLURM job ID:", job_id)
-    print("Date (dd/mm/yyyy):",date.strftime('%02d/%02m/%04Y'))
-    print("Time (hh/mm/ss):", time.strftime('%02H:%02M:%02S'))
-    print("Output-folder:", output_folder)
+    LOG.info("SLURM job ID: " + str(job_id))
+    LOG.info("Date (dd/mm/yyyy): " + date.strftime('%02d/%02m/%04Y'))
+    LOG.info("Time (hh/mm/ss): " + time.strftime('%02H:%02M:%02S'))
+    LOG.info("Output-folder: " + output_folder)
 
 ########### Import the data ###########
 
@@ -70,7 +72,7 @@ if data_file.split(".")[-1] == "root":
 elif data_file.split(".")[-1] == "txt":
     labels, fit_data = np.loadtxt(data_file, dtype='S')
 else:
-    print("Error: Allowed file type is one of ['ROOT','TXT'].")
+    LOG.info("Error: Allowed file type is one of ['ROOT','TXT'].")
 
 
 labels = np.array(labels).astype(str)
@@ -128,7 +130,7 @@ elif args.train_mode=="FULL":
 
 else:
 
-    print("Unknown args.train_mode! Please select 'MEAN', 'SIGMA' or 'FULL'.")
+    LOG.info("Unknown args.train_mode! Please select 'MEAN', 'SIGMA' or 'FULL'.")
     exit()
 
 
@@ -172,4 +174,5 @@ elif str(args.train_mode)=="ENSEMBLE":
                                     output_folder+'/networks/network_'+str(args.train_mode).lower()+'/validation_loss_'+str(job_id)+'.txt'])
 
 
-print("\nDone!")
+if verbose:
+    LOG.info("Done!")

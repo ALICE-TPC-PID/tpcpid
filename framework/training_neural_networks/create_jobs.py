@@ -21,14 +21,16 @@ args = parser.parse_args()
 config = args.config
 with open(config, 'r') as config_file:
     CONFIG = json.load(config_file)
-sys.path.append(os.path.join(CONFIG["output"]["general"]["base_folder"], "framework"))
+sys.path.append(CONFIG['paths']['framework'] + "/framework")
 
 from base.config_tools import *
+
+LOG = logger.logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="create_jobs")
 
 ### directory settings
 toplevel        = CONFIG["output"]["general"]["path"]
 output_folder   = CONFIG["output"]["general"]["training"]
-data_file       = CONFIG["output"]["shiftNsigma"]["training_data"]
+data_file       = CONFIG["output"]["createTrainingDataset"]["training_data"]
 
 ### network settings
 execution_mode  = CONFIG["trainNeuralNetOptions"]["execution_mode"]
@@ -48,7 +50,7 @@ if os.path.exists(output_folder):
             os.system('rm -rf {0}'.format(output_folder))
             os.makedirs(output_folder)
         else:
-            print("Stopping macro!")
+            LOG.info("Stopping macro!")
             sys.exit(1)
 
 for file in glob.glob(data_file, recursive=True):
@@ -66,7 +68,3 @@ for file in glob.glob(data_file, recursive=True):
         if "ENSEMBLE" in execution_mode:
             for i in range(num_networks):
                 os.makedirs(os.path.join(output_folder, 'networks', 'network_' + str(i)))
-
-os.system('cp {0} {1}'.format(CONFIG["trainNeuralNetOptions"]["configuration"], os.path.join(output_folder, 'configurations.py')))
-CONFIG["trainNeuralNetOptions"]["configuration"] = os.path.join(output_folder, 'configurations.py')
-write_config(CONFIG, path=os.path.join(toplevel, 'configuration.json'))

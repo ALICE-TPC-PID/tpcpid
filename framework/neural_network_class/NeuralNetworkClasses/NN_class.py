@@ -410,10 +410,10 @@ class NN():
 
     def save_losses(self, path=["./training_loss.txt", "./validation_loss.txt"]):
 
-        np.savetxt(path[0], self.training_loss)
-        np.savetxt(path[1], self.validation_loss)
-        print("Training and validation loss saved!")
-
+        if self.rank == 0:
+            np.savetxt(path[0], self.training_loss)
+            np.savetxt(path[1], self.validation_loss)
+            print("Training and validation loss saved!")
 
     def eval(self):
 
@@ -500,31 +500,32 @@ class NN():
 
     def save_net(self, path="./net.pt", avoid_q = False):
 
-        if isinstance(self.network, torch.nn.parallel.DistributedDataParallel):
-            model = self.network.module
-        else:
-            model = self.network
+        if self.rank == 0:
+            if isinstance(self.network, torch.nn.parallel.DistributedDataParallel):
+                model = self.network.module
+            else:
+                model = self.network
 
-        if not avoid_q:
-            if os.path.isfile(path):
+            if not avoid_q:
+                if os.path.isfile(path):
 
-                response = input("File exists. Do you want to overwrite it? [y/n] ")
-                if response == ('y' or 'yes' or 'Y' or 'Yes' or 'YES'):
+                    response = input("File exists. Do you want to overwrite it? [y/n] ")
+                    if response == ('y' or 'yes' or 'Y' or 'Yes' or 'YES'):
+                        #torch.save(self.network.state_dict(), path)
+                        torch.save(model.to(device="cpu"), path)
+                        print("Network saved")
+                    else:
+                        print("Network not saved!")
+
+                else:
                     #torch.save(self.network.state_dict(), path)
                     torch.save(model.to(device="cpu"), path)
                     print("Network saved")
-                else:
-                    print("Network not saved!")
 
             else:
-                #torch.save(self.network.state_dict(), path)
+
                 torch.save(model.to(device="cpu"), path)
                 print("Network saved")
-
-        else:
-
-            torch.save(model.to(device="cpu"), path)
-            print("Network saved")
 
 
     def jit_script_model(self):

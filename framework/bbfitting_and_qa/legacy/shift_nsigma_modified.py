@@ -1,10 +1,11 @@
 import ROOT
-import os, sys, json
+import os, sys
 import array
 import argparse
+import json
 
 #This is the python equivalent to shiftNsigma.C
-#This script takes as input the Data tree with the clean samples, and the BB parameters from the fitting macro. 
+#This script takes as input the Data tree with the clean samples, and the BB parameters from the fitting macro.
 #It then reads in the tree, and creates a copy
 #Then it shifts the Nsigma values for the new tree, applies some cuts, creates some fits, and then stores the new tree
 
@@ -33,6 +34,7 @@ def collect_latest_trees(directory, prefix=""):
                 trees[full_name] = (cycle, obj)
     return trees
 
+
 #Takes Config array
 #Reads all trees, and automatically picks the newest onces
 #Crashes if there is more than one subdirectory
@@ -40,25 +42,25 @@ def collect_latest_trees(directory, prefix=""):
 def read_tree(config):
     root_file_path = config['dataset']['input_skimmedtree_path']
     if not root_file_path or not os.path.exists(root_file_path):
-        raise FileNotFoundError(f"[ERROR]: ROOT file not found at path: {root_file_path}")
+        raise FileNotFoundError(f"ROOT file not found at path: {root_file_path}")
     else:
         LOG.info(f"Found Root tree at {root_file_path}")
 
     f = ROOT.TFile.Open(root_file_path, "READ")
     if not f or f.IsZombie():
-        LOG.fatal(f"Could not open file: {root_file_path}")
+        LOG.info(f"Could not open file: {root_file_path}")
+        exit(1)
 
     # Recursively collect all latest-cycle trees
     latest_trees = collect_latest_trees(f)
     trees = []
     for full_name, (_, tree) in latest_trees.items():
-        # LOG.debug(f"Appending tree '{full_name}' of type: {type(tree)}")
+        # LOG.info(f"DEBUG: Appending tree '{full_name}' of type: {type(tree)}")
         trees.append((full_name, tree))
-        # LOG(f"Appended tree {full_name}")
 
     #DEBUG
     # for name, tree in trees:
-    #     LOG.debug(f"Exporting tree '{name}' of type: {type(tree)}")
+    #     LOG.info(f"DEBUG: Exporting tree '{name}' of type: {type(tree)}")
 
     return trees, f
 
@@ -66,7 +68,7 @@ def read_tree(config):
 def check_trees(trees):
 
     for name, tree in trees:
-        LOG.debug(f"CHECK tree '{name}' of type: {type(tree)}")
+        LOG.info(f"DEBUG: CHECK tree '{name}' of type: {type(tree)}")
     """
     Diagnose and verify the list of (name, tree) tuples.
     Checks for None objects, wrong types, and prints structure.
@@ -75,36 +77,36 @@ def check_trees(trees):
         LOG.warning("Tree list is empty.")
         return
 
-    LOG.info(f"Checking {len(trees)} trees...")
+    LOG.info(f"[INFO] Checking {len(trees)} trees...")
 
     for name, tree in trees:
-        LOG.info(f"Tree: {name}")
+        LOG.info(f"\n[INFO] Tree: {name}")
 
         if tree is None:
-            LOG.error(f"Tree object for '{name}' is None.")
+            LOG.info(f"  [ERROR] Tree object for '{name}' is None.")
             continue
 
         if not isinstance(tree, ROOT.TTree):
-            LOG.error(f"Object for '{name}' is not a TTree (type: {type(tree).__name__})")
+            LOG.info(f"  [ERROR] Object for '{name}' is not a TTree (type: {type(tree).__name__})")
             continue
 
-        LOG.info(f"Valid TTree with {tree.GetEntries()} entries.")
+        LOG.info(f"  [OK] Valid TTree with {tree.GetEntries()} entries.")
 
         # Try to list branches
         try:
             branches = tree.GetListOfBranches()
             if not branches:
-                LOG.warning("No branches found.")
+                LOG.info(" [WARNING] No branches found.")
                 continue
 
             branch_names = [branch.GetName() for branch in branches]
-            LOG.info(f"Branches ({len(branch_names)}):")
+            LOG.info(f"  [INFO] Branches ({len(branch_names)}):")
             for branch in branches:
                 LOG.info(f"    - {branch.GetName()}")
 
 
         except Exception as e:
-            LOG.error(f"Exception while inspecting tree '{name}': {e}")
+            LOG.info(f"  [ERROR] Exception while inspecting tree '{name}': {e}")
 
 def create_funcBBvsBGNew(BB_params):
     """
@@ -129,92 +131,15 @@ def create_funcBBvsBGNew(BB_params):
 
     return calculate_dEdx
 
-def count_particles_in_tree(tree, tree_name):
-    """Print a per-species summary of entries stored in the provided tree."""
-    if tree is None:
-        LOG.warning(f"Tree {tree_name} is None. Skipping particle count.")
-        return
 
-    pid_leaf = tree.GetLeaf("fPidIndex")
-    if not pid_leaf:
-        LOG.warning(f"Tree {tree_name} has no fPidIndex leaf. Skipping particle count.")
-        return
-
-    counts = {
-        "electrons": 0,
-        "pions": 0,
-        "kaons": 0,
-        "protons": 0,
-        "rest": 0,
-    }
-
-    nentries = tree.GetEntries()
-    for i in range(nentries):
-        tree.GetEntry(i)
-        pid = int(pid_leaf.GetValue())
-        if pid == 0:
-            counts["electrons"] += 1
-        elif pid == 2:
-            counts["pions"] += 1
-        elif pid == 3:
-            counts["kaons"] += 1
-        elif pid == 4:
-            counts["protons"] += 1
-        else:
-            counts["rest"] += 1
-
-    LOG.info(
-        f"Tree {tree_name} contains: " +
-        f"electrons={counts['electrons']}, pions={counts['pions']}, " +
-        f"kaons={counts['kaons']}, protons={counts['protons']}, rest={counts['rest']}"
-    )
-
-def create_output_tree(tree_name, title, output_file):
-    """Create an output tree with the standard branch layout used by the script."""
-    output_file.cd()
-
-    float_branch_names = [
-        "fY",
-        "fEta",
-        "fPhi",
-        "fTgl",
-        "fMass",
-        "fNSigTPC",
-        "fNSigTOF",
-        "fTPCSignal",
-        "fSigned1Pt",
-        "fBetaGamma",
-        "fNormMultTPC",
-        "fInvDeDxExpTPC",
-        "fTPCInnerParam",
-        "fNormNClustersTPC",
-        "fFt0Occ",
-        "fHadronicRate",
-    ]
-    int_branch_names = ["fPidIndex", "fRunNumber"]
-
-    buffers = {}
-    tree = ROOT.TTree(tree_name, title)
-
-    for name in float_branch_names:
-        buffers[name] = array.array('f', [0.0])
-        tree.Branch(name, buffers[name], f"{name}/F")
-
-    for name in int_branch_names:
-        buffers[name] = array.array('i', [0])
-        tree.Branch(name, buffers[name], f"{name}/I")
-
-    return tree, buffers
-
-def update_v0_tree(tree, name, calculate_dEdx, output_V0_tree, buffers):
+def update_v0_tree(tree, calculate_dEdx, output_file):
     """
-    Takes a V0 tree, updates the values, and fills the provided output tree.
+    Takes a V0 tree, updates the values, and returns a new tree.
     calculate_dEdx: callable func(beta_gamma) -> expected dEdx
     """
-    if output_V0_tree is None or buffers is None:
-        raise ValueError("Output tree and buffers must be provided for V0 update.")
-    # LOG(f"Using dEdx values from branch {CONFIG['dataset']['dEdxSelection']} for V0 tree")
-    
+    output_file.cd()
+    LOG.info(f"Using dEdx values from branch {CONFIG['dataset']['dEdxSelection']} for V0 tree")
+
     # Prepare input buffers for SetBranchAddress
     fY = array.array('f', [0.0])
     fEta = array.array('f', [0.0])
@@ -234,7 +159,6 @@ def update_v0_tree(tree, name, calculate_dEdx, output_V0_tree, buffers):
     fTPCInnerParam = array.array('f', [0.0])
     fNormNClustersTPC = array.array('f', [0.0])
     fFt0Occ = array.array('f', [0.0])
-    fHadronicRate = array.array('f', [0.0])
 
     # Connect input branches
     tree.SetBranchAddress("fY", fY)
@@ -255,36 +179,55 @@ def update_v0_tree(tree, name, calculate_dEdx, output_V0_tree, buffers):
     tree.SetBranchAddress("fTPCInnerParam", fTPCInnerParam)
     tree.SetBranchAddress("fNormNClustersTPC", fNormNClustersTPC)
     tree.SetBranchAddress("fFt0Occ", fFt0Occ)
-    tree.SetBranchAddress("fHadronicRate", fHadronicRate)
 
-    fsY = buffers["fY"]
-    fsEta = buffers["fEta"]
-    fsPhi = buffers["fPhi"]
-    fsTgl = buffers["fTgl"]
-    fsMass = buffers["fMass"]
-    fsNSigTPC = buffers["fNSigTPC"]
-    fsNSigTOF = buffers["fNSigTOF"]
-    fsPidIndex = buffers["fPidIndex"]
-    fsTPCSignal = buffers["fTPCSignal"]
-    fsSigned1Pt = buffers["fSigned1Pt"]
-    fsBetaGamma = buffers["fBetaGamma"]
-    fsRunNumber = buffers["fRunNumber"]
-    fsNormMultTPC = buffers["fNormMultTPC"]
-    fsInvDeDxExpTPC = buffers["fInvDeDxExpTPC"]
-    fsTPCInnerParam = buffers["fTPCInnerParam"]
-    fsNormNClustersTPC = buffers["fNormNClustersTPC"]
-    fsFt0Occ = buffers["fFt0Occ"]
-    fsHadronicRate = buffers["fHadronicRate"]
+    # Prepare output arrays (same types)
+    fsY = array.array('f', [0.0])
+    fsEta = array.array('f', [0.0])
+    fsPhi = array.array('f', [0.0])
+    fsTgl = array.array('f', [0.0])
+    fsMass = array.array('f', [0.0])
+    fsNSigTPC = array.array('f', [0.0])
+    fsNSigTOF = array.array('f', [0.0])
+    fsPidIndex = array.array('i', [0])
+    fsTPCSignal = array.array('f', [0.0])
+    fsSigned1Pt = array.array('f', [0.0])
+    fsBetaGamma = array.array('f', [0.0])
+    fsRunNumber = array.array('i', [0])
+    fsNormMultTPC = array.array('f', [0.0])
+    fsInvDeDxExpTPC = array.array('f', [0.0])
+    fsTPCInnerParam = array.array('f', [0.0])
+    fsNormNClustersTPC = array.array('f', [0.0])
+    fsFt0Occ = array.array('f', [0.0])
+
+    # Create output tree and branches
+    gTree_V0 = ROOT.TTree("O2V0Tree", "Reconstructed ntuple")
+    gTree_V0.Branch("fY", fsY, "fY/F")
+    gTree_V0.Branch("fEta", fsEta, "fEta/F")
+    gTree_V0.Branch("fPhi", fsPhi, "fPhi/F")
+    gTree_V0.Branch("fTgl", fsTgl, "fTgl/F")
+    gTree_V0.Branch("fMass", fsMass, "fMass/F")
+    gTree_V0.Branch("fNSigTPC", fsNSigTPC, "fNSigTPC/F")
+    gTree_V0.Branch("fNSigTOF", fsNSigTOF, "fNSigTOF/F")
+    gTree_V0.Branch("fPidIndex", fsPidIndex, "fPidIndex/I")
+    gTree_V0.Branch("fTPCSignal", fsTPCSignal, "fTPCSignal/F")
+    gTree_V0.Branch("fSigned1Pt", fsSigned1Pt, "fSigned1Pt/F")
+    gTree_V0.Branch("fBetaGamma", fsBetaGamma, "fBetaGamma/F")
+    gTree_V0.Branch("fRunNumber", fsRunNumber, "fRunNumber/I")
+    gTree_V0.Branch("fNormMultTPC", fsNormMultTPC, "fNormMultTPC/F")
+    gTree_V0.Branch("fInvDeDxExpTPC", fsInvDeDxExpTPC, "fInvDeDxExpTPC/F")
+    gTree_V0.Branch("fTPCInnerParam", fsTPCInnerParam, "fTPCInnerParam/F")
+    gTree_V0.Branch("fNormNClustersTPC", fsNormNClustersTPC, "fNormNClustersTPC/F")
+    gTree_V0.Branch("fFt0Occ", fsFt0Occ, "fFt0Occ/F")
 
     nentries = tree.GetEntries()
 
     # for i in range(1,100):
-    #     # print(f"fPID index for entry ")
-    #     print(f"Event {i}")
-    #     print(tree.Show(i))
+    #     # LOG.info(f"fPID index for entry ")
+    #     LOG.info(f"Event {i}")
+    #     LOG.info(tree.Show(i))
         # tree.GetEntry(i)
-        # print(tree.GetEntry(i))
-        # print(f"fPID index for entry {i} = {tree.fPidIndex}")
+        # LOG.info(tree.GetEntry(i))
+        # LOG.info(f"fPID index for entry {i} = {tree.fPidIndex}")
 
     #add particle counter
     nElectronV0 = 0
@@ -295,7 +238,7 @@ def update_v0_tree(tree, name, calculate_dEdx, output_V0_tree, buffers):
 
     for i in range(nentries):
         tree.GetEntry(i)
-        
+
         #count particles by species
         if fPidIndex[0] == 0:
             nElectronV0 += 1
@@ -325,11 +268,10 @@ def update_v0_tree(tree, name, calculate_dEdx, output_V0_tree, buffers):
         fsTPCInnerParam[0] = fTPCInnerParam[0]
         fsNormNClustersTPC[0] = fNormNClustersTPC[0]
         fsFt0Occ[0] = fFt0Occ[0]
-        fsHadronicRate[0] = fHadronicRate[0]
-        
+
         expected_dEdx = calculate_dEdx(fsBetaGamma[0])
         fsInvDeDxExpTPC[0] = 1.0 / expected_dEdx if expected_dEdx != 0 else 0
-        
+
         if CONFIG['dataset']['dEdxSelection'] == "TPCSignal":
             fsTPCSignal[0] = fTPCSignal[0]
         elif CONFIG['dataset']['dEdxSelection'] == "TPCdEdxNorm":
@@ -338,24 +280,24 @@ def update_v0_tree(tree, name, calculate_dEdx, output_V0_tree, buffers):
         fsNSigTPC[0] = (fsTPCSignal[0] - expected_dEdx) / (0.07 * expected_dEdx) if expected_dEdx != 0 else 0
 
         # tree.Show(i)
-        # print(f"PID value = {fsPidIndex[0]}")
-        # print(f"TPCSignal = {fTPCSignal[0]}")
+        # LOG.info(f"PID value = {fsPidIndex[0]}")
+        # LOG.info(f"TPCSignal = {fTPCSignal[0]}")
         # Calculate expected dEdx and update InvDeDxExpTPC and NSigTPC
-        # print(f"expected_dEdx = {expected_dEdx}")
+        # LOG.info(f"expected_dEdx = {expected_dEdx}")
 
         #writes every single entry to the output root tree
-        output_V0_tree.Fill()
-    LOG.info("Particles found in V0 tree {name}: Electrons={nElectronV0}, Pions={nPionV0}, Kaons={nKaonV0}, Protons={nProtonV0}, Rest={nRestV0}")
+        gTree_V0.Fill()
+    LOG.info(f"Particles found in V0 tree: Electrons={nElectronV0}, Pions={nPionV0}, Kaons={nKaonV0}, Protons={nProtonV0}, Rest={nRestV0}")
+    gTree_V0.Write()
     return True
 
-def update_tpctof_tree(tree, name, calculate_dEdx, output_tpctof_tree, buffers):
+def update_tpctof_tree(tree, calculate_dEdx, output_file):
     """
-    Takes a TPCTOF tree, updates the values, and fills the provided output tree.
+    Takes a TPCTOF tree, updates the values, and returns a new tree.
     calculate_dEdx: callable func(beta_gamma) -> expected dEdx
     """
-    if output_tpctof_tree is None or buffers is None:
-        raise ValueError("Output tree and buffers must be provided for TPCTOF update.")
-    # LOG(f"Using dEdx values from branch {CONFIG['dataset']['dEdxSelection']} for tpctof tree")
+    output_file.cd()
+    LOG.info(f"Using dEdx values from branch {CONFIG['dataset']['dEdxSelection']} for tpctof tree")
 
     # Prepare input buffers for SetBranchAddress
     fY = array.array('f', [0.0])
@@ -376,7 +318,6 @@ def update_tpctof_tree(tree, name, calculate_dEdx, output_tpctof_tree, buffers):
     fTPCInnerParam = array.array('f', [0.0])
     fNormNClustersTPC = array.array('f', [0.0])
     fFt0Occ = array.array('f', [0.0])
-    fHadronicRate = array.array('f', [0.0])
 
     # Connect input branches
     tree.SetBranchAddress("fY", fY)
@@ -397,26 +338,45 @@ def update_tpctof_tree(tree, name, calculate_dEdx, output_tpctof_tree, buffers):
     tree.SetBranchAddress("fTPCInnerParam", fTPCInnerParam)
     tree.SetBranchAddress("fNormNClustersTPC", fNormNClustersTPC)
     tree.SetBranchAddress("fFt0Occ", fFt0Occ)
-    tree.SetBranchAddress("fHadronicRate", fHadronicRate)
 
-    fsY = buffers["fY"]
-    fsEta = buffers["fEta"]
-    fsPhi = buffers["fPhi"]
-    fsTgl = buffers["fTgl"]
-    fsMass = buffers["fMass"]
-    fsNSigTPC = buffers["fNSigTPC"]
-    fsNSigTOF = buffers["fNSigTOF"]
-    fsPidIndex = buffers["fPidIndex"]
-    fsTPCSignal = buffers["fTPCSignal"]
-    fsSigned1Pt = buffers["fSigned1Pt"]
-    fsBetaGamma = buffers["fBetaGamma"]
-    fsRunNumber = buffers["fRunNumber"]
-    fsNormMultTPC = buffers["fNormMultTPC"]
-    fsInvDeDxExpTPC = buffers["fInvDeDxExpTPC"]
-    fsTPCInnerParam = buffers["fTPCInnerParam"]
-    fsNormNClustersTPC = buffers["fNormNClustersTPC"]
-    fsFt0Occ = buffers["fFt0Occ"]
-    fsHadronicRate = buffers["fHadronicRate"]
+    # Prepare output arrays (same types)
+    fsY = array.array('f', [0.0])
+    fsEta = array.array('f', [0.0])
+    fsPhi = array.array('f', [0.0])
+    fsTgl = array.array('f', [0.0])
+    fsMass = array.array('f', [0.0])
+    fsNSigTPC = array.array('f', [0.0])
+    fsNSigTOF = array.array('f', [0.0])
+    fsPidIndex = array.array('i', [0])
+    fsTPCSignal = array.array('f', [0.0])
+    fsSigned1Pt = array.array('f', [0.0])
+    fsBetaGamma = array.array('f', [0.0])
+    fsRunNumber = array.array('i', [0])
+    fsNormMultTPC = array.array('f', [0.0])
+    fsInvDeDxExpTPC = array.array('f', [0.0])
+    fsTPCInnerParam = array.array('f', [0.0])
+    fsNormNClustersTPC = array.array('f', [0.0])
+    fsFt0Occ = array.array('f', [0.0])
+
+    # Create output tree and branches
+    gTree_tpctof = ROOT.TTree("O2tpctofTree", "Reconstructed ntuple")
+    gTree_tpctof.Branch("fY", fsY, "fY/F")
+    gTree_tpctof.Branch("fEta", fsEta, "fEta/F")
+    gTree_tpctof.Branch("fPhi", fsPhi, "fPhi/F")
+    gTree_tpctof.Branch("fTgl", fsTgl, "fTgl/F")
+    gTree_tpctof.Branch("fMass", fsMass, "fMass/F")
+    gTree_tpctof.Branch("fNSigTPC", fsNSigTPC, "fNSigTPC/F")
+    gTree_tpctof.Branch("fNSigTOF", fsNSigTOF, "fNSigTOF/F")
+    gTree_tpctof.Branch("fPidIndex", fsPidIndex, "fPidIndex/I")
+    gTree_tpctof.Branch("fTPCSignal", fsTPCSignal, "fTPCSignal/F")
+    gTree_tpctof.Branch("fSigned1Pt", fsSigned1Pt, "fSigned1Pt/F")
+    gTree_tpctof.Branch("fBetaGamma", fsBetaGamma, "fBetaGamma/F")
+    gTree_tpctof.Branch("fRunNumber", fsRunNumber, "fRunNumber/I")
+    gTree_tpctof.Branch("fNormMultTPC", fsNormMultTPC, "fNormMultTPC/F")
+    gTree_tpctof.Branch("fInvDeDxExpTPC", fsInvDeDxExpTPC, "fInvDeDxExpTPC/F")
+    gTree_tpctof.Branch("fTPCInnerParam", fsTPCInnerParam, "fTPCInnerParam/F")
+    gTree_tpctof.Branch("fNormNClustersTPC", fsNormNClustersTPC, "fNormNClustersTPC/F")
+    gTree_tpctof.Branch("fFt0Occ", fsFt0Occ, "fFt0Occ/F")
 
     nentries = tree.GetEntries()
 
@@ -441,11 +401,11 @@ def update_tpctof_tree(tree, name, calculate_dEdx, output_tpctof_tree, buffers):
             nKaonV0 += 1
         elif fPidIndex[0] == 4:
             nProtonV0 += 1
-            # LOG.debug(f"Proton TPC Inner Param = {fTPCInnerParam[0]}")  
-            # LOG.debug(f"Proton TPC abs(fSigned1Pt[0]) = {abs(1/fSigned1Pt[0])}")  
+            # LOG.info(f"DEBUG: Proton TPC Inner Param = {fTPCInnerParam[0]}")
+            # LOG.info(f"DEBUG: Proton TPC abs(fSigned1Pt[0]) = {abs(1/fSigned1Pt[0])}")
         else:
             nRestV0 += 1
-        
+
         # Copy values to output arrays
         fsY[0] = fY[0]
         fsEta[0] = fEta[0]
@@ -461,7 +421,6 @@ def update_tpctof_tree(tree, name, calculate_dEdx, output_tpctof_tree, buffers):
         fsTPCInnerParam[0] = fTPCInnerParam[0]
         fsNormNClustersTPC[0] = fNormNClustersTPC[0]
         fsFt0Occ[0] = fFt0Occ[0]
-        fsHadronicRate[0] = fHadronicRate[0]
 
         expected_dEdx = calculate_dEdx(fsBetaGamma[0])
         fsInvDeDxExpTPC[0] = 1.0 / expected_dEdx if expected_dEdx != 0 else 0
@@ -473,24 +432,24 @@ def update_tpctof_tree(tree, name, calculate_dEdx, output_tpctof_tree, buffers):
 
         fsNSigTPC[0] = (fsTPCSignal[0] - expected_dEdx) / (0.07 * expected_dEdx) if expected_dEdx != 0 else 0
 
-        # print(f"Original TPCNSigma {fNSigTPC}")
-        # print(f"New TPCNSigma {fsNSigTPC}")
+        # LOG.info(f"Original TPCNSigma {fNSigTPC}")
+        # LOG.info(f"New TPCNSigma {fsNSigTPC}")
 
         #Here is the section where we apply cuts, on the kinematics and the PID
         if(fPidIndex[0]==2 and fTPCInnerParam[0] > 1.8):
-            # print(f"Rejected TPC inner parameter is {fTPCInnerParam[0]} ")
+            # LOG.info(f"Rejected TPC inner parameter is {fTPCInnerParam[0]} ")
             nRejectedPionsV0 += 1
             continue
         if(fPidIndex[0]==4 and fTPCInnerParam[0] > 0.8):
             nRejectedProtonsV0 += 1
-            # print("[DEBUG] Cut on Inner Param applied")
+            # LOG.info("[DEBUG] Cut on Inner Param applied")
             continue
         if(fPidIndex[0]==2 and (abs(1/fSigned1Pt[0]))> 1.8):
             nRejectedPionsV0 += 1
             continue
         if(fPidIndex[0]==4 and (abs(1/fSigned1Pt[0]))> 0.8):
             nRejectedProtonsV0 += 1
-            # print("[DEBUG] Cut on Signed1Pt applied")
+            # LOG.info("[DEBUG] Cut on Signed1Pt applied")
             continue
 
         #New Kaon cuts, to look at distribution and contamination
@@ -502,11 +461,15 @@ def update_tpctof_tree(tree, name, calculate_dEdx, output_tpctof_tree, buffers):
             continue
 
 
-        output_tpctof_tree.Fill()
+        gTree_tpctof.Fill()
 
-    LOG.info("Particles found in TPCTOF tree {name}: Electrons={nElectronV0}, Pions={nPionV0}, Kaons={nKaonV0}, Protons={nProtonV0}, Rest={nRestV0}")
-    LOG.info("Rejected particles in TPCTOF tree {name}: RejectedPions={nRejectedPionsV0}, RejectedKaons={nRejectedKaonsV0}, RejectedProtons={nRejectedProtonsV0}")
+    LOG.info(f"Particles found in TPCTOF tree: Electrons={nElectronV0}, Pions={nPionV0}, Kaons={nKaonV0}, Protons={nProtonV0}, Rest={nRestV0}")
+    LOG.info(f"Rejected particles in TPCTOF tree: RejectedPions={nRejectedPionsV0}, RejectedKaons={nRejectedKaonsV0}, RejectedProtons={nRejectedProtonsV0}")
+    gTree_tpctof.Write()
     return True
+
+
+
 
 def collect_trees(root_dir, prefix=""):
     """Recursively collect all trees in a ROOT directory."""
@@ -521,8 +484,10 @@ def collect_trees(root_dir, prefix=""):
             trees.append((full_name, obj))
     return trees
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
+    # Define the job directory
+    # Setup argument parser
     parser = argparse.ArgumentParser(description="Shift Nsigma values and apply cuts to ROOT trees.")
     parser.add_argument("--config", default="configuration.json", help="Path to the job directory containing config.txt")
     args = parser.parse_args()
@@ -535,11 +500,27 @@ if __name__ == "__main__":
 
     LOG = logger.logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="shift_nsigma_modified")
 
-    #Reading 
+    # Job_dir = "/lustre/alice/users/jwitte/tpcpid/o2-tpcpid-parametrisation/BBfitAndQA/BBFitting_DEBUG/JOBS/20250528/32632827"
+    Job_dir = CONFIG["output"]["general"]["path"]
+    LOG.info(f"Job dir = {Job_dir}")
+
+    # Read the configuration
+    CONFIG["dataset"]["Job_dir"] = Job_dir
+
+    # #define to use tpcsignal or tpcdEdxNorm
+    # CONFIG['dataset']['dEdxSelection'] = "TPCSignal"
+    # CONFIG['dataset']['dEdxSelection'] = "TPCdEdxNorm"
+    # LOG.info(f"Using Hardcoded dEdx values in shiftNSigma {config['dEdxSelection']}")
+
+    #Reading
     BB_params = CONFIG['output']['fitBBGraph']['BBparameters']
+    LOG.info(f"BB parameters used for dEdx calculation: {BB_params}")
 
     #create function to calculate dEdx values from fit
     calculate_dEdx = create_funcBBvsBGNew(BB_params)
+
+
+
 
     # Read the tree from the ROOT file
     #f is the loaded tree, that needs to be kept alive
@@ -551,29 +532,25 @@ if __name__ == "__main__":
     output_file = ROOT.TFile(os.path.join(CONFIG['output']['general']['path'],"trees",f"SkimmedTree_UpdatednSigmaAndExpdEdx_{CONFIG['output']['general']['name']}.root"), "RECREATE")
     CONFIG["output"].setdefault('shiftNsigma', {})
     CONFIG["output"]["shiftNsigma"]["Skimmedtree_shiftedNsigma_path"] = os.path.join(CONFIG['output']['general']['path'],"trees",f"SkimmedTree_UpdatednSigmaAndExpdEdx_{CONFIG['output']['general']['name']}.root")
+    CONFIG["output"]["createTrainingDataset"]["training_data"] = os.path.join(CONFIG['output']['general']['path'],"trees/merged_tree_for_training.root")
     write_config(CONFIG, path=args.config)
 
-    v0_tree, v0_buffers = create_output_tree(CONFIG['general']['V0treename'], "Reconstructed ntuple", output_file)
-    tpctof_tree, tpctof_buffers = create_output_tree(CONFIG['general']['tpctoftreename'], "Reconstructed ntuple", output_file)
-
     for name, tree in trees:
-        # LOG(f"MAIN tree '{name}' of type: {type(tree)}")
-        # count_particles_in_tree(tree, name)
+        # LOG.info(f"DEBUG: MAIN tree '{name}' of type: {type(tree)}")
         if name == CONFIG['general']['V0treename'] or name.endswith(f"/{CONFIG['general']['V0treename']}"):
             success_V0 = False
-            success_V0 = update_v0_tree(tree, name, calculate_dEdx, v0_tree, v0_buffers)
-            # LOG(f"Update of NSigma in V0 tree sucessful: {success_V0}")
+            success_V0 = update_v0_tree(tree, calculate_dEdx, output_file)
+            LOG.info(f"Update of NSigma in V0 tree sucessful: {success_V0}")
 
 
         elif name == CONFIG['general']['tpctoftreename'] or name.endswith(f"/{CONFIG['general']['tpctoftreename']}"):
         # if name == "O2tpctofskimwde":
             success_tpctof = False
-            success_tpctof = update_tpctof_tree(tree, name, calculate_dEdx, tpctof_tree, tpctof_buffers)
-            # LOG(f"Update of NSigma in tpctof tree sucessful: {success_tpctof}")
+            success_tpctof = update_tpctof_tree(tree, calculate_dEdx, output_file)
+            LOG.info(f"Update of NSigma in tpctof tree sucessful: {success_tpctof}")
         else:
-            LOG.error(f"Unexpected tree {name}")
-    count_particles_in_tree(v0_tree, "V0 output")
-    count_particles_in_tree(tpctof_tree, "TPCTOF output")
+            LOG.info(f"Unexpected tree {name}")
+
     output_file.Write()
     output_file.Close()
 

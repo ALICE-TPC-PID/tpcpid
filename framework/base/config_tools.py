@@ -2,9 +2,10 @@ import os, json
 import importlib.util
 from datetime import datetime
 import subprocess
+import sys
 from . import logger
 
-LOG = logger.logger("CreateFolders")
+LOG = logger.logger(min_severity="DEBUG", task_name="config_tools")
 
 def read_config(path="../configuration.json"):
     global CONFIG
@@ -23,7 +24,7 @@ def write_config(CONFIG, path = "../configuration.json"):
 #Reads config and adds the name of the dataset
 def add_name_and_path(config):
     # Ensure base_output_folder exists; default to $PWD (fall back to os.getcwd() if not set)
-    base_folder = os.path.abspath(os.path.join(os.environ.get("PWD", os.getcwd()), ".."))
+    base_folder = config['paths']['framework']
     dataset = config.get('dataset', {})
     required_keys = ['year', 'period', 'pass', 'optTag1', 'optTag2', 'dEdxSelection', 'HadronicRate']
     missing = [key for key in required_keys if key not in dataset]
@@ -47,15 +48,30 @@ def add_name_and_path(config):
         date_stamp,
     )
     os.makedirs(output_path, exist_ok=True)
+    LOG.info(f"Framework path = {base_folder}")
     LOG.info(f"Name of dataset = {name}")
-    LOG.info(f"Base path = {base_folder}")
-    LOG.info(f"Output path = {base_output}")
+    LOG.info(f"Output path = {output_path}")
     config["output"]["general"]["name"] = name
     config["output"]["general"]["path"] = output_path
+    if os.path.exists(output_path):
+        LOG.warning(f"Output directory {output_path} already exists. -> Will be overwritten!")
     return config
 
+def can_we_continue():
+    response = input("\n--> Do you want to continue? (y/n) ")
+    if response != 'y':
+        LOG.info("Stopping macro!")
+        sys.exit(1)
+
 def create_folders(config):
+    
     outdir = config['output']['general']['path']
+    
+    if os.path.exists(outdir):
+        os.system(f'rm -rf {outdir}')
+    os.makedirs(outdir, exist_ok=True)
+    LOG.info(f"Created output folder {outdir}")
+    
     tree_dir = os.path.join(outdir, "trees")
     os.makedirs(tree_dir, exist_ok=True)
     LOG.info(f"Created tree output folder {tree_dir}")
@@ -74,6 +90,9 @@ def create_folders(config):
             config["output"][process]["QApath"] = qa_dir
 
 def copy_config(config):
+    
+    os.system(f"cp {config['trainNeuralNetOptions']['configuration']} {os.path.join(config['output']['general']['path'], 'nnconfig.py')}")
+    config["trainNeuralNetOptions"]["configuration"] = os.path.join(config['output']['general']['path'], 'nnconfig.py')
 
     write_config(config, path=os.path.join(config["output"]["general"]["path"], "configuration.json"))
     LOG.info("Copied scripts and config to job directory")
@@ -142,10 +161,10 @@ def determine_scheduler(scheduler=None, verbose=False):
         if condor_env:
             avail_schedulers.append("htcondor")
         if verbose > 0:
-            print("The following schedulers are available: ", avail_schedulers)
-            print(avail_schedulers[0], "is picked for submission\n")
+            LOG.info("The following schedulers are available: ", avail_schedulers)
+            LOG.info(avail_schedulers[0], "is picked for submission\n")
         return avail_schedulers[0]
     else:
         if verbose > 0:
-            print(scheduler, "is picked for submission\n")
+            LOG.info(scheduler, "is picked for submission\n")
         return scheduler

@@ -1,4 +1,7 @@
 {
+    "paths": {
+        "framework": "/lustre/alice/users/csonnab/TPC/tpcpid-github-official"
+    },
     "createTrainingDatasetOptions": {
         "labels_x": [
             "fTPCInnerParam",
@@ -17,7 +20,7 @@
         "sigmarange": "3"
     },
     "dataset": {
-        "HadronicRate": "True",
+        "HadronicRate": "False",
         "dEdxSelection": "TPCSignal",
         "optTag1": "First",
         "optTag2": "FullTest",
@@ -31,6 +34,7 @@
         "tpctoftreename": "O2tpctofskimwde"
     },
     "process": {
+        "severity": "DEBUG",
         "createTrainingDataset": true,
         "fitBBGraph": true,
         "shiftNsigma": true,
@@ -39,7 +43,7 @@
     },
     "trainNeuralNetOptions": {
         "execution_mode": "FULL",
-        "configuration": "/lustre/alice/users/csonnab/TPC/tpcpid-github-official/running/configs/nnconfig.py",
+        "configuration": "/lustre/alice/users/csonnab/TPC/tpcpid-github-official/run/configs/nnconfig.py",
         "training_file": "train_single_sigma.py",
         "numberOfEpochs": "2",
         "num_networks": 1,
@@ -51,12 +55,12 @@
         "slurm": {
             "rocm_container": "/lustre/alice/users/csonnab/TPC/TPC_PRODUCTION/Containers/rocm_torch_env.sif",
             "cuda_container": "/lustre/alice/users/csonnab/TPC/TPC_PRODUCTION/Containers/cuda_torch_env.sif",
-            "job-name": "TPCPID_test",
+            "job-name": "TPCPID_TRAINING",
             "partition": "main",
             "time": 480,
             "device": "MI100_GPU",
             "cpus-per-task": 10,
-            "mem": "80G",
+            "mem": "160G",
             "mail-type": "END,FAIL,INVALID_DEPEND",
             "mail-user": "",
             "ngpus": 8

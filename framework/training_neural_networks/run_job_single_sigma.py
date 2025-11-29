@@ -17,7 +17,10 @@ args = parser.parse_args()
 config = args.config
 with open(config, 'r') as config_file:
     CONFIG = json.load(config_file)
-sys.path.append(os.path.join(CONFIG["output"]["general"]["base_folder"], "framework"))
+sys.path.append(CONFIG['paths']['framework'] + "/framework")
+from base import *
+
+LOG = logger.logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="run_job_single_sigma")
 
 output_folder   = CONFIG["output"]["general"]["training"]
 execution_mode  = CONFIG["trainNeuralNetOptions"]["execution_mode"]
@@ -25,6 +28,7 @@ training_file   = CONFIG["trainNeuralNetOptions"]["training_file"]
 num_networks	= CONFIG["trainNeuralNetOptions"]["num_networks"]
 enable_qa		= CONFIG["trainNeuralNetOptions"]["enable_qa"]
 scheduler       = CONFIG["trainNeuralNetOptions"]["scheduler"]
+qa_dir          = CONFIG["output"]["trainNeuralNet"]["QApath"]
 
 
 if scheduler == "slurm":
@@ -33,47 +37,48 @@ if scheduler == "slurm":
 
     if("RUN12" in execution_mode):
         out = subprocess.check_output("sbatch --output={0}/networks/network_run12/job.out --error={0}/networks/network_run12/job.err {0}/TRAIN.sh {1} RUN12".format(output_folder, args.config), shell=True).decode().strip('\n')
-        print(out)
+        LOG.info(out)
         job_ids[0] = str(out.split(" ")[-1])
- 
+
     if ("MEAN" in execution_mode) or (execution_mode=="FULL"):
         ### Submit job for mean calculation
         out = subprocess.check_output("sbatch --output={0}/networks/network_mean/job.out --error={0}/networks/network_mean/job.err {0}/TRAIN.sh {1} MEAN".format(output_folder, args.config), shell=True).decode().strip('\n')
-        print(out)
+        LOG.info(out)
         job_ids[0] = str(out.split(" ")[-1])
 
     if ("SIGMA" in execution_mode) or (execution_mode=="FULL"):
         ### Submit job for sigma calculation
         out = subprocess.check_output("sbatch --output={0}/networks/network_sigma/job.out --error={0}/networks/network_sigma/job.err --dependency=afterok:{1} {0}/TRAIN.sh {2} SIGMA".format(output_folder, job_ids[0], args.config), shell=True).decode().strip('\n')
-        print(out)
+        LOG.info(out)
         job_ids.append(str(out.split(" ")[-1]))
 
     if execution_mode=="FULL":
         ### Submit job for full network calculation
         out = subprocess.check_output("sbatch --output={0}/networks/network_full/job.out --error={0}/networks/network_full/job.err --dependency=afterok:{1} {0}/TRAIN.sh {2} FULL".format(output_folder, job_ids[-1], args.config), shell=True).decode().strip('\n')
-        print(out)
+        LOG.info(out)
         job_ids.append(str(out.split(" ")[-1]))
-    
+
     if enable_qa in ["True", 1]:
         ### Submit job for QA output
-        out = subprocess.check_output("sbatch --output={0}/QA/job.out --error={0}/QA/job.err --dependency=afterok:{1} {0}/QA.sh {2}".format(output_folder, job_ids[-1], args.config), shell=True).decode().strip('\n')
-        print(out)
+        # out = subprocess.check_output("sbatch --output={0}/QA/job.out --error={0}/QA/job.err --dependency=afterok:{1} {0}/QA.sh {2}".format(output_folder, job_ids[-1], args.config), shell=True).decode().strip('\n')
+        out = subprocess.check_output("sbatch --output={0}/job.out --error={0}/job.err --dependency=afterok:{1} {0}/QA.sh {2}".format(qa_dir, job_ids[-1], args.config), shell=True).decode().strip('\n')
+        LOG.info(out)
         job_ids.append(str(out.split(" ")[-1]))
-        
+
 
 
 elif scheduler == "htcondor":
 
     import htcondor
     import htcondor.dags as dags
-    
+
     condor_settings = CONFIG["trainNeuralNetOptions"]["htcondor"]
-    
+
     dag = dags.DAG()
     dag_layers = list()
 
     # +JobFlavour: espresso = 20 minutes,microcentury = 1 hour,longlunch = 2 hours,workday = 8 hours,tomorrow = 1 day,testmatch = 3 days,nextweek = 1 week
-    
+
     if ("MEAN" in execution_mode) or (execution_mode=="FULL"):
         ### Submit job for mean calculation
         exec_dict = {
@@ -114,8 +119,8 @@ elif scheduler == "htcondor":
 
     dags.write_dag(dag, output_folder)
     dag_submit = htcondor.Submit.from_dag(str(output_folder+"/dagfile.dag"), {'force': 1})
-    
+
     os.chdir(str(output_folder))
     schedd = htcondor.Schedd()
     cluster_id = schedd.submit(dag_submit).cluster()
-    print(f"DAGMan job cluster is {cluster_id}")
+    LOG.info(f"DAGMan job cluster is {cluster_id}")

@@ -169,5 +169,3 @@ class load_tree():
 
         file['data_tree'] = dicts
         file.close()
-
-        print("Successfully exported data to TTree!\n")

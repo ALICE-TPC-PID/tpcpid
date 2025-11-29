@@ -15,7 +15,6 @@ import argparse
 #     if key.startswith('legend.'):
 #         mpl.rcParams[key] = mpl.rcParamsDefault[key]
 
-print("--- Starting the data preparation script ---\n")
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--config", default="configuration.json", help="Path to configuration file")
 parser.add_argument("-o", "--output-path", default="training_data", help="Output absolute path for the merged tree")
@@ -36,9 +35,13 @@ args = parser.parse_args()
 config = args.config
 with open(config, 'r') as config_file:
     CONFIG = json.load(config_file)
-sys.path.append(os.path.join(CONFIG["output"]["general"]["base_folder"], "framework"))
+sys.path.append(CONFIG['paths']['framework'] + "/framework")
 from base import *
 from neural_network_class.NeuralNetworkClasses.extract_from_root import *
+
+LOG = logger.logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="CreateDataset")
+
+LOG.info("--- Starting the data preparation script ---\n")
 
 period = CONFIG['dataset']['period']
 apass = CONFIG['dataset']['pass']
@@ -50,7 +53,7 @@ date = datetime.today().strftime('%d%m%Y')
 plot_path = os.path.join(CONFIG['output']['general']['path'], "QA", "createTrainingDataset")
 
 dir_tree = CONFIG['output']['shiftNsigma']['Skimmedtree_shiftedNsigma_path']
-print("Period:", period, "; apass:", apass, "; input is:", dir_tree)
+LOG.info("Period: " + period + "; apass: " + apass + "; input is: " + dir_tree)
 
 ### V0 cleaning
 
@@ -191,7 +194,7 @@ cload = load_tree()
 TTree = cload.print_trees(dir_tree)
 mode = args.loading_mode
 import_labels = [*LABELS_Y, *LABELS_X, 'fPidIndex','fRunNumber']
-print(f"[DEBUG]: Import labels are {import_labels}")
+LOG.debug(f"Import labels are {import_labels}")
 if mode=="full":
     labels, fit_data = cload.load(use_vars=import_labels, limit = 100, path=dir_tree, load_latest=True, verbose=True)
 else:
@@ -225,8 +228,15 @@ else:
 # Normalize fFT0Occ by a factor of 60000
 ft0occ_index = np.where(labels == 'fFt0Occ')[0][0]  # Locate the index of fFT0Occ in labels
 fit_data[:, ft0occ_index] /= 60000
+LOG.debug("FT0 occupancy normalization set to 60000")
+
+if CONFIG['dataset']['HadronicRate'].strip().lower() == "true":
+    LOG.info("Using Hadronic Rate option in CreateDataset and normalise HadronicRate branch to 50")
+    fHadronicRate_index = np.where(labels == 'fHadronicRate')[0][0]  # Locate the index of fHadronicRate in labels
+    fit_data[:, fHadronicRate_index] /= 50
+    
 samplesize = int(CONFIG['createTrainingDatasetOptions']['samplesize'])
-print(f"samplesize is {samplesize}")
+LOG.info(f"Training data samplesize is set to {samplesize}")
 
 if len(fit_data) >= samplesize:
     ### Downsampling to defined sample size
@@ -240,17 +250,17 @@ plt.hist2d(fit_data[:,labels=="fTPCInnerParam"].flatten(), fit_data[:,labels=="f
 plt.xscale("log")
 plt.grid()
 plt.savefig(os.path.join(plot_path, "initial_dEdx_vs_p.pdf"))
-print("Saved initial dE/dx vs. p plot.")
+LOG.info("Saved initial dE/dx vs. p plot.")
 
 ### Trending of MIP vs. runnumber
 
-print("Processing trending of MIP pions vs. runnumber...")
+LOG.info("Processing trending of MIP pions vs. runnumber...")
 
 pions_at_mip = ((np.abs(fit_data[:, labels=="fTPCInnerParam"] - 0.4) < 0.01) * (np.abs(fit_data[:, labels=="fMass"] - 0.13957) < 0.0001)).flatten()
 run_numbers = np.sort(np.unique(fit_data[:, labels=="fRunNumber"]))
 gaussian_fits = list()
 for run in run_numbers:
-    print("Run:", int(run))
+    LOG.info("Run: " + str(int(run)))
     run_mask = (fit_data[:, labels=="fRunNumber"] == run).flatten() * pions_at_mip
     run_data = fit_data[run_mask]
     for mult in tqdm(np.arange(0., 3., 0.1)):
@@ -303,7 +313,7 @@ if len(gaussian_fits):
 
     plt.savefig(os.path.join(plot_path, "mip_pi_trending.pdf"))
 else:
-    print("No data for MIP trending. Skipping...")
+    LOG.info("No data for MIP trending. Skipping...")
 
 
 ### Index reordering
@@ -364,20 +374,20 @@ def selector(X, Y, rangeX, rangeY, bins_sigma_mean = 200, p0 = [1.,0,0.1], use_g
                 if((coeff[1] < 0.5) * (coeff[2] > -0.5) * (coeff[2] < 1.5) * (coeff[2] > 0.7)):
                     binned_mean[0][j], binned_sigma[0][j] = coeff[1], coeff[2]
             except Exception as e:
-                print(e)
+                LOG.info(e)
                 continue
 
     x_ax = np.linspace(rangeX[0],rangeX[1], bins_sigma_mean)
     mask_poly = (x_ax>rangeX[0]) * (x_ax<rangeX[1])
-    
+
     try:
         poly_mean = np.polyfit(x_ax[mask_poly],np.array(binned_mean[0])[mask_poly],deg=13)
         poly_sigma = np.polyfit(x_ax[mask_poly],(np.array(binned_mean[0])+np.array(binned_sigma[0]))[mask_poly],deg=13)
         return (np.abs((Y - np.polyval(poly_mean,X))/(np.polyval(poly_sigma,X) - np.polyval(poly_mean, X))) < sigma_threshold), poly_mean, poly_sigma, binned_mean, binned_sigma
     except Exception as e:
-        print(e)
+        LOG.info(e)
         return np.array([True]*len(X)), poly_mean, poly_sigma, binned_mean, binned_sigma
-    
+
 ### Excluding outside 3 sigma range for indiv. particle species
 
 momentum_ranges = {
@@ -400,12 +410,13 @@ y_space = np.linspace(-5, 5, 20*8)
 
 collect_data = 0
 
-print("Processing data...")
+LOG.info("Processing data...")
 
 for i, m in enumerate(tqdm(np.sort(np.unique(new_data.T[labels=='fMass']))[:4])):
 
     mask = (new_data.T[labels=='fMass'].flatten() == m)
-    print(np.sum(mask))
+    particle = particles[np.where(np.abs(np.array(masses) - m)<0.001)[0][0]]
+    LOG.info("Particles found: " + str(np.sum(mask)) + " (" + str(particle) + ")")
 
     X = new_data[:,labels=="fTPCInnerParam"].flatten()[mask]
     Y = (new_data[:,labels=='fTPCSignal'].flatten()[mask]*new_data[:,labels=='fInvDeDxExpTPC'].flatten()[mask] - 1.)/0.07
@@ -429,7 +440,7 @@ for i, m in enumerate(tqdm(np.sort(np.unique(new_data.T[labels=='fMass']))[:4]))
     elif i == 5:
         collect_data = np.vstack((collect_data, test_data[new_mask * (test_data[:,labels=='fTPCInnerParam'].flatten() > p_cut[i][0]) * (test_data[:,labels=='fTPCInnerParam'].flatten() < p_cut[i][1])]))
     else:
-        print("This mass (" + str(m) + ") is not supported!")
+        LOG.info("This mass (" + str(m) + ") is not supported!")
 
     fig = plt.figure(figsize=(16,9))
     plt.hist2d(X, Y, bins = (x_space, y_space), cmap=cm.jet, norm=mcolors.LogNorm())
@@ -450,15 +461,15 @@ for i, m in enumerate(tqdm(np.sort(np.unique(new_data.T[labels=='fMass']))[:4]))
     plt.xscale('log')
     plt.xlabel('p [GeV/c]')
     plt.ylabel('TPC Nσ, σ=7%')
-    plt.savefig(os.path.join(plot_path, "dEdx_vs_p_selection_{0}.pdf".format(particles[np.where(np.abs(np.array(masses) - m)<0.001)[0][0]])))
-    print("Saved dE/dx vs. p selection plot for {0}.".format(particles[np.where(np.abs(np.array(masses) - m)<0.001)[0][0]]))
+    plt.savefig(os.path.join(plot_path, "dEdx_vs_p_selection_{0}.pdf".format(particle)))
+    LOG.info("Saved dE/dx vs. p selection plot for {0}.".format(particle))
 
 new_data = collect_data
 
 ### Down- / Oversampling
 import random
 
-print("Data-points before: ", np.shape(new_data)[0])
+LOG.info("Data-points before: " + str(np.shape(new_data)[0]))
 
 percentages = []
 for i, m in enumerate(np.sort(np.unique(new_data.T[labels=='fMass']))):
@@ -497,13 +508,13 @@ for i, m in enumerate(np.sort(np.unique(new_data.T[labels=='fMass']))):
         new_data = np.vstack((new_data, new_data[mask][randint]))
 
 
-print("Data-points after: ", np.shape(new_data)[0], "\n")
+LOG.info("Data-points after: " + str(np.shape(new_data)[0]))
 
 for i, m in enumerate(np.sort(np.unique(new_data.T[labels=='fMass']))):
-    print(particles[np.where(np.abs(np.array(masses) - m)<0.001)[0][0]], ": ", np.sum(new_data.T[labels=='fMass'].flatten() == m)*100/np.shape(new_data)[0], "%")
+    LOG.info(particles[np.where(np.abs(np.array(masses) - m)<0.001)[0][0]] + ": " + str(np.sum(new_data.T[labels=='fMass'].flatten() == m)*100/np.shape(new_data)[0]) + "%")
 
 ### Export data to file
 cload = load_tree()
 cload.export_to_tree(output_path, np.array(labels).astype(str), new_data, overwrite=True)
 
-print("Exported data to: ", output_path)
+LOG.info("Exported data to: " + output_path)

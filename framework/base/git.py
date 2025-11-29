@@ -1,7 +1,7 @@
 import subprocess
 from . import logger
 
-LOG = logger.logger("Git")
+LOG = logger.logger(min_severity="DEBUG", task_name="git")
 
 def git(*args):
     return subprocess.check_output(["git"] + list(args), encoding="utf-8").strip()
@@ -29,10 +29,11 @@ def safe_git_tag():
         return None
 
 def full_git_config(save_to_file : str, verbose=True):
-    branch = git("rev-parse", "--abbrev-ref", "HEAD")
-    commit = git("rev-parse", "HEAD")
     remote = normalize_remote(git("config", "--get", "remote.origin.url"))
     tag = safe_git_tag() or "N/A"
+    if tag == "N/A":
+        branch = git("rev-parse", "--abbrev-ref", "HEAD")
+        commit = git("rev-parse", "HEAD")
 
     if verbose:
         LOG.info(f"Branch: {branch}")

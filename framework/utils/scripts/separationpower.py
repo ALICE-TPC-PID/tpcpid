@@ -157,9 +157,9 @@ def separation_power(labels_loc, fit_data_loc, useNN=0, useMassAssumption=0, mom
     plt.legend(title="Separation power: " + "{:.3f}".format(sep_power))
     plt.grid()
     if useNN:
-        plt.savefig(output_dir + '/SeparationPower/SeparationPower_' + particles[useMassAssumption] + 'MassHypothesis_NN.png', bbox_inches='tight', dpi=200)
+        plt.savefig(output_dir + '/SeparationPower/SeparationPower_' + particles[useMassAssumption] + 'MassHypothesis_NN.pdf', bbox_inches='tight')
     else:
-        plt.savefig(output_dir + '/SeparationPower/SeparationPower_' + particles[useMassAssumption] + 'MassHypothesis_BB.png', bbox_inches='tight', dpi=200)
+        plt.savefig(output_dir + '/SeparationPower/SeparationPower_' + particles[useMassAssumption] + 'MassHypothesis_BB.pdf', bbox_inches='tight')
     plt.close()
 
     hist, edges = np.histogram(fit_data_all[:,labels_all=="fHadronicRate"].flatten(), bins=plot_bins, range=(np.min(fit_data_all[:,labels_all=="fHadronicRate"]), np.max(fit_data_all[:,labels_all=="fHadronicRate"])), density=True)
@@ -262,9 +262,9 @@ def separation_power(labels_loc, fit_data_loc, useNN=0, useMassAssumption=0, mom
             # plt.ylabel('Density', fontsize=fontsize_axislabels)
             # plt.grid()
             # if useNN:
-            #     plt.savefig(output_dir + '/SeparationPower/debug/SeparationPower_' + particles[useMassAssumption] + 'MassHypothesis_NN' + str(i) + '.png', bbox_inches='tight', dpi=200)
+            #     plt.savefig(output_dir + '/SeparationPower/debug/SeparationPower_' + particles[useMassAssumption] + 'MassHypothesis_NN' + str(i) + '.pdf', bbox_inches='tight')
             # else:
-            #     plt.savefig(output_dir + '/SeparationPower/debug/SeparationPower_' + particles[useMassAssumption] + 'MassHypothesis_BB' + str(i) + '.png', bbox_inches='tight', dpi=200)
+            #     plt.savefig(output_dir + '/SeparationPower/debug/SeparationPower_' + particles[useMassAssumption] + 'MassHypothesis_BB' + str(i) + '.pdf', bbox_inches='tight')
             # plt.close()
 
     fit_dict[particles[useMassAssumption] + ("_NN" if useNN else "_BB")] = trending_output
@@ -299,9 +299,9 @@ def separation_power(labels_loc, fit_data_loc, useNN=0, useMassAssumption=0, mom
     axs[2].set_xlim(np.min(fit_data_all[:, labels_all == "fHadronicRate"]), np.max(fit_data_all[:, labels_all == "fHadronicRate"]))
     axs[2].grid()
     if useNN:
-        plt.savefig(output_dir + '/SeparationPower/SeparationPower_trending_' + particles[useMassAssumption] + 'MassHypothesis_NN.png', bbox_inches='tight', dpi=200)
+        plt.savefig(output_dir + '/SeparationPower/SeparationPower_trending_' + particles[useMassAssumption] + 'MassHypothesis_NN.pdf', bbox_inches='tight')
     else:
-        plt.savefig(output_dir + '/SeparationPower/SeparationPower_trending_' + particles[useMassAssumption] + 'MassHypothesis_BB.png', bbox_inches='tight', dpi=200)
+        plt.savefig(output_dir + '/SeparationPower/SeparationPower_trending_' + particles[useMassAssumption] + 'MassHypothesis_BB.pdf', bbox_inches='tight')
     plt.close()
 
 fig = plt.figure(figsize=(16,9))
@@ -310,7 +310,7 @@ plt.xlim(np.min(fit_data_all[:,labels_all=="fHadronicRate"]), np.max(fit_data_al
 plt.xlabel("Hadronic rate [kHz]", fontsize=fontsize_axislabels)
 plt.ylabel("Density", fontsize=fontsize_axislabels)
 plt.grid()
-plt.savefig(output_dir + '/SeparationPower/HadronicRate.png', bbox_inches='tight', dpi=200)
+plt.savefig(output_dir + '/SeparationPower/HadronicRate.pdf', bbox_inches='tight')
 plt.close()
 
 separation_power(labels, fit_data, useNN=1, useMassAssumption=0)
