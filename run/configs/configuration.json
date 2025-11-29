@@ -10,7 +10,8 @@
             "fMass",
             "fNormMultTPC",
             "fNormNClustersTPC",
-            "fFt0Occ"
+            "fFt0Occ",
+            "fHadronicRate"
         ],
         "labels_y": [
             "fTPCSignal",
@@ -20,13 +21,11 @@
         "sigmarange": "3"
     },
     "dataset": {
-        "HadronicRate": "False",
         "dEdxSelection": "TPCSignal",
-        "optTag1": "First",
-        "optTag2": "FullTest",
-        "pass": "5",
-        "period": "zzh",
+        "pass": "apass5",
+        "period": "zzf",
         "year": "23",
+        "optTag": "",
         "input_skimmedtree_path": "/lustre/alice/users/marin/R3A/TPCTreeswithNN/PbPbapass5_HR_251006/TPCTrees_HR_LHC23zzf_251006/AO2D_merge_LHC23zzf.root"
     },
     "general": {
@@ -34,7 +33,7 @@
         "tpctoftreename": "O2tpctofskimwde"
     },
     "process": {
-        "severity": "DEBUG",
+        "severity": "INFO",
         "createTrainingDataset": true,
         "fitBBGraph": true,
         "shiftNsigma": true,

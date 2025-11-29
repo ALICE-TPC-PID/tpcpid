@@ -16,6 +16,7 @@ from base import *
 
 LOG = logger.logger("Framework")
 LOG.welcome_message()
+full_git_config(verbose=True)
 
 CONFIG = add_name_and_path(CONFIG)
 can_we_continue() # Ask user if they want to continue with the given configuration, recreates the output folders if necessary
