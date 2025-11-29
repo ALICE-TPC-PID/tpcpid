@@ -28,6 +28,7 @@ with open(args.config, 'r') as config_file:
 sys.path.append(CONFIG['paths']['framework'] + "/framework")
 from base import *
 from neural_network_class.NeuralNetworkClasses.extract_from_root import *
+nnconfig = import_from_path(CONFIG["trainNeuralNetOptions"]["configuration"])
 
 ########### Import the Neural Network class ###########
 
@@ -329,10 +330,9 @@ def separation_power(useNN=0, useMassAssumption=0, momentumSelection=[0.3,0.4],
     # input = input[selection]
     net_out_tmp = net_out[selection]
     fit_data_tmp = fit_data[selection]
-    LOG.info(f"Default BB params: {configurations.BB_PARAMS}")
 
-    BBparams = CONFIG['output']['fitBBGraph']['BBparameters']
     LOG.info("Looking for provided BB params")
+    BBparams = CONFIG['output']['fitBBGraph']['BBparameters']
     #Using extension to account for christians syntax
     BBparams.extend([50,2.3])
     LOG.info(f"Found BB params {BBparams}")

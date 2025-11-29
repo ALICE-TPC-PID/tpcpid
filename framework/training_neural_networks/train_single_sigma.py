@@ -16,7 +16,7 @@ import torch
 
 from sklearn.model_selection import train_test_split
 
-########### Load the configurations from config.json ###########
+########### Load the configurations.json ###########
 
 ### Command line arguments
 parser = argparse.ArgumentParser()
@@ -34,7 +34,7 @@ from neural_network_class.NeuralNetworkClasses.NN_class import *
 
 LOG = logger.logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="train_single_sigma")
 
-configurations = import_from_path(CONFIG["trainNeuralNetOptions"]["configuration"])
+nnconfig = import_from_path(CONFIG["trainNeuralNetOptions"]["configuration"])
 
 ### directory settings
 output_folder       = CONFIG["output"]["general"]["training"]
@@ -93,7 +93,7 @@ def run_network(data, ort_session, hardware=torch.device('cuda' if torch.cuda.is
 
 if args.train_mode=='MEAN':
 
-    dict_config = configurations.DICT_MEAN
+    dict_config = nnconfig.DICT_MEAN
     dict_config["NET_DEF"]["n_neurons_input"] = len(LABELS_X)
     dict_config["NET_TRAINING"]["epochs"] = EPOCHS
     dict_config["NET_TRAINING"]["loss_function"] = weighted_mse_loss
@@ -102,7 +102,7 @@ if args.train_mode=='MEAN':
 
 elif args.train_mode=="SIGMA":
 
-    dict_config = configurations.DICT_SIGMA
+    dict_config = nnconfig.DICT_SIGMA
     dict_config["NET_DEF"]["n_neurons_input"] = len(LABELS_X)
     dict_config["NET_TRAINING"]["epochs"] = EPOCHS
     dict_config["NET_TRAINING"]["loss_function"] = weighted_mse_loss
@@ -115,7 +115,7 @@ elif args.train_mode=="SIGMA":
 
 elif args.train_mode=="FULL":
 
-    dict_config = configurations.DICT_FULL
+    dict_config = nnconfig.DICT_FULL
     dict_config["NET_DEF"]["n_neurons_input"] = len(LABELS_X)
     dict_config["NET_TRAINING"]["epochs"] = EPOCHS
     dict_config["NET_TRAINING"]["loss_function"] = weighted_mse_loss
@@ -136,7 +136,7 @@ else:
 
 ##### Network training #####
 
-H_SIZES, LAYER_TYPES, ACTIVATION = configurations.network_def(**dict_config["NET_DEF"])
+H_SIZES, LAYER_TYPES, ACTIVATION = nnconfig.network_def(**dict_config["NET_DEF"])
 NeuralNet = NN(General_NN(params = H_SIZES, layer_types = LAYER_TYPES, act_func =ACTIVATION, **dict_config["NET_SETTINGS"]))
 
 ### data preparation

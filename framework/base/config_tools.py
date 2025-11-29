@@ -60,7 +60,7 @@ def add_name_and_path(config):
 def can_we_continue():
     response = input("\n--> Do you want to continue? (y/n) ")
     if response != 'y':
-        LOG.info("Stopping macro!")
+        LOG.error("Stopping macro!")
         sys.exit(1)
 
 def create_folders(config):

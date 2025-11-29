@@ -45,7 +45,7 @@
         "execution_mode": "FULL",
         "configuration": "/lustre/alice/users/csonnab/TPC/tpcpid-github-official/run/configs/nnconfig.py",
         "training_file": "train_single_sigma.py",
-        "numberOfEpochs": "2",
+        "numberOfEpochs": "200",
         "num_networks": 1,
         "qa_file": "training_qa.py",
         "enable_qa": "True",
