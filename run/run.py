@@ -38,7 +38,7 @@ exec_script = """#!/bin/bash
 time python3 {p}/run/src/run_framework.py --config $1
 """.format(p=framework_path, l=output_path)
 
-script_path = os.path.join(framework_path, 'run/RUN_SLURM.sh')
+script_path = os.path.join(framework_path, 'run/srcRUN_SLURM.sh')
 with open(script_path, 'w') as script_file:
     script_file.write(exec_script)
 

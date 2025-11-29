@@ -1,2 +1,0 @@
-In this file, all output will live.
-It will be organised by years, pass, period, hadronicRate option and date, with timestamp. In the folder for each run, the QA will be separated. There will be logs, the scripts used for the process, the copy of the configurations, the parameters and datasets created on the fly. Everything will be labeled clearly.

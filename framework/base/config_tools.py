@@ -48,14 +48,21 @@ def add_name_and_path(config):
 
     base_output = os.path.join(base_folder, "output")
     date_stamp = datetime.now().strftime("%Y%m%d")
-    output_path = os.path.join(
-        base_output,
-        f"LHC{dataset['year']}",
-        f"{dataset['period']}",
-        f"{dataset['pass']}",
-        name,
-        date_stamp,
-    )
+    if not "outputPath" in dataset.keys():
+        output_path = os.path.join(
+            base_output,
+            f"LHC{dataset['year']}",
+            f"{dataset['period']}",
+            f"{dataset['pass']}",
+            name,
+            date_stamp,
+        )
+    else:
+        output_path = os.path.join(
+            base_output,
+            f"{dataset['outputPath']}",
+            date_stamp,
+        )
     LOG.info(f"Framework path = {base_folder}")
     LOG.info(f"Name of dataset = {name}")
     LOG.info(f"Output path = {output_path}")
