@@ -28,13 +28,14 @@ from base import *
 
 LOG = logger.logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="shell_script_creation")
 
-output_folder   = CONFIG["output"]["general"]["training"]
-scheduler       = CONFIG["trainNeuralNetOptions"]["scheduler"]
-job_dict        = CONFIG["trainNeuralNetOptions"][scheduler]
+output_folder           = CONFIG["output"]["general"]["training"]
+scheduler               = CONFIG["trainNeuralNetOptions"]["scheduler"]
+job_dict                = CONFIG["trainNeuralNetOptions"][scheduler]
 
-full_path_out = output_folder
-job_dict["chdir"] = full_path_out
-job_dict["job_script"] = job_script
+full_path_out           = output_folder
+qa_dir                  = CONFIG["output"]["trainNeuralNet"]["QApath"]
+job_dict["chdir"]       = full_path_out
+job_dict["job_script"]  = job_script
 
 if scheduler.lower() == "slurm":
 
@@ -188,7 +189,7 @@ time singularity exec %(cuda_container)s python3 %(job_script)s --config $1 --tr
         actual_job_script = job_script
 
         if job_dict["device"] == "EPN": ### Setup to submit to EPN nodes
-            bash_file = open(path.join(full_path_out, "QA.sh"), "w")
+            bash_file = open(path.join(qa_dir, "QA.sh"), "w")
             bash_file.write(
 
 """#!/bin/bash
@@ -206,7 +207,7 @@ time python3.9 %(actual_job_script)s --config $1
 
         else:
 
-            bash_file = open(path.join(full_path_out, "QA.sh"), "w")
+            bash_file = open(path.join(qa_dir, "QA.sh"), "w")
             bash_file.write(
 """#!/bin/bash
 #SBATCH --job-name=%(job-name)s                                                 # Task name

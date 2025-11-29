@@ -28,21 +28,46 @@ def safe_git_tag():
     except subprocess.CalledProcessError:
         return None
 
-def full_git_config(save_to_file : str, verbose=True):
+def full_git_config(save_to_file: str, verbose=True):
     remote = normalize_remote(git("config", "--get", "remote.origin.url"))
-    tag = safe_git_tag() or "N/A"
-    if tag == "N/A":
-        branch = git("rev-parse", "--abbrev-ref", "HEAD")
-        commit = git("rev-parse", "HEAD")
+    tag = safe_git_tag() or None
+    branch = git("rev-parse", "--abbrev-ref", "HEAD")
+    commit = git("rev-parse", "HEAD")
 
     if verbose:
+        LOG.info(f"Remote: {remote}")
         LOG.info(f"Branch: {branch}")
         LOG.info(f"Commit: {commit}")
-        LOG.info(f"Remote: {remote}")
-        LOG.info(f"Tag: {tag}")
+        LOG.info(f"Tag: {tag if tag else 'N/A'}")
+
+        if tag:
+            LOG.info(
+                "To reproduce this state:\n"
+                f"  git clone {remote}\n"
+                f"  git fetch --tags\n"
+                f"  git checkout {tag}"
+            )
+        else:
+            LOG.info(
+                "To reproduce this state:\n"
+                f"  git clone {remote}\n"
+                f"  git fetch origin {branch}\n"
+                f"  git checkout {commit}"
+            )
+
     if save_to_file:
         with open(save_to_file, "w") as f:
+            f.write(f"Remote: {remote}\n")
             f.write(f"Branch: {branch}\n")
             f.write(f"Commit: {commit}\n")
-            f.write(f"Remote: {remote}\n")
-            f.write(f"Tag: {tag}\n")
+            f.write(f"Tag: {tag if tag else 'N/A'}\n")
+            if tag:
+                f.write("Reproduce:\n")
+                f.write(f"git clone {remote}\n")
+                f.write(f"git fetch --tags\n")
+                f.write(f"git checkout {tag}\n")
+            else:
+                f.write("Reproduce:\n")
+                f.write(f"git clone {remote}\n")
+                f.write(f"git fetch origin {branch}\n")
+                f.write(f"git checkout {commit}\n")

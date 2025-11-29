@@ -115,7 +115,7 @@ net_out = network(X,ort_session=ort_sess_full)[0] ### Precompute for speed
 
 def QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTPCInnerParam', log_x = True, range_hists = [[-1.,1.]]*6, fitted_particles=['Electrons', 'Pions', 'Kaons', 'Protons', 'Deuterons', 'Tritons'], bins_sig_mean=100, sigma_range = [-3.,3.], useNN = True, xlabel = r'p [GeV/c]', transform_x = lambda x: x, plot_mode="nsigma"):
 
-    LOG.info("Creating histograms for" + fitted_particles[i] + " against " + plot_against + " for mode: " + plot_mode)
+    LOG.info("Creating histograms for " + fitted_particles[i] + " against " + plot_against + " for mode: " + plot_mode)
 
     fig = plt.figure(figsize=(16,10))
 
