@@ -33,9 +33,9 @@ nnconfig = import_from_path(CONFIG["trainNeuralNetOptions"]["configuration"])
 ########### Import the Neural Network class ###########
 
 # Follow old-script behavior: read HadronicRate from config and cast to bool
-HadronicRateString = CONFIG['dataset']['HadronicRate']
-HadronicRateBool = HadronicRateString.strip().lower() == "true"
-LOG.debug(f"Using Hadronic Rate option {HadronicRateString}")
+HadronicRateBool = "fHadronicRate" in CONFIG['createTrainingDatasetOptions']['labels_x']
+if HadronicRateBool:
+    LOG.debug("Using Hadronic Rate option")
 
 ### Data preparation
 

@@ -230,7 +230,7 @@ ft0occ_index = np.where(labels == 'fFt0Occ')[0][0]  # Locate the index of fFT0Oc
 fit_data[:, ft0occ_index] /= 60000
 LOG.debug("FT0 occupancy normalization set to 60000")
 
-if CONFIG['dataset']['HadronicRate'].strip().lower() == "true":
+if "fHadronicRate" in CONFIG['createTrainingDatasetOptions']['labels_x']:
     LOG.info("Using Hadronic Rate option in CreateDataset and normalise HadronicRate branch to 50")
     fHadronicRate_index = np.where(labels == 'fHadronicRate')[0][0]  # Locate the index of fHadronicRate in labels
     fit_data[:, fHadronicRate_index] /= 50
@@ -250,7 +250,7 @@ plt.hist2d(fit_data[:,labels=="fTPCInnerParam"].flatten(), fit_data[:,labels=="f
 plt.xscale("log")
 plt.grid()
 plt.savefig(os.path.join(plot_path, "initial_dEdx_vs_p.pdf"))
-LOG.info("Saved initial dE/dx vs. p plot.")
+LOG.debug("Saved initial dE/dx vs. p plot.")
 
 ### Trending of MIP vs. runnumber
 
@@ -462,7 +462,7 @@ for i, m in enumerate(tqdm(np.sort(np.unique(new_data.T[labels=='fMass']))[:4]))
     plt.xlabel('p [GeV/c]')
     plt.ylabel('TPC Nσ, σ=7%')
     plt.savefig(os.path.join(plot_path, "dEdx_vs_p_selection_{0}.pdf".format(particle)))
-    LOG.info("Saved dE/dx vs. p selection plot for {0}.".format(particle))
+    LOG.debug("Saved dE/dx vs. p selection plot for {0}.".format(particle))
 
 new_data = collect_data
 
