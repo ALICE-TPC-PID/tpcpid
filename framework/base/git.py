@@ -26,11 +26,13 @@ def safe_git_tag(path=None):
     tag = git("tag", "--points-at", "HEAD", path=path)
     if tag:
         return tag
-
-    try:
-        return git("describe", "--tags", "--abbrev=0", quiet=True, path=path)
-    except subprocess.CalledProcessError:
+    else:
         return None
+
+    # try:
+    #     return git("describe", "--tags", "--abbrev=0", quiet=True, path=path)
+    # except subprocess.CalledProcessError:
+    #     return None
 
 def full_git_config(save_to_file=None, verbose=True, path=None):
     remote = normalize_remote(git("config", "--get", "remote.origin.url", path=path))
