@@ -1,6 +1,13 @@
 {
-    "paths": {
-        "framework": "/lustre/alice/users/csonnab/TPC/tpcpid-github-official"
+    "settings": {
+        "framework": "/lustre/alice/users/csonnab/TPC/tpcpid-github-official",
+        "git": {
+            "checkout": 1,
+            "remote": "https://github.com/ChSonnabend/tpcpid",
+            "branch": "main",
+            "commit": "latest",
+            "tag": "N/A"
+        }
     },
     "createTrainingDatasetOptions": {
         "labels_x": [
@@ -10,8 +17,7 @@
             "fMass",
             "fNormMultTPC",
             "fNormNClustersTPC",
-            "fFt0Occ",
-            "fHadronicRate"
+            "fFt0Occ"
         ],
         "labels_y": [
             "fTPCSignal",

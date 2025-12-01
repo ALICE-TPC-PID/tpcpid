@@ -11,19 +11,27 @@ if not os.path.exists(args.config):
     
 with open(args.config, 'r') as config_file:
     CONFIG = json.load(config_file)
-sys.path.append(CONFIG['paths']['framework'] + "/framework")
+sys.path.append(CONFIG['settings']['framework'] + "/framework")
 from base import *
 
 LOG = logger.logger("Framework")
 LOG.welcome_message()
-full_git_config(verbose=True)
+
+if CONFIG['settings'].get('git', {}).get('checkout', 0) == 1:
+    LOG.framework("Checking out the specified git commit/tag/branch...")
+    git_config = CONFIG['settings']['git']
+    checkout_from_config(
+        git_config=git_config,
+        path=CONFIG['settings']['framework']
+    )
+full_git_config(verbose=True, path=CONFIG['settings']['framework'])
 
 CONFIG = add_name_and_path(CONFIG)
 can_we_continue() # Ask user if they want to continue with the given configuration, recreates the output folders if necessary
 create_folders(CONFIG)
 config_path = copy_config(CONFIG)
 
-framework_path = CONFIG['paths']['framework']
+framework_path = CONFIG['settings']['framework']
 output_path = CONFIG["output"]["general"]["path"]
 
 exec_script = """#!/bin/bash

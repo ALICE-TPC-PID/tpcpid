@@ -2,6 +2,7 @@ import os
 import sys
 import uproot
 import numpy as np
+import pandas as pd
 
 if('tqdm' in sys.modules):
     from tqdm import tqdm
@@ -14,19 +15,18 @@ class load_tree():
 
         self.num_workers = num_workers
 
-    def print_trees(self, path, num_workers=1):
+    def trees(self, path, num_workers=1):
         Tree = uproot.open(path,
                            file_handler=uproot.MultithreadedFileSource,
                            num_workers=num_workers)
         all_ttrees= dict()
         for cls in Tree.items():
             if isinstance(cls[1], uproot.TTree):
-                all_ttrees[cls[0]] = cls[1]
+                all_ttrees[cls[0]] = cls[1].keys()
 
-        print(all_ttrees)
-        return Tree
+        return all_ttrees
 
-    def load_internal(self, path, limit=None, use_vars=0, load_latest=True, key=None, verbose=False):
+    def load_internal(self, path, limit=None, use_vars=0, load_latest=True, key=None, verbose=False, to_numpy=False):
 
         root_file = uproot.open(path,
                                 file_handler=uproot.MultithreadedFileSource,
@@ -96,7 +96,8 @@ class load_tree():
             del new_entries
 
         # Pre-allocate arrays to store branch values
-        branch_value_arrays = [np.empty(np.sum(entries[:limit]), dtype=all_ttrees[list(all_ttrees.keys())[0]][branch_name].interpretation.numpy_dtype) for branch_name in castable_branches]
+        df = None
+        data_raw = list()
 
         # Loop through each branch and fill the pre-allocated array
         for i, tree in enumerate(load_trees):
@@ -106,21 +107,33 @@ class load_tree():
             if(('tqdm' in sys.modules) and verbose):
                 with tqdm(total=len(castable_branches)) as pbar:
                     for j, branch_name in enumerate(castable_branches):
-                        branch_value_arrays[j][int(np.sum(entries[:i])):int(np.sum(entries[:i+1]))] = all_ttrees[tree][branch_name].array(library="np")
+                        try:
+                            dfnew = pd.DataFrame(all_ttrees[tree][branch_name].array(library="pd"), columns=[branch_name])
+                            data_raw.append(dfnew)
+                        except Exception as e:
+                            print(e)
                         pbar.update(1)
+
             else:
                 for j, branch_name in enumerate(castable_branches):
-                    branch_value_arrays[j][int(np.sum(entries[:i])):int(np.sum(entries[:i+1]))] = all_ttrees[tree][branch_name].array(library="np")
+                    try:
+                        dfnew = pd.DataFrame(all_ttrees[tree][branch_name].array(library="pd"), columns=[branch_name])
+                        data_raw.append(dfnew)
+                    except Exception as e:
+                        print(e)
 
-        # Stack the arrays to create a 2D array
-        stacked_values = np.array(branch_value_arrays).T
+            df = pd.concat([df, pd.concat(data_raw, axis=1)])
+            data_raw = list()
 
         if verbose:
             # Print branch names and the stacked values
             print("Branch Names:", selected_branch_names)
-            print("Shape of stacked values:", np.shape(stacked_values), "\n")
+            print("Shape of stacked values:", df.shape, "\n")
 
-        return np.array(selected_branch_names), stacked_values
+        if to_numpy:
+            return np.array(selected_branch_names), df.to_numpy()
+        else:
+            return np.array(selected_branch_names), df
 
     def load(self, path, limit=None, use_vars=0, load_latest=True, key=None, verbose=False):
 
@@ -142,13 +155,13 @@ class load_tree():
                 if i == 0:
                     labels, output = self.load_internal(path=file, limit=limit, use_vars=use_vars, load_latest=load_latest, key=key, verbose=verbose)
                 else:
-                    output = np.vstack((output, self.load_internal(path=file, limit=limit, use_vars=use_vars, load_latest=load_latest, key=key, verbose=verbose)[1]))
+                    output = pd.concat([output, self.load_internal(path=file, limit=limit, use_vars=use_vars, load_latest=load_latest, key=key, verbose=verbose)[1]])
 
-            return labels, output
+            return labels, output.to_numpy()
 
         else:
 
-            return self.load_internal(path=path, limit=limit, use_vars=use_vars, load_latest=load_latest, key=key, verbose=verbose)
+            return self.load_internal(path=path, limit=limit, use_vars=use_vars, load_latest=load_latest, key=key, verbose=verbose, to_numpy=True)
 
 
     def export_to_tree(self, path, labels, data, overwrite=False):

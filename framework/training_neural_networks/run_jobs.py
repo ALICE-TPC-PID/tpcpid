@@ -17,13 +17,13 @@ args = parser.parse_args()
 config = args.config
 with open(config, 'r') as config_file:
     CONFIG = json.load(config_file)
-sys.path.append(CONFIG['paths']['framework'] + "/framework")
+sys.path.append(CONFIG['settings']['framework'] + "/framework")
 from base import *
 
 ### execution settings
 output_folder                                   = CONFIG["output"]["general"]["training"]
 execution_mode                                  = CONFIG["trainNeuralNetOptions"]["execution_mode"]
-base_folder                                     = CONFIG['paths']['framework']
+base_folder                                     = CONFIG['settings']['framework']
 scheduler                                       = determine_scheduler(verbose=False)
 CONFIG["trainNeuralNetOptions"]["scheduler"]    = scheduler
 write_config(CONFIG, args.config)

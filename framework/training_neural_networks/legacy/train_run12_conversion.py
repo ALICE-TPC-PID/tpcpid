@@ -59,7 +59,7 @@ hardware = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 ########### Import the Neural Network class ###########
 
-neuralNetClass_dir = os.path.join(CONFIG['paths']['framework'] + "/framework","Neural-Network-Class","NeuralNetworkClasses")
+neuralNetClass_dir = os.path.join(CONFIG['settings']['framework'] + "/framework","Neural-Network-Class","NeuralNetworkClasses")
 sys.path.append(neuralNetClass_dir)
 
 from extract_from_root import load_tree

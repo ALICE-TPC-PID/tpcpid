@@ -23,7 +23,7 @@ train_mode      = str(args.training_mode)
 
 with open(args.config, 'r') as config_file:
     CONFIG = json.load(config_file)
-sys.path.append(CONFIG['paths']['framework'] + "/framework")
+sys.path.append(CONFIG['settings']['framework'] + "/framework")
 from base import *
 
 LOG = logger.logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="shell_script_creation")

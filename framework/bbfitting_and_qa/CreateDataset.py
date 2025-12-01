@@ -35,7 +35,7 @@ args = parser.parse_args()
 config = args.config
 with open(config, 'r') as config_file:
     CONFIG = json.load(config_file)
-sys.path.append(CONFIG['paths']['framework'] + "/framework")
+sys.path.append(CONFIG['settings']['framework'] + "/framework")
 from base import *
 from neural_network_class.NeuralNetworkClasses.extract_from_root import *
 
@@ -191,7 +191,7 @@ LABELS_X = CONFIG['createTrainingDatasetOptions']['labels_x']
 LABELS_Y = CONFIG['createTrainingDatasetOptions']['labels_y']
 
 cload = load_tree()
-TTree = cload.print_trees(dir_tree)
+TTree = cload.trees(dir_tree)
 mode = args.loading_mode
 import_labels = [*LABELS_Y, *LABELS_X, 'fPidIndex','fRunNumber']
 LOG.debug(f"Import labels are {import_labels}")

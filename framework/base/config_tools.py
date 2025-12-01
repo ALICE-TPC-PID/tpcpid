@@ -24,7 +24,7 @@ def write_config(CONFIG, path = "../configuration.json"):
 #Reads config and adds the name of the dataset
 def add_name_and_path(config):
     # Ensure base_output_folder exists; default to $PWD (fall back to os.getcwd() if not set)
-    base_folder = config['paths']['framework']
+    base_folder = config['settings']['framework']
     
     ### Enable HadronicRate flag if present in input features
     if "fHadronicRate" in config["createTrainingDatasetOptions"]["labels_x"]:

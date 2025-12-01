@@ -495,7 +495,7 @@ if __name__ == "__main__":
     config = args.config
     with open(config, 'r') as config_file:
         CONFIG = json.load(config_file)
-    sys.path.append(CONFIG['paths']['framework'] + "/framework")
+    sys.path.append(CONFIG['settings']['framework'] + "/framework")
     from base.config_tools import *
 
     LOG = logger.logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="shift_nsigma_modified")

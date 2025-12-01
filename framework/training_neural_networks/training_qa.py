@@ -25,7 +25,7 @@ args = parser.parse_args()
 
 with open(args.config, 'r') as config_file:
     CONFIG = json.load(config_file)
-sys.path.append(CONFIG['paths']['framework'] + "/framework")
+sys.path.append(CONFIG['settings']['framework'] + "/framework")
 from base import *
 from neural_network_class.NeuralNetworkClasses.extract_from_root import *
 nnconfig = import_from_path(CONFIG["trainNeuralNetOptions"]["configuration"])

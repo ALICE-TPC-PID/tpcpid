@@ -7,7 +7,7 @@ args = parser.parse_args()
 
 with open(args.config, 'r') as config_file:
     CONFIG = json.load(config_file)
-sys.path.append(CONFIG['paths']['framework'] + "/framework")
+sys.path.append(CONFIG['settings']['framework'] + "/framework")
 from base import *
 
 try:
@@ -16,7 +16,8 @@ try:
     
     full_git_config(
         save_to_file=os.path.join(CONFIG["output"]["general"]["path"], "git_info.txt"),
-        verbose=False
+        verbose=False,
+        path=CONFIG['settings']['framework']
     )
     
     LOG.framework("--- Starting plotSkimTreeQA2D_modified.C ---")
@@ -25,7 +26,7 @@ try:
         "singularity", "exec",
         "/lustre/alice/users/jwitte/singularity/python_hipe4ml_root.sif",
         "root", "-l", "-b", "-q",
-        f"{CONFIG['paths']['framework']}/framework/bbfitting_and_qa/plotSkimTreeQA2D_modified.C(\"{args.config}\")"
+        f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/plotSkimTreeQA2D_modified.C(\"{args.config}\")"
     ], check=True)
 
     LOG.framework("--- plotSkimTreeQA2D_modified.C finished ---")
@@ -35,7 +36,7 @@ try:
         "singularity", "exec",
         "/lustre/alice/users/jwitte/singularity/python_hipe4ml_root.sif",
         "root", "-l", "-b", "-q",
-        f"{CONFIG['paths']['framework']}/framework/bbfitting_and_qa/fitNormGraphdEdxvsBGpid_modified.C(\"{args.config}\")"
+        f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/fitNormGraphdEdxvsBGpid_modified.C(\"{args.config}\")"
     ], check=True)
 
     LOG.framework("--- fitNormGraphdEdxvsBGpid_modified.C finished ---")
@@ -47,7 +48,7 @@ try:
         "singularity", "exec",
         "/lustre/alice/users/jwitte/singularity/python_hipe4ml_root.sif",
         "python3",
-        f"{CONFIG['paths']['framework']}/framework/bbfitting_and_qa/shift_nsigma_modified.py",
+        f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/shift_nsigma_modified.py",
         "--config", args.config
     ], check=True)
 
@@ -58,7 +59,7 @@ try:
         "singularity", "exec",
         "/lustre/alice/users/jwitte/singularity/python_hipe4ml_root.sif",
         "python3",
-        f"{CONFIG['paths']['framework']}/framework/bbfitting_and_qa/CreateDataset.py",
+        f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/CreateDataset.py",
         "--config", args.config
     ], check=True)
 
@@ -69,14 +70,14 @@ try:
     # config = read_config(path=args.config)
     subprocess.run([
         "python3",
-        f"{CONFIG['paths']['framework']}/framework/training_neural_networks/create_jobs.py",
+        f"{CONFIG['settings']['framework']}/framework/training_neural_networks/create_jobs.py",
         "--config", args.config,
         "--avoid-question", "1"
     ], check=True)
 
     subprocess.run([
         "python3",
-        f"{CONFIG['paths']['framework']}/framework/training_neural_networks/run_jobs.py",
+        f"{CONFIG['settings']['framework']}/framework/training_neural_networks/run_jobs.py",
         "--config", args.config
     ], check=True)
 
