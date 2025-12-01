@@ -40,7 +40,7 @@ parser.add_argument("-lm", "--loading-mode", default="full", help="Loading mode 
 parser.add_argument("-f", "--full-input-path", default=";;", help="If --full-path != ';;', then ignore -apass and -period and use the full path (this variable) instead.")
 parser.add_argument("-ce", "--cut-electrons", default="[np.log10(0.11),np.log10(5.)]", help="Momentum range for electrons.")
 parser.add_argument("-cpi", "--cut-pions", default="[np.log10(0.11),np.log10(20.)]", help="Momentum range for pions.")
-parser.add_argument("-cka", "--cut-kaons", default="[np.log10(0.12),np.log10(20.)]", help="Momentum range for kaons.")
+parser.add_argument("-cka", "--cut-kaons", default="[np.log10(0.12),np.log10(2.)]", help="Momentum range for kaons.")
 parser.add_argument("-cp", "--cut-protons", default="[np.log10(0.12),np.log10(15.)]", help="Momentum range for protons.")
 parser.add_argument("-cd", "--cut-deuterons", default="[np.log10(0.3),np.log10(2.)]", help="Momentum range for deuterons.")
 parser.add_argument("-ct", "--cut-tritons", default="[np.log10(0.3),np.log10(1.)]", help="Momentum range for tritons.")
