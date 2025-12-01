@@ -1,4 +1,4 @@
-import subprocess
+import os, subprocess
 from . import logger
 
 LOG = logger.logger(min_severity="DEBUG", task_name="git")
