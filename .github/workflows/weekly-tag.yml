@@ -2,8 +2,8 @@ name: Weekly Auto Tag
 
 on:
   schedule:
-    # Every Monday at 00:00 UTC
-    - cron: "0 0 * * 1"
+    # Every Thursday at 00:00 UTC
+    - cron: "0 0 * * 4"
   workflow_dispatch:
     inputs:
       custom:
@@ -29,10 +29,8 @@ jobs:
           DATE=$(date -u +'%d%m%Y')
 
           if [ -z "${{ github.event.inputs.custom }}" ]; then
-            # automatic weekly tag
             TAG_NAME="weekly-${DATE}"
           else
-            # manual custom tag
             TAG_NAME="custom-weekly-${DATE}"
           fi
 
