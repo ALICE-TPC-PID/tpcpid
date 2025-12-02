@@ -1,11 +1,9 @@
-name: Daily Auto Tag
+name: Daily Tag
 
 permissions:
   contents: write
 
 on:
-  schedule:
-    - cron: "0 0 * * *"   # run daily at midnight UTC
   workflow_dispatch:
     inputs:
       custom:

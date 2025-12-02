@@ -111,4 +111,4 @@ Most important settings
     - Set the path to the nnconfig.py (```trainNeuralNetOptions/configuration```) correctly. You will not need to modify it, the default settings should be fine for running.
 
 
-~Christian Sonnabend, Jonathan Witte
+~ Christian Sonnabend, Jonathan Witte (Dec. 2025)
