@@ -389,7 +389,7 @@ for i, mass in enumerate(np.sort(np.unique(fit_data[:,labels=='fMass'].flatten()
 
     def transform_ncl(x):
         return 152./(x**2)
-    
+
     val = CONFIG['trainNeuralNetOptions'].get('isSmallSystem', 'False')
     IsSmallSystem = val.lower() == "true"
 
@@ -426,12 +426,12 @@ for i, mass in enumerate(np.sort(np.unique(fit_data[:,labels=='fMass'].flatten()
         QA2D_NSigma_vs_Var(i, mass, plot_against = 'fFt0Occ', log_x = True, range_hists = [[-1.,1.]]*6, useNN=False, xlabel = r'norm. FT0 occupancy')
         QA2D_NSigma_vs_Var(i, mass, plot_against = 'fFt0Occ', log_x = True, range_hists = [[-1.,1.]]*6, xlabel = r'norm. FT0 occupancy', plot_mode="rel_sigma")
         QA2D_NSigma_vs_Var(i, mass, plot_against = 'fFt0Occ', log_x = True, range_hists = [[-1.,1.]]*6, xlabel = r'norm. FT0 occupancy', plot_mode="raw_relsigma_fitted")
-    
+
     if(HadronicRateBool):
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fHadronicRate', log_x = True, range_hists = [[-1.,1.]]*6, xlabel = r'Hadronic Rate [50khz]')
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fHadronicRate', log_x = True, range_hists = [[-1.,1.]]*6, useNN=False, xlabel = r'Hadronic Rate [50khz]')
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fHadronicRate', log_x = True, range_hists = [[-1.,1.]]*6, plot_mode="rel_sigma",xlabel = r'Hadronic Rate [50khz]')
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fHadronicRate', log_x = True, range_hists = [[-1.,1.]]*6, plot_mode="raw_relsigma_fitted",xlabel = r'Hadronic Rate [50khz]')
+        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fHadronicRate', log_x = True, range_hists = [[-1.,0.3]]*6, xlabel = r'Hadronic Rate [50kHz]')
+        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fHadronicRate', log_x = True, range_hists = [[-1.,0.3]]*6, useNN=False, xlabel = r'Hadronic Rate [50kHz]')
+        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fHadronicRate', log_x = True, range_hists = [[-1.,0.3]]*6, plot_mode="rel_sigma",xlabel = r'Hadronic Rate [50kHz]')
+        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fHadronicRate', log_x = True, range_hists = [[-1.,0.3]]*6, plot_mode="raw_relsigma_fitted",xlabel = r'Hadronic Rate [50kHz]')
 
 separation_power(useNN=1, useMassAssumption=0)
 separation_power(useNN=0, useMassAssumption=0)

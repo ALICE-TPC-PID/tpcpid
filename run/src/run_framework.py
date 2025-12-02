@@ -13,76 +13,89 @@ from base import *
 try:
     LOG = logger.logger("Framework")
     LOG.framework("Setup completed successfully. Ready to launch!")
-    
+
     full_git_config(
         save_to_file=os.path.join(CONFIG["output"]["general"]["path"], "git_info.txt"),
         verbose=False,
         path=CONFIG['settings']['framework']
     )
-    
+
     if CONFIG["settings"]["git"].get("create_diff", False):
         diff, repo_url, tag = diff_to_latest_upstream_tag(path=CONFIG["settings"]["framework"], diff_file=os.path.join(CONFIG["output"]["general"]["path"], "git_diff.patch"), info_file=os.path.join(CONFIG["output"]["general"]["path"], "git_info.txt"))
-    
-    LOG.framework("--- Starting plotSkimTreeQA2D_modified.C ---")
 
-    subprocess.run([
-        "singularity", "exec",
-        "/lustre/alice/users/jwitte/singularity/python_hipe4ml_root.sif",
-        "root", "-l", "-b", "-q",
-        f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/plotSkimTreeQA2D_modified.C(\"{args.config}\")"
-    ], check=True)
 
-    LOG.framework("--- plotSkimTreeQA2D_modified.C finished ---")
-    LOG.framework("--- Starting fitNormGraphdEdxvsBGpid_modified.C ---")
+    if CONFIG["process"]["skimTreeQA"]:
+        LOG.framework("--- Starting plotSkimTreeQA2D_modified.C ---")
 
-    subprocess.run([
-        "singularity", "exec",
-        "/lustre/alice/users/jwitte/singularity/python_hipe4ml_root.sif",
-        "root", "-l", "-b", "-q",
-        f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/fitNormGraphdEdxvsBGpid_modified.C(\"{args.config}\")"
-    ], check=True)
+        subprocess.run([
+            "singularity", "exec",
+            "/lustre/alice/users/jwitte/singularity/python_hipe4ml_root.sif",
+            "root", "-l", "-b", "-q",
+            f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/plotSkimTreeQA2D_modified.C(\"{args.config}\")"
+        ], check=True)
 
-    LOG.framework("--- fitNormGraphdEdxvsBGpid_modified.C finished ---")
-    LOG.framework("--- Starting shift_nsigma_modified.py ---")
-    # args.config = "/lustre/alice/users/csonnab/TPC/tpcpid-github-official/output/LHC24/pass1/ar/LHC24ar_pass1_Remove_lustre_TPCSignal_HR_True/20251127/configuration.json"
-    # config = read_config(path=args.config)
+        LOG.framework("--- plotSkimTreeQA2D_modified.C finished ---")
 
-    subprocess.run([
-        "singularity", "exec",
-        "/lustre/alice/users/jwitte/singularity/python_hipe4ml_root.sif",
-        "python3",
-        f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/shift_nsigma_modified.py",
-        "--config", args.config
-    ], check=True)
 
-    LOG.framework("--- shift_nsigma_modified.py finished ---")
-    LOG.framework("--- Starting CreateDataset.py ---")
+    if CONFIG["process"]["fitBBGraph"]:
+        LOG.framework("--- Starting fitNormGraphdEdxvsBGpid_modified.C ---")
 
-    subprocess.run([
-        "singularity", "exec",
-        "/lustre/alice/users/jwitte/singularity/python_hipe4ml_root.sif",
-        "python3",
-        f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/CreateDataset.py",
-        "--config", args.config
-    ], check=True)
+        subprocess.run([
+            "singularity", "exec",
+            "/lustre/alice/users/jwitte/singularity/python_hipe4ml_root.sif",
+            "root", "-l", "-b", "-q",
+            f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/fitNormGraphdEdxvsBGpid_modified.C(\"{args.config}\")"
+        ], check=True)
 
-    LOG.framework("--- CreateDataset.py finished ---")
+        LOG.framework("--- fitNormGraphdEdxvsBGpid_modified.C finished ---")
+
+
+    if CONFIG["process"]["shiftNsigma"]:
+        LOG.framework("--- Starting shift_nsigma_modified.py ---")
+
+        subprocess.run([
+            "singularity", "exec",
+            "/lustre/alice/users/jwitte/singularity/python_hipe4ml_root.sif",
+            "python3",
+            f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/shift_nsigma_modified.py",
+            "--config", args.config
+        ], check=True)
+
+        LOG.framework("--- shift_nsigma_modified.py finished ---")
+
+
+    if CONFIG["process"]["createTrainingDataset"]:
+        LOG.framework("--- Starting CreateDataset.py ---")
+
+        subprocess.run([
+            "singularity", "exec",
+            "/lustre/alice/users/jwitte/singularity/python_hipe4ml_root.sif",
+            "python3",
+            f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/CreateDataset.py",
+            "--config", args.config
+        ], check=True)
+
+        LOG.framework("--- CreateDataset.py finished ---")
+
+
     LOG.framework("All steps completed successfully! Continuing with NN training")
 
-    # args.config = "/lustre/alice/users/csonnab/TPC/tpcpid-github-official/output/LHC23/pass5/zzh/LHC23zzh_pass5_First_FullTest_TPCSignal_HR_True/20251128/configuration.json"
-    # config = read_config(path=args.config)
-    subprocess.run([
-        "python3",
-        f"{CONFIG['settings']['framework']}/framework/training_neural_networks/create_jobs.py",
-        "--config", args.config,
-        "--avoid-question", "1"
-    ], check=True)
 
-    subprocess.run([
-        "python3",
-        f"{CONFIG['settings']['framework']}/framework/training_neural_networks/run_jobs.py",
-        "--config", args.config
-    ], check=True)
+    if CONFIG["process"]["trainNeuralNet"]:
+        # args.config = "/lustre/alice/users/csonnab/TPC/tpcpid-github-official/output/LHC23/pass5/zzh/LHC23zzh_pass5_First_FullTest_TPCSignal_HR_True/20251128/configuration.json"
+        # config = read_config(path=args.config)
+        subprocess.run([
+            "python3",
+            f"{CONFIG['settings']['framework']}/framework/training_neural_networks/create_jobs.py",
+            "--config", args.config,
+            "--avoid-question", "1"
+        ], check=True)
+
+        subprocess.run([
+            "python3",
+            f"{CONFIG['settings']['framework']}/framework/training_neural_networks/run_jobs.py",
+            "--config", args.config
+        ], check=True)
 
 
 
