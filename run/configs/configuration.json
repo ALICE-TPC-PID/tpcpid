@@ -2,7 +2,8 @@
     "settings": {
         "framework": "/lustre/alice/users/csonnab/TPC/tpcpid-github-official",
         "git": {
-            "checkout": 1,
+            "checkout": 0,
+            "create_diff": 1,
             "remote": "https://github.com/ALICE-TPC-PID/tpcpid.git",
             "branch": "main",
             "commit": "latest",

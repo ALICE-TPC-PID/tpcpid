@@ -20,6 +20,9 @@ try:
         path=CONFIG['settings']['framework']
     )
     
+    if CONFIG["settings"]["git"].get("create_diff", False):
+        diff, repo_url, tag = diff_to_latest_upstream_tag(path=CONFIG["settings"]["framework"], diff_file=os.path.join(CONFIG["output"]["general"]["path"], "git_diff.patch"), info_file=os.path.join(CONFIG["output"]["general"]["path"], "git_info.txt"))
+    
     LOG.framework("--- Starting plotSkimTreeQA2D_modified.C ---")
 
     subprocess.run([
