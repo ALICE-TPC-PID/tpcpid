@@ -3,6 +3,15 @@ from . import logger
 
 LOG = logger.logger(min_severity="DEBUG", task_name="git")
 
+def fetch_upstream(remote: str, path: str):
+    try:
+        subprocess.check_call(
+            ["git", "fetch", remote],
+            cwd=path
+        )
+    except subprocess.CalledProcessError as e:
+        LOG.error(f"Failed to fetch from remote '{remote}' in path '{path}': {e}. Continuing for now. PLEASE CHECK YOUR GIT STATUS!")
+
 def git(*args, quiet=False, path=None):
     stderr = subprocess.DEVNULL if quiet else None
     return subprocess.check_output(
@@ -28,11 +37,6 @@ def safe_git_tag(path=None):
         return tag
     else:
         return None
-
-    # try:
-    #     return git("describe", "--tags", "--abbrev=0", quiet=True, path=path)
-    # except subprocess.CalledProcessError:
-    #     return None
 
 def full_git_config(save_to_file=None, verbose=True, path=None):
     remote = normalize_remote(git("config", "--get", "remote.origin.url", path=path))
@@ -61,7 +65,7 @@ def full_git_config(save_to_file=None, verbose=True, path=None):
                 f.write(f"  git clone {remote}\n")
                 f.write(f"  git fetch origin {branch}\n")
                 f.write(f"  git checkout {commit}\n")
-                
+
 def checkout_from_config(git_config: dict, path: str = None):
     """
     Given a git config dictionary:
@@ -142,14 +146,14 @@ def diff_to_latest_upstream_tag(path=None, diff_file=None, info_file=None):
 
     repo_url = normalize_remote(git("config", "--get", "remote.origin.url", path=path))
     LOG.info(f"Repository URL: {repo_url}")
-    
+
     # Fetch all tags from upstream
     LOG.info("Fetching tags from upstream ...")
     subprocess.check_call(["git", "fetch", "--tags"], cwd=path)
 
     # Resolve latest tag
     try:
-        latest_tag = git("describe", "--tags", "--abbrev=0", path=path)
+        latest_tag = git("tag", "--sort=-creatordate", path=path).splitlines()[0]
     except subprocess.CalledProcessError:
         raise RuntimeError("Repository has no tags available.")
 

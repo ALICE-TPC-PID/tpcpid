@@ -8,7 +8,7 @@ args = parser.parse_args()
 if not os.path.exists(args.config):
     print(f"Configuration file {args.config} not found. Aborting")
     sys.exit(1)
-    
+
 with open(args.config, 'r') as config_file:
     CONFIG = json.load(config_file)
 sys.path.append(CONFIG['settings']['framework'] + "/framework")
@@ -17,6 +17,8 @@ from base import *
 LOG = logger.logger("Framework")
 LOG.welcome_message()
 
+fetch_upstream("origin", path=CONFIG['settings']['framework'])
+fetch_upstream("upstream", path=CONFIG['settings']['framework'])
 if CONFIG['settings'].get('git', {}).get('checkout', 0) == 1:
     LOG.framework("Checking out the specified git commit/tag/branch...")
     git_config = CONFIG['settings']['git']
