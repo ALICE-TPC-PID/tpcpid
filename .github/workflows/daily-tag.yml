@@ -1,5 +1,8 @@
 name: Daily Auto Tag
 
+permissions:
+  contents: write
+
 on:
   schedule:
     - cron: "0 0 * * *"   # run daily at midnight UTC
@@ -24,14 +27,11 @@ jobs:
       - name: Compute tag name
         id: tag
         run: |
-          # compute date as ddmmyyyy
           DATE=$(date -u +'%d%m%Y')
 
           if [ -z "${{ github.event.inputs.custom }}" ]; then
-            # automatic daily tag
             TAG_NAME="daily-${DATE}"
           else
-            # manual custom tag
             TAG_NAME="custom-daily-${DATE}"
           fi
 
@@ -44,13 +44,11 @@ jobs:
 
           TAG=${{ steps.tag.outputs.tag }}
 
-          # delete locally if exists
           git tag -d $TAG 2>/dev/null || true
-          # delete remotely if exists
           git push origin :refs/tags/$TAG 2>/dev/null || true
 
       - name: Create and push new tag
         run: |
           TAG=${{ steps.tag.outputs.tag }}
-          git tag $TAG
-          git push origin $TAG
+          git tag "$TAG"
+          git push origin "$TAG"
