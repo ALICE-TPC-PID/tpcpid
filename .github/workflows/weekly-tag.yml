@@ -1,0 +1,58 @@
+name: Weekly Auto Tag
+
+on:
+  schedule:
+    # Every Monday at 00:00 UTC
+    - cron: "0 0 * * 1"
+  workflow_dispatch:
+    inputs:
+      custom:
+        description: "Use a custom weekly tag name? (leave empty for auto)"
+        required: false
+        default: ""
+        type: string
+
+jobs:
+  weekly-tag:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # fetch tags
+
+      - name: Compute tag name
+        id: tag
+        run: |
+          # compute date as ddmmyyyy
+          DATE=$(date -u +'%d%m%Y')
+
+          if [ -z "${{ github.event.inputs.custom }}" ]; then
+            # automatic weekly tag
+            TAG_NAME="weekly-${DATE}"
+          else
+            # manual custom tag
+            TAG_NAME="custom-weekly-${DATE}"
+          fi
+
+          echo "tag=$TAG_NAME" >> $GITHUB_OUTPUT
+
+      - name: Delete tag if it exists (idempotent)
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          TAG=${{ steps.tag.outputs.tag }}
+
+          # delete local tag if present
+          git tag -d $TAG 2>/dev/null || true
+
+          # delete remote tag if present
+          git push origin :refs/tags/$TAG 2>/dev/null || true
+
+      - name: Create and push new tag
+        run: |
+          TAG=${{ steps.tag.outputs.tag }}
+          git tag $TAG
+          git push origin $TAG
