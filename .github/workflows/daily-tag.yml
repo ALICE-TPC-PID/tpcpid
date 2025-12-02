@@ -1,0 +1,56 @@
+name: Daily Auto Tag
+
+on:
+  schedule:
+    - cron: "0 0 * * *"   # run daily at midnight UTC
+  workflow_dispatch:
+    inputs:
+      custom:
+        description: "Use a custom daily tag name? (leave empty for auto)"
+        required: false
+        default: ""
+        type: string
+
+jobs:
+  daily-tag:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # required for tags
+
+      - name: Compute tag name
+        id: tag
+        run: |
+          # compute date as ddmmyyyy
+          DATE=$(date -u +'%d%m%Y')
+
+          if [ -z "${{ github.event.inputs.custom }}" ]; then
+            # automatic daily tag
+            TAG_NAME="daily-${DATE}"
+          else
+            # manual custom tag
+            TAG_NAME="custom-daily-${DATE}"
+          fi
+
+          echo "tag=$TAG_NAME" >> $GITHUB_OUTPUT
+
+      - name: Delete tag if it exists (idempotent)
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          TAG=${{ steps.tag.outputs.tag }}
+
+          # delete locally if exists
+          git tag -d $TAG 2>/dev/null || true
+          # delete remotely if exists
+          git push origin :refs/tags/$TAG 2>/dev/null || true
+
+      - name: Create and push new tag
+        run: |
+          TAG=${{ steps.tag.outputs.tag }}
+          git tag $TAG
+          git push origin $TAG
