@@ -1,0 +1,536 @@
+{
+  "max_df_size": 100000000,
+  "dataset_id": 608,
+  "cpu_cores": 1,
+  "workflows": [
+    {
+      "subwagon_id": 9868,
+      "subwagon_name": "base",
+      "configuration": {
+        "tree-writer-t-p-c-t-o-f": {
+          "applyEvSel": "2",
+          "applyTrkSel": "1",
+          "downsamplingTsalisDeuterons": "-1",
+          "downsamplingTsalisKaons": "0.001",
+          "downsamplingTsalisPions": "0.0001",
+          "downsamplingTsalisProtons": "0.001",
+          "downsamplingTsalisTritons": "-1",
+          "dwnSmplFactor_De": "0.05",
+          "dwnSmplFactor_Ka": "1",
+          "dwnSmplFactor_Pi": "1",
+          "dwnSmplFactor_Pr": "1",
+          "dwnSmplFactor_Tr": "0.154",
+          "maxMomHardCutOnlyKa": "1.2",
+          "maxMomTPCOnlyDe": "1",
+          "maxMomTPCOnlyKa": "0.5",
+          "maxMomTPCOnlyPi": "0.5",
+          "maxMomTPCOnlyPr": "0.6",
+          "maxMomTPCOnlyTr": "1.5",
+          "nClNorm": "152",
+          "nSigmaTOF_TPCTOF_De": "4",
+          "nSigmaTOF_TPCTOF_Ka": "5",
+          "nSigmaTOF_TPCTOF_Pi": "5",
+          "nSigmaTOF_TPCTOF_Pr": "5",
+          "nSigmaTOF_TPCTOF_Tr": "4",
+          "nSigmaTPCOnlyDe": "4",
+          "nSigmaTPCOnlyKa": "5",
+          "nSigmaTPCOnlyPi": "5",
+          "nSigmaTPCOnlyPr": "5",
+          "nSigmaTPCOnlyTr": "4",
+          "nSigmaTPC_TPCTOF_De": "5",
+          "nSigmaTPC_TPCTOF_Ka": "5",
+          "nSigmaTPC_TPCTOF_Pi": "5",
+          "nSigmaTPC_TPCTOF_Pr": "5",
+          "nSigmaTPC_TPCTOF_Tr": "4",
+          "sqrt_s_NN": "13600",
+          "trackSelection": "1"
+        },
+        "tree-writer-tpc-v0": {
+          "applyEvSel": "2",
+          "downsamplingTsalisElectrons": "0.1",
+          "downsamplingTsalisPions": "0.05",
+          "downsamplingTsalisProtons": "0.1",
+          "dwnSmplFactor_El": "1",
+          "dwnSmplFactor_Pi": "1",
+          "dwnSmplFactor_Pr": "1",
+          "nClNorm": "152",
+          "nSigmaTOFdautrack": "5",
+          "sqrt_s_NN": "13600",
+          "trackSelection": "1"
+        }
+      },
+      "wagon_id": 6918,
+      "workflow_name": "o2-analysis-pid-tpc-skimscreation",
+      "suffix": ""
+    },
+    {
+      "subwagon_id": 1172,
+      "subwagon_name": "base",
+      "configuration": {
+        "tof-pid-full": {
+          "parametrizationPath": "TOF/Calib/Params",
+          "enableParticle": {
+            "values": [
+              [
+                -1
+              ],
+              [
+                -1
+              ],
+              [
+                -1
+              ],
+              [
+                -1
+              ],
+              [
+                -1
+              ],
+              [
+                -1
+              ],
+              [
+                -1
+              ],
+              [
+                -1
+              ],
+              [
+                -1
+              ]
+            ]
+          },
+          "ccdb-timestamp": "-1",
+          "fatalOnPassNotAvailable": "1",
+          "paramFileName": "",
+          "enableTimeDependentResponse": "0",
+          "processWSlice": "1",
+          "processWoSlice": "0",
+          "passName": "",
+          "timeShiftCCDBPath": "",
+          "ccdb-url": "http://alice-ccdb.cern.ch",
+          "loadResponseFromCCDB": "0"
+        }
+      },
+      "wagon_id": 1036,
+      "workflow_name": "o2-analysis-pid-tof-full",
+      "suffix": ""
+    },
+    {
+      "subwagon_id": 1223,
+      "subwagon_name": "base",
+      "configuration": {
+        "tof-pid-beta": {
+          "enableTOFParams": "0",
+          "parametrizationPath": "TOF/Calib/Params",
+          "ccdb-timestamp": "-1",
+          "fatalOnPassNotAvailable": "1",
+          "paramFileName": "",
+          "tof-expreso": "80",
+          "passName": "",
+          "ccdb-url": "http://alice-ccdb.cern.ch"
+        }
+      },
+      "wagon_id": 1074,
+      "workflow_name": "o2-analysis-pid-tof-beta",
+      "suffix": ""
+    },
+    {
+      "subwagon_id": 1337,
+      "subwagon_name": "base",
+      "configuration": {
+        "tof-signal": {
+          "processRun3": "1",
+          "processRun2": "0"
+        },
+        "tof-event-time": {
+          "parametrizationPath": "TOF/Calib/Params",
+          "sel8TOFEvTime": "0",
+          "maxNtracksInSet": "10",
+          "fatalOnPassNotAvailable": "1",
+          "maxMomentum": "2",
+          "paramFileName": "",
+          "processOnlyFT0": "0",
+          "processRun2": "0",
+          "passName": "",
+          "processNoFT0": "0",
+          "minMomentum": "0.5",
+          "ccdb-timestamp": "-1",
+          "maxEvTimeTOF": "100000",
+          "processFT0": "1",
+          "ccdb-url": "http://alice-ccdb.cern.ch",
+          "loadResponseFromCCDB": "0"
+        }
+      },
+      "wagon_id": 1178,
+      "workflow_name": "o2-analysis-pid-tof-base",
+      "suffix": ""
+    },
+    {
+      "subwagon_id": 9863,
+      "subwagon_name": "base",
+      "configuration": {
+        "track-pid-qa": {
+          "processQA": "1",
+          "mincrossedrows": "70",
+          "maxchi2tpc": "4",
+          "dcamin": "0",
+          "dcamax": "1e+10",
+          "processDummy": "1"
+        },
+        "v0-selector": {
+          "v0max_mee": "0.1",
+          "v0cospa": "0.998",
+          "mincrossedrows": "70",
+          "maxchi2tpc": "4",
+          "dcamin": "0",
+          "dcav0dau": "0.3",
+          "dcamax": "1e+10",
+          "v0Rmax": "90",
+          "v0Rmin": "0",
+          "fillhisto": "1",
+          "maxpsipair": "1.6"
+        }
+      },
+      "wagon_id": 6913,
+      "workflow_name": "o2-analysis-dq-v0-selector",
+      "suffix": ""
+    },
+    {
+      "subwagon_id": 9864,
+      "subwagon_name": "base",
+      "configuration": {
+        "tpc-pid-qa": {
+          "etaBins": {
+            "values": [
+              100,
+              -1,
+              1
+            ]
+          },
+          "dEdxBins": {
+            "values": [
+              5000,
+              0,
+              5000
+            ]
+          },
+          "applyRapidityCut": "0",
+          "processFullWithTOFDeuteron": "0",
+          "phiBins": {
+            "values": [
+              100,
+              0,
+              6.283185307179586
+            ]
+          },
+          "processProton": "0",
+          "processHelium3": "0",
+          "processFullElectron": "1",
+          "processKaon": "0",
+          "processAlpha": "0",
+          "processFullWithTOFPion": "0",
+          "processFullHelium3": "1",
+          "minP": "0.1",
+          "enableDeDxPlot": "1",
+          "processFullWithTOFElectron": "0",
+          "logAxis": "1",
+          "processFullWithTOFAlpha": "0",
+          "processFullKaon": "1",
+          "processMuon": "0",
+          "processFullDeuteron": "1",
+          "processFullWithTOFMuon": "0",
+          "processFullWithTOFProton": "0",
+          "maxP": "20",
+          "processFullAlpha": "1",
+          "processElectron": "0",
+          "processDeuteron": "0",
+          "trackLengthBins": {
+            "values": [
+              100,
+              0,
+              1000
+            ]
+          },
+          "processFullProton": "1",
+          "processFullWithTOFKaon": "0",
+          "minTPCNcls": "0",
+          "processFullMuon": "1",
+          "processFullWithTOFTriton": "0",
+          "nSigmaBins": {
+            "values": [
+              401,
+              -10.024999618530273,
+              10.024999618530273
+            ]
+          },
+          "trackSelection": "1",
+          "processFullWithTOFHelium3": "0",
+          "processFullTriton": "1",
+          "processTriton": "0",
+          "processPion": "0",
+          "splitSignalPerCharge": "1",
+          "expSigmaBins": {
+            "values": [
+              200,
+              0,
+              200
+            ]
+          },
+          "applyEvSel": "2",
+          "nBinsP": "200",
+          "deltaBins": {
+            "values": [
+              200,
+              -1000,
+              1000
+            ]
+          },
+          "processFullPion": "1"
+        }
+      },
+      "wagon_id": 6914,
+      "workflow_name": "o2-analysis-pid-tpc-qa",
+      "suffix": ""
+    },
+    {
+      "subwagon_id": 9865,
+      "subwagon_name": "base",
+      "configuration": {
+        "lambdakzero-initializer": {},
+        "lambdakzero-builder": {
+          "lutPath": "GLO/Param/MatLUT",
+          "dcav0dau": "1",
+          "processRun3": "1",
+          "processRun2": "0",
+          "v0radius": "0.9",
+          "dQALambdaMassWindow": "0.005",
+          "d_UseAbsDCA": "1",
+          "d_UseAutodetectMode": "0",
+          "tpcrefit": "0",
+          "grpPath": "GLO/GRP/GRP",
+          "dQAMaxPt": "5",
+          "v0cospa": "0.995",
+          "useMatCorrType": "2",
+          "d_doQA": "0",
+          "d_UseWeightedPCA": "0",
+          "rejDiffCollTracks": "0",
+          "dQANBinsPtCoarse": "10",
+          "geoPath": "GLO/Config/GeometryAligned",
+          "dcanegtopv": "0.1",
+          "dQANBinsMass": "400",
+          "dcapostopv": "0.1",
+          "createV0CovMats": "0",
+          "d_doTrackQA": "0",
+          "grpmagPath": "GLO/Config/GRPMagField",
+          "dQANBinsRadius": "500",
+          "dQAK0ShortMassWindow": "0.005",
+          "d_bz": "-999",
+          "ccdb-url": "http://alice-ccdb.cern.ch"
+        },
+        "lambdakzero-v0-data-link-builder": {},
+        "lambdakzero-preselector": {
+          "dPreselectOnlyBaryons": "0",
+          "ddEdxPreSelectAntiLambda": "1",
+          "ddEdxPreSelectLambda": "1",
+          "dIfMCgenerateLambda": "0",
+          "dTPCNCrossedRows": "50",
+          "ddEdxPreSelectHypertriton": "0",
+          "dIfMCgenerateK0Short": "0",
+          "dIfMCgenerateGamma": "0",
+          "ddEdxPreSelectGamma": "1",
+          "processBuildAll": "1",
+          "processBuildMCAssociated": "0",
+          "ddEdxPreSelectAntiHypertriton": "0",
+          "ddEdxPreSelectionWindow": "7",
+          "dIfMCgenerateHypertriton": "0",
+          "dIfMCgenerateAntiHypertriton": "0",
+          "processBuildValiddEdx": "0",
+          "dIfMCgenerateAntiLambda": "0",
+          "ddEdxPreSelectK0Short": "1",
+          "processBuildValiddEdxMCAssociated": "0"
+        }
+      },
+      "wagon_id": 6915,
+      "workflow_name": "o2-analysis-lf-lambdakzerobuilder",
+      "suffix": ""
+    },
+    {
+      "subwagon_id": 9866,
+      "subwagon_name": "base",
+      "configuration": {
+        "multiplicity-table": {
+          "doVertexZeq": "1",
+          "processRun3": "1",
+          "processRun2": "0",
+          "fractionOfEvents": "2"
+        }
+      },
+      "wagon_id": 6916,
+      "workflow_name": "o2-analysis-multiplicity-table",
+      "suffix": ""
+    },
+    {
+      "subwagon_id": 9867,
+      "subwagon_name": "base",
+      "configuration": {
+        "tpc-pid-full": {
+          "param-file": "",
+          "networkPathCCDB": "Analysis/PID/TPC/ML",
+          "pid-he": "-1",
+          "pid-ka": "-1",
+          "ccdbPath": "Analysis/PID/TPC/Response",
+          "pid-pi": "-1",
+          "pid-pr": "-1",
+          "autofetchNetworks": "1",
+          "ccdb-timestamp": "0",
+          "enableNetworkOptimizations": "0",
+          "pid-tr": "-1",
+          "pid-de": "-1",
+          "networkSetNumThreads": "0",
+          "pid-al": "-1",
+          "skipTPCOnly": "0",
+          "ccdb-url": "http://alice-ccdb.cern.ch",
+          "recoPass": "",
+          "useNetworkCorrection": "0",
+          "pid-el": "-1",
+          "pid-mu": "-1",
+          "networkPathLocally": "network.onnx"
+        }
+      },
+      "wagon_id": 6917,
+      "workflow_name": "o2-analysis-pid-tpc-full",
+      "suffix": ""
+    },
+    {
+      "subwagon_id": 17,
+      "subwagon_name": "base",
+      "configuration": {
+        "timestamp-task": {
+          "rct-path": "RCT/Info/RunInformation",
+          "orbit-reset-path": "CTP/Calib/OrbitReset",
+          "ccdb-url": "http://alice-ccdb.cern.ch",
+          "verbose": "0",
+          "isRun2MC": "0"
+        }
+      },
+      "wagon_id": 17,
+      "workflow_name": "o2-analysis-timestamp",
+      "suffix": ""
+    },
+    {
+      "subwagon_id": 1761,
+      "subwagon_name": "base",
+      "configuration": {
+        "ft0-corrected-table": {}
+      },
+      "wagon_id": 1560,
+      "workflow_name": "o2-analysis-ft0-corrected-table",
+      "suffix": ""
+    },
+    {
+      "subwagon_id": 3190,
+      "subwagon_name": "base",
+      "configuration": {
+        "pid-multiplicity": {
+          "processIU": "0",
+          "processStandard": "1"
+        }
+      },
+      "wagon_id": 2832,
+      "workflow_name": "o2-analysis-pid-tpc-base",
+      "suffix": ""
+    },
+    {
+      "subwagon_id": 9869,
+      "subwagon_name": "base",
+      "configuration": {
+        "track-selection": {
+          "ptMax": "1e+10",
+          "produceTable": "-1",
+          "etaMin": "-0.8",
+          "isRun3": "1",
+          "itsMatching": "1",
+          "etaMax": "0.8",
+          "compatibilityIU": "0",
+          "dcaSetup": "0",
+          "ptMin": "0.1",
+          "produceFBextendedTable": "-1"
+        }
+      },
+      "wagon_id": 6919,
+      "workflow_name": "o2-analysis-trackselection",
+      "suffix": ""
+    },
+    {
+      "subwagon_id": 9870,
+      "subwagon_name": "base",
+      "configuration": {
+        "track-propagation": {
+          "lutPath": "GLO/Param/MatLUT",
+          "processCovarianceMc": "0",
+          "trackTunerParams": "",
+          "geoPath": "GLO/Config/GeometryAligned",
+          "minPropagationDistance": "2.5",
+          "useTrackTuner": "0",
+          "processCovarianceWithPID": "0",
+          "processCovarianceData": "1",
+          "mVtxPath": "GLO/Calib/MeanVertex",
+          "grpmagPath": "GLO/Config/GRPMagField",
+          "ccdb-url": "http://alice-ccdb.cern.ch",
+          "processStandard": "0",
+          "processStandardWithPID": "0"
+        }
+      },
+      "wagon_id": 6920,
+      "workflow_name": "o2-analysis-track-propagation",
+      "suffix": ""
+    },
+    {
+      "subwagon_id": 9871,
+      "subwagon_name": "base",
+      "configuration": {
+        "bc-selection-task": {
+          "triggerBcShift": "999",
+          "processRun3": "1",
+          "processRun2": "0"
+        },
+        "event-selection-task": {
+          "syst": "pp",
+          "isMC": "0",
+          "processRun3": "1",
+          "processRun2": "0",
+          "muonSelection": "0",
+          "customDeltaBC": "300"
+        }
+      },
+      "wagon_id": 6921,
+      "workflow_name": "o2-analysis-event-selection",
+      "suffix": ""
+    }
+  ],
+  "allowed_parent_level": 0,
+  "type": "test",
+  "derived_data_type": "standard",
+  "inputdata": [
+    "/alice/data/2023/LHC23zc/537901/apass1_relval_itstpcmap_1/0740"
+  ],
+  "package_tag": "VO_ALICE@O2Physics::daily-20231117-0100-1",
+  "OutputDirector": {
+    "debug_mode": true,
+    "resfile": "tpc_skims",
+    "OutputDescriptors": [
+      {
+        "table": "AOD/TPCTOFSKIMTREE/0"
+      },
+      {
+        "table": "AOD/TPCSKIMV0TREE/0"
+      }
+    ],
+    "ntfmerge": 1
+  },
+  "isProductionHY": false,
+  "wagons_timestamp": 1700428478865,
+  "train_id": "136103",
+  "derived_data": true
+}
