@@ -14,7 +14,7 @@ with open(args.config, 'r') as config_file:
 sys.path.append(CONFIG['settings']['framework'] + "/framework")
 from base import *
 
-LOG = logger.logger("Framework")
+LOG = logger("Framework")
 LOG.welcome_message()
 
 fetch_upstream("origin", path=CONFIG['settings']['framework'])
@@ -46,7 +46,7 @@ exec_script = """#!/bin/bash
 #SBATCH --error={l}/run_%j.err                                              # Standard error log
 
 time python3 {p}/run/src/run_framework.py --config $1
-""".format(p=framework_path, l=output_path)
+""".format(p=framework_path, l=output_path, cont=CONFIG['trainNeuralNetOptions']['slurm']['rocm_container'])
 
 script_path = os.path.join(framework_path, 'run/src/RUN_SLURM.sh')
 with open(script_path, 'w') as script_file:

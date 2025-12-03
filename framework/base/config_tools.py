@@ -3,9 +3,10 @@ import importlib.util
 from datetime import datetime
 import subprocess
 import sys
-from . import logger
 
-LOG = logger.logger(min_severity="DEBUG", task_name="config_tools")
+from .logger import *
+
+LOG = logger(min_severity="DEBUG", task_name="config_tools")
 
 def read_config(path="../configuration.json"):
     global CONFIG
@@ -25,11 +26,11 @@ def write_config(CONFIG, path = "../configuration.json"):
 def add_name_and_path(config):
     # Ensure base_output_folder exists; default to $PWD (fall back to os.getcwd() if not set)
     base_folder = config['settings']['framework']
-    
+
     ### Enable HadronicRate flag if present in input features
     if "fHadronicRate" in config["createTrainingDatasetOptions"]["labels_x"]:
         config["dataset"]["HadronicRate"] = "True"
-        
+
     dataset = config.get('dataset', {})
     required_keys = ['year', 'period', 'pass', 'dEdxSelection']
     missing = [key for key in required_keys if key not in dataset]
@@ -77,16 +78,17 @@ def can_we_continue():
     if response != 'y':
         LOG.error("Stopping macro!")
         sys.exit(1)
+    print("Continuing...\n")
 
 def create_folders(config):
-    
+
     outdir = config['output']['general']['path']
-    
+
     if os.path.exists(outdir):
         os.system(f'rm -rf {outdir}')
     os.makedirs(outdir, exist_ok=True)
     LOG.info(f"Created output folder {outdir}")
-    
+
     tree_dir = os.path.join(outdir, "trees")
     os.makedirs(tree_dir, exist_ok=True)
     LOG.info(f"Created tree output folder {tree_dir}")
@@ -105,7 +107,7 @@ def create_folders(config):
             config["output"][process]["QApath"] = qa_dir
 
 def copy_config(config):
-    
+
     os.system(f"cp {config['trainNeuralNetOptions']['configuration']} {os.path.join(config['output']['general']['path'], 'nnconfig.py')}")
     config["trainNeuralNetOptions"]["configuration"] = os.path.join(config['output']['general']['path'], 'nnconfig.py')
 

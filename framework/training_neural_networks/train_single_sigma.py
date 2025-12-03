@@ -32,7 +32,7 @@ from neural_network_class.NeuralNetworkClasses.extract_from_root import *
 from neural_network_class.NeuralNetworkClasses.dataset_loading import *
 from neural_network_class.NeuralNetworkClasses.NN_class import *
 
-LOG = logger.logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="train_single_sigma")
+LOG = logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="train_single_sigma")
 
 nnconfig = import_from_path(CONFIG["trainNeuralNetOptions"]["configuration"])
 

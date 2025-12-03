@@ -4,7 +4,7 @@ import array
 import argparse
 
 #This is the python equivalent to shiftNsigma.C
-#This script takes as input the Data tree with the clean samples, and the BB parameters from the fitting macro. 
+#This script takes as input the Data tree with the clean samples, and the BB parameters from the fitting macro.
 #It then reads in the tree, and creates a copy
 #Then it shifts the Nsigma values for the new tree, applies some cuts, creates some fits, and then stores the new tree
 
@@ -214,7 +214,7 @@ def update_v0_tree(tree, name, calculate_dEdx, output_V0_tree, buffers):
     if output_V0_tree is None or buffers is None:
         raise ValueError("Output tree and buffers must be provided for V0 update.")
     # LOG(f"Using dEdx values from branch {CONFIG['dataset']['dEdxSelection']} for V0 tree")
-    
+
     # Prepare input buffers for SetBranchAddress
     fY = array.array('f', [0.0])
     fEta = array.array('f', [0.0])
@@ -295,7 +295,7 @@ def update_v0_tree(tree, name, calculate_dEdx, output_V0_tree, buffers):
 
     for i in range(nentries):
         tree.GetEntry(i)
-        
+
         #count particles by species
         if fPidIndex[0] == 0:
             nElectronV0 += 1
@@ -326,10 +326,10 @@ def update_v0_tree(tree, name, calculate_dEdx, output_V0_tree, buffers):
         fsNormNClustersTPC[0] = fNormNClustersTPC[0]
         fsFt0Occ[0] = fFt0Occ[0]
         fsHadronicRate[0] = fHadronicRate[0]
-        
+
         expected_dEdx = calculate_dEdx(fsBetaGamma[0])
         fsInvDeDxExpTPC[0] = 1.0 / expected_dEdx if expected_dEdx != 0 else 0
-        
+
         if CONFIG['dataset']['dEdxSelection'] == "TPCSignal":
             fsTPCSignal[0] = fTPCSignal[0]
         elif CONFIG['dataset']['dEdxSelection'] == "TPCdEdxNorm":
@@ -441,11 +441,11 @@ def update_tpctof_tree(tree, name, calculate_dEdx, output_tpctof_tree, buffers):
             nKaonV0 += 1
         elif fPidIndex[0] == 4:
             nProtonV0 += 1
-            # LOG.debug(f"Proton TPC Inner Param = {fTPCInnerParam[0]}")  
-            # LOG.debug(f"Proton TPC abs(fSigned1Pt[0]) = {abs(1/fSigned1Pt[0])}")  
+            # LOG.debug(f"Proton TPC Inner Param = {fTPCInnerParam[0]}")
+            # LOG.debug(f"Proton TPC abs(fSigned1Pt[0]) = {abs(1/fSigned1Pt[0])}")
         else:
             nRestV0 += 1
-        
+
         # Copy values to output arrays
         fsY[0] = fY[0]
         fsEta[0] = fEta[0]
@@ -533,9 +533,9 @@ if __name__ == "__main__":
     sys.path.append(CONFIG['settings']['framework'] + "/framework")
     from base.config_tools import *
 
-    LOG = logger.logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="shift_nsigma_modified")
+    LOG = logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="shift_nsigma_modified")
 
-    #Reading 
+    #Reading
     BB_params = CONFIG['output']['fitBBGraph']['BBparameters']
 
     #create function to calculate dEdx values from fit

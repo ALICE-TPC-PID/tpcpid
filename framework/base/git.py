@@ -1,7 +1,7 @@
 import os, subprocess
-from . import logger
+from .logger import *
 
-LOG = logger.logger(min_severity="DEBUG", task_name="git")
+LOG = logger(min_severity="DEBUG", task_name="git")
 
 def fetch_upstream(remote: str, path: str):
     try:

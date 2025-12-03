@@ -37,9 +37,10 @@ with open(config, 'r') as config_file:
     CONFIG = json.load(config_file)
 sys.path.append(CONFIG['settings']['framework'] + "/framework")
 from base import *
+from math_functions import *
 from neural_network_class.NeuralNetworkClasses.extract_from_root import *
 
-LOG = logger.logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="CreateDataset")
+LOG = logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="CreateDataset")
 
 LOG.info("--- Starting the data preparation script ---\n")
 
@@ -324,18 +325,6 @@ for lab in import_labels:
 reorder_index = np.array(reorder_index)
 fit_data = fit_data[:,reorder_index]
 labels = labels[reorder_index]
-
-def gausscale(x, mean, sigma, scale):
-    return (scale/0.4)*np.exp(-0.5*((x-mean)/sigma)**2)
-
-def linear(x, a, b):
-    return a*x + b
-
-def gausgauslin(x, mu1, sigma1, scale1, mu2, sigma2, scale2, a, b):
-    return gausscale(x, mu1, sigma1, scale1) + gausscale(x, mu2, sigma2, scale2) + (a*x + b)
-
-def gauslin(x, mu1, sigma1, scale1, a, b):
-    return gausscale(x, mu1, sigma1, scale1) + (a*x + b)
 
 
 ## Training data selection

@@ -11,7 +11,7 @@ sys.path.append(CONFIG['settings']['framework'] + "/framework")
 from base import *
 
 try:
-    LOG = logger.logger("Framework")
+    LOG = logger("Framework")
     LOG.framework("Setup completed successfully. Ready to launch!")
 
     full_git_config(
@@ -28,7 +28,7 @@ try:
         LOG.framework("--- Starting plotSkimTreeQA2D_modified.C ---")
 
         subprocess.run([
-            "singularity", "exec",
+            "apptainer", "exec",
             "/lustre/alice/users/jwitte/singularity/python_hipe4ml_root.sif",
             "root", "-l", "-b", "-q",
             f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/plotSkimTreeQA2D_modified.C(\"{args.config}\")"
@@ -41,7 +41,7 @@ try:
         LOG.framework("--- Starting fitNormGraphdEdxvsBGpid_modified.C ---")
 
         subprocess.run([
-            "singularity", "exec",
+            "apptainer", "exec",
             "/lustre/alice/users/jwitte/singularity/python_hipe4ml_root.sif",
             "root", "-l", "-b", "-q",
             f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/fitNormGraphdEdxvsBGpid_modified.C(\"{args.config}\")"
@@ -54,7 +54,7 @@ try:
         LOG.framework("--- Starting shift_nsigma_modified.py ---")
 
         subprocess.run([
-            "singularity", "exec",
+            "apptainer", "exec",
             "/lustre/alice/users/jwitte/singularity/python_hipe4ml_root.sif",
             "python3",
             f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/shift_nsigma_modified.py",
@@ -68,7 +68,7 @@ try:
         LOG.framework("--- Starting CreateDataset.py ---")
 
         subprocess.run([
-            "singularity", "exec",
+            "apptainer", "exec",
             "/lustre/alice/users/jwitte/singularity/python_hipe4ml_root.sif",
             "python3",
             f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/CreateDataset.py",

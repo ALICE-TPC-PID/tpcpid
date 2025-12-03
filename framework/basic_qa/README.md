@@ -1,7 +1,7 @@
 # Usage example at Virgo
-At first, open singularity enviroment: 
+At first, open apptainer enviroment:
 ``` bash
-singularity shell -B /lustre /lustre/alice/users/szhu/share/root_npm.sif
+apptainer shell -B /lustre /lustre/alice/users/szhu/share/root_npm.sif
 ```
 Then, compile the code. At the path where Makefile exsits.
 ```bash
