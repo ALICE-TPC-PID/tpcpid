@@ -20,7 +20,7 @@ with open(config, 'r') as config_file:
 sys.path.append(CONFIG['settings']['framework'] + "/framework")
 from base import *
 
-LOG = logger.logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="run_job_single_sigma")
+LOG = logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="run_job_single_sigma")
 
 output_folder   = CONFIG["output"]["general"]["training"]
 execution_mode  = CONFIG["trainNeuralNetOptions"]["execution_mode"]

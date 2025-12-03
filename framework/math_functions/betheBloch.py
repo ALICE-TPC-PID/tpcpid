@@ -1,3 +1,5 @@
+import numpy as np
+
 def BetheBlochAleph(bg, params):
     beta = bg/np.sqrt(1.+ bg*bg)
     aa   = beta**params[3]

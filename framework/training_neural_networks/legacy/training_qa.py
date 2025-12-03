@@ -28,7 +28,7 @@ sys.path.append(CONFIG['settings']['framework'] + "/framework")
 from base import *
 from neural_network_class.NeuralNetworkClasses import *
 
-LOG = logger.logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="training_qa")
+LOG = logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="training_qa")
 
 configurations = import_from_path(CONFIG["trainNeuralNetOptions"]["configuration"])
 

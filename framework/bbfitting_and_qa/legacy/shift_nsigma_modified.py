@@ -498,7 +498,7 @@ if __name__ == "__main__":
     sys.path.append(CONFIG['settings']['framework'] + "/framework")
     from base.config_tools import *
 
-    LOG = logger.logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="shift_nsigma_modified")
+    LOG = logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="shift_nsigma_modified")
 
     # Job_dir = "/lustre/alice/users/jwitte/tpcpid/o2-tpcpid-parametrisation/BBfitAndQA/BBFitting_DEBUG/JOBS/20250528/32632827"
     Job_dir = CONFIG["output"]["general"]["path"]

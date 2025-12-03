@@ -27,8 +27,10 @@ with open(args.config, 'r') as config_file:
     CONFIG = json.load(config_file)
 sys.path.append(CONFIG['settings']['framework'] + "/framework")
 from base import *
+from math_functions import *
 from neural_network_class.NeuralNetworkClasses.extract_from_root import *
 nnconfig = import_from_path(CONFIG["trainNeuralNetOptions"]["configuration"])
+LOG = logger("training_qa")
 
 ########### Import the Neural Network class ###########
 
@@ -38,19 +40,6 @@ if HadronicRateBool:
     LOG.debug("Using Hadronic Rate option")
 
 ### Data preparation
-
-def gauss(x, A, x0, sigma):
-    return A * np.exp(-(x - x0) ** 2 / (2 * sigma ** 2))
-
-def BetheBlochAleph(bg, params):
-    beta = bg/np.sqrt(1.+ bg*bg)
-    aa   = beta**params[3]
-    bb   = bg**(-params[4])
-    bb   = np.log(params[2]+bb)
-    charge_factor = params[5]         # params[5] = mMIP, params[6] = mChargeFactor #usually its the other way around. Here its just for simplicity to copy it directly from the google sheet
-    final = (params[1]-aa-bb)*params[0]*charge_factor/aa
-    return final
-
 
 ## Loading data and models
 
@@ -210,10 +199,10 @@ def QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTPCInnerParam', log_x = True, r
             except Exception as e:
                 if log_x:
                     LOG.error("Exception at: " + particles[pid_idx] + "/" + plot_against +
-                    "for bins: " + str(10**bin_edges[j]) + " " + str(10**bin_edges[j+1]) + " -> " + str(e))
+                    " for bins: " + str(10**bin_edges[j]) + " " + str(10**bin_edges[j+1]) + " -> " + str(e))
                 else:
                     LOG.error("Exception at: " + particles[pid_idx] + "/" + plot_against +
-                    "for bins: " + str(bin_edges[j]) + " " + str(bin_edges[j+1]) + " -> " + str(e))
+                    " for bins: " + str(bin_edges[j]) + " " + str(bin_edges[j+1]) + " -> " + str(e))
                 binned_mean[0][j], binned_sigma[0][j] = np.nan, np.nan
                 continue
 
@@ -312,15 +301,6 @@ def separation_power(useNN=0, useMassAssumption=0, momentumSelection=[0.3,0.4],
     os.makedirs(qa_dir + "/SeparationPower", exist_ok=True)
 
     ### usemMassAssumption is the index in the masses array: 0 = electrons, 2 = pions
-
-    def double_gauss(x, A1, x01, sigma1, A2, x02, sigma2):
-        return A1 * np.exp(-(x - x01) ** 2 / (2 * sigma1 ** 2)) + A2 * np.exp(-(x - x02) ** 2 / (2 * sigma2 ** 2))
-
-    def gauss(x, A, x0, sigma):
-        return A * np.exp(-(x - x0) ** 2 / (2 * sigma ** 2))
-
-    def separation_power(mu1, mu2, sigma1, sigma2):
-        return 2*np.abs(mu1-mu2)/(sigma1+sigma2)
 
     fig = plt.figure(figsize=(16,10))
     y_bins = np.linspace(*(y_ranges[useMassAssumption]),200)

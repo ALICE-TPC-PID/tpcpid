@@ -26,7 +26,7 @@ with open(args.config, 'r') as config_file:
 sys.path.append(CONFIG['settings']['framework'] + "/framework")
 from base import *
 
-LOG = logger.logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="shell_script_creation")
+LOG = logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="shell_script_creation")
 
 output_folder           = CONFIG["output"]["general"]["training"]
 scheduler               = CONFIG["trainNeuralNetOptions"]["scheduler"]
@@ -104,7 +104,7 @@ time srun /bin/python3.9 python3 %(job_script)s --config $1 --train-mode $2
 
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 
-time srun singularity exec %(rocm_container)s python3 %(job_script)s --config $1 --train-mode $2
+time srun apptainer exec %(rocm_container)s python3 %(job_script)s --config $1 --train-mode $2
 """ % job_dict
 
                 else:
@@ -114,7 +114,7 @@ time srun singularity exec %(rocm_container)s python3 %(job_script)s --config $1
 
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 
-time srun singularity exec %(rocm_container)s python3 %(job_script)s --config $1 --train-mode $2
+time srun apptainer exec %(rocm_container)s python3 %(job_script)s --config $1 --train-mode $2
 """ % job_dict
 
                 bash_file = open(bash_path, "w")
@@ -143,7 +143,7 @@ time srun singularity exec %(rocm_container)s python3 %(job_script)s --config $1
 
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 
-time srun singularity exec %(rocm_container)s python3 %(job_script)s --config $1 --train-mode $2
+time srun apptainer exec %(rocm_container)s python3 %(job_script)s --config $1 --train-mode $2
 """ % job_dict
 
                 else:
@@ -153,7 +153,7 @@ time srun singularity exec %(rocm_container)s python3 %(job_script)s --config $1
 
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 
-time srun singularity exec %(rocm_container)s python3 %(job_script)s --config $1 --train-mode $2
+time srun apptainer exec %(rocm_container)s python3 %(job_script)s --config $1 --train-mode $2
 """ % job_dict
 
                 bash_file = open(bash_path, "w")
@@ -174,7 +174,7 @@ time srun singularity exec %(rocm_container)s python3 %(job_script)s --config $1
 #SBATCH --mail-type=%(mail-type)s                                           # notify via email
 #SBATCH --mail-user=%(mail-user)s                                           # recipient
 
-time singularity exec %(cuda_container)s python3 %(job_script)s --config $1 --train-mode $2
+time apptainer exec %(cuda_container)s python3 %(job_script)s --config $1 --train-mode $2
 
 """ % job_dict)
                 bash_file.close()
@@ -193,8 +193,8 @@ time singularity exec %(cuda_container)s python3 %(job_script)s --config $1 --tr
             bash_file.write(
 
 """#!/bin/bash
-#SBATCH --job-name=%(job-name)s                                                 # Task name
-#SBATCH --chdir=%(chdir)s                                                       # Working directory on shared storage
+#SBATCH --job-name=TPCPID_NNQA                                                  # Task name
+#SBATCH --chdir=%(qa_dir)s                                                      # Working directory on shared storage
 #SBATCH --time=10                                                               # Run time limit
 #SBATCH --mem=30G                                                               # job memory
 #SBATCH --partition=prod                                                        # job partition (debug, main)
@@ -203,24 +203,24 @@ time singularity exec %(cuda_container)s python3 %(job_script)s --config $1 --tr
 
 time python3.9 %(actual_job_script)s --config $1
 
-""" % {**job_dict, 'actual_job_script': actual_job_script})
+""" % {**job_dict, 'actual_job_script': actual_job_script, 'qa_dir': qa_dir})
 
         else:
 
             bash_file = open(path.join(qa_dir, "QA.sh"), "w")
             bash_file.write(
 """#!/bin/bash
-#SBATCH --job-name=%(job-name)s                                                 # Task name
-#SBATCH --chdir=%(chdir)s                                                       # Working directory on shared storage
+#SBATCH --job-name=TPCPID_NNQA                                                  # Task name
+#SBATCH --chdir=%(qa_dir)s                                                      # Working directory on shared storage
 #SBATCH --time=10                                                               # Run time limit
 #SBATCH --mem=30G                                                               # job memory
 #SBATCH --partition=debug                                                       # job partition (debug, main)
 #SBATCH --mail-type=%(mail-type)s                                               # notify via email
 #SBATCH --mail-user=%(mail-user)s                                               # recipient
 
-time singularity exec %(cuda_container)s python3 %(actual_job_script)s --config $1
+time apptainer exec %(cuda_container)s python3 %(actual_job_script)s --config $1
 
-""" % {**job_dict, 'actual_job_script': actual_job_script})
+""" % {**job_dict, 'actual_job_script': actual_job_script, 'qa_dir': qa_dir})
             bash_file.close()
 
 elif scheduler.lower() == "htcondor":

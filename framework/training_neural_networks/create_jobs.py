@@ -25,7 +25,7 @@ sys.path.append(CONFIG['settings']['framework'] + "/framework")
 
 from base.config_tools import *
 
-LOG = logger.logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="create_jobs")
+LOG = logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="create_jobs")
 
 ### directory settings
 toplevel        = CONFIG["output"]["general"]["path"]
