@@ -457,15 +457,15 @@ class NN():
         # 3. Determine MASTER_ADDR (multi-node safe)
         #    Only node 0 writes its hostname to a file shared across nodes.
         # ----------------------------------------------------------------------
-        hostfile = os.path.join(os.environ.get("TMPDIR", "/tmp"), f"master_addr_{user}_{slurm_jobid}.txt")
+        self.hostfile = os.path.join(os.environ.get("TMPDIR", "/tmp"), f"master_addr_{user}_{slurm_jobid}.txt")
 
         if slurm_nodeid == 0:
             # Node 0 writes its hostname
-            with open(hostfile, "w") as f:
+            with open(self.hostfile, "w") as f:
                 f.write(socket.gethostname())
 
         # Slurm ensures simultaneous startup → we simply read the file
-        with open(hostfile, "r") as f:
+        with open(self.hostfile, "r") as f:
             master_addr = f.read().strip()
 
         os.environ["MASTER_ADDR"] = master_addr
@@ -507,11 +507,10 @@ class NN():
 
         user = os.environ["USER"]
         slurm_jobid = os.environ["SLURM_JOBID"]
-        hostfile = os.path.join(os.environ.get("TMPDIR", "/tmp"), f"master_addr_{user}_{slurm_jobid}.txt")
 
         if self.rank == 0:
             try:
-                os.remove(hostfile)
+                os.remove(self.hostfile)
             except OSError:
                 pass
 
