@@ -406,6 +406,7 @@ class NN():
 
         if self.multigpu > 0:
             dist.destroy_process_group()
+            self.delete_masteraddr_file()
 
 
     def save_losses(self, path=["./training_loss.txt", "./validation_loss.txt"]):
@@ -440,6 +441,7 @@ class NN():
         slurm_nodeid   = int(os.environ["SLURM_NODEID"])    # node index (0 .. nnodes-1)
         slurm_nnodes   = int(os.environ["SLURM_NNODES"])    # number of nodes
         slurm_jobid    = int(os.environ["SLURM_JOBID"])
+        user           = os.environ["USER"]
 
         # Let user-provided n_gpus override Slurm if desired
         worldsize = self.multigpu if self.multigpu > 0 else slurm_ntasks
@@ -455,7 +457,7 @@ class NN():
         # 3. Determine MASTER_ADDR (multi-node safe)
         #    Only node 0 writes its hostname to a file shared across nodes.
         # ----------------------------------------------------------------------
-        hostfile = os.path.join(os.environ.get("TMPDIR", "/tmp"), "master_addr.txt")
+        hostfile = os.path.join(os.environ.get("TMPDIR", "/tmp"), f"master_addr_{user}_{slurm_jobid}.txt")
 
         if slurm_nodeid == 0:
             # Node 0 writes its hostname
@@ -497,6 +499,21 @@ class NN():
 
         return slurm_localid, worldsize
 
+    def delete_masteraddr_file(self):
+        """
+        Delete the temporary master address file created during multi-node DDP setup.
+        Only node 0 should perform the deletion.
+        """
+
+        user = os.environ["USER"]
+        slurm_jobid = os.environ["SLURM_JOBID"]
+        hostfile = os.path.join(os.environ.get("TMPDIR", "/tmp"), f"master_addr_{user}_{slurm_jobid}.txt")
+
+        if self.rank == 0:
+            try:
+                os.remove(hostfile)
+            except OSError:
+                pass
 
     def save_net(self, path="./net.pt", avoid_q = False):
 
