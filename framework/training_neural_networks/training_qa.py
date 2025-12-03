@@ -339,11 +339,10 @@ def separation_power(useNN=0, useMassAssumption=0, momentumSelection=[0.3,0.4],
     plt.plot(y_bins[:-1], gauss(y_bins[:-1], popt[0], popt[1], popt[2]), lw=1, label=plot_labels[gauss_labels[useMassAssumption][0]][0] + " {:.3f}".format(popt[1]) + " $\pm$ " + "{:.3f}".format(popt[2]), c = plot_labels[gauss_labels[useMassAssumption][0]][1])
     plt.plot(y_bins[:-1], gauss(y_bins[:-1], popt[3], popt[4], popt[5]), lw=1, label=plot_labels[gauss_labels[useMassAssumption][1]][0] + " {:.3f}".format(popt[4]) + " $\pm$ " + "{:.3f}".format(popt[5]), c = plot_labels[gauss_labels[useMassAssumption][1]][1])
     plt.axvline(0, c='black', lw=1, ls='--', label="Optimal band center")
-    sep_power = separation_power(popt[1], popt[4], popt[2], popt[5])
 
     plt.xlabel(r'N$\sigma$ (' + particles[useMassAssumption] + ')', fontsize=fontsize_axislabels)
     plt.ylabel('Density', fontsize=fontsize_axislabels)
-    plt.legend(title="Separation power: " + "{:.3f}".format(sep_power))
+    plt.legend(title="Species: "particles[useMassAssumption])
     plt.grid()
     plt.tight_layout()
     if useNN:

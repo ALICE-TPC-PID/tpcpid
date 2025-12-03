@@ -505,9 +505,6 @@ class NN():
         Only node 0 should perform the deletion.
         """
 
-        user = os.environ["USER"]
-        slurm_jobid = os.environ["SLURM_JOBID"]
-
         if self.rank == 0:
             try:
                 os.remove(self.hostfile)
