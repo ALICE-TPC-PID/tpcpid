@@ -342,6 +342,7 @@ def separation_power(useNN=0, useMassAssumption=0, momentumSelection=[0.3,0.4],
 
     plt.xlabel(r'N$\sigma$ (' + particles[useMassAssumption] + ')', fontsize=fontsize_axislabels)
     plt.ylabel('Density', fontsize=fontsize_axislabels)
+    plt.legend(title="Species: "particles[useMassAssumption])
     plt.grid()
     plt.tight_layout()
     if useNN:
