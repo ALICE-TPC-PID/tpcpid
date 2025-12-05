@@ -277,24 +277,22 @@ for run in run_numbers:
 gaussian_fits = np.array(gaussian_fits)
 
 if len(gaussian_fits):
-    mapper = dict()
-    for i, run in enumerate(np.sort(np.unique(run_numbers))):
-        mapper[run] = i
-    index_x = list()
-    for run in gaussian_fits[:,0]:
-        index_x.append(mapper[run])
+    # Use only runs that actually have fits
+    unique_runs = np.sort(np.unique(gaussian_fits[:, 0]))
+    mapper = {run: i for i, run in enumerate(unique_runs)}
+
+    index_x = [mapper[run] for run in gaussian_fits[:, 0]]
 
     fig, axs = plt.subplots(3, 1, sharex=True, figsize=(15, 15), gridspec_kw={'hspace': 0})
 
-    scatter0 = axs[0].scatter(index_x, gaussian_fits[:,2], c=gaussian_fits[:,1], cmap="jet")
+    scatter0 = axs[0].scatter(index_x, gaussian_fits[:, 2], c=gaussian_fits[:, 1], cmap="jet")
     cbar0 = fig.colorbar(scatter0, ax=axs[0])
     cbar0.set_label("norm. multiplicity", fontsize=18)
     cbar0.ax.tick_params(labelsize=15)
     axs[0].set_xlabel("runnumber", fontsize=18)
-    axs[0].set_ylabel("dE/dx gaussian fit of MIP pions", fontsize=18)
     axs[0].grid()
 
-    scatter1 = axs[1].scatter(index_x, gaussian_fits[:,2], c=gaussian_fits[:,3], cmap="hot")
+    scatter1 = axs[1].scatter(index_x, gaussian_fits[:, 2], c=gaussian_fits[:, 3], cmap="hot")
     cbar1 = fig.colorbar(scatter1, ax=axs[1])
     cbar1.set_label("gaussian sigma", fontsize=18)
     cbar1.ax.tick_params(labelsize=15)
@@ -302,17 +300,17 @@ if len(gaussian_fits):
     axs[1].set_ylabel("dE/dx gaussian fit of MIP pions", fontsize=18)
     axs[1].grid()
 
-    axs[2].set_xticks(np.arange(0, len(np.unique(gaussian_fits[:,0])), 1))
-    axs[2].set_xticklabels(np.unique(gaussian_fits[:,0].astype(int)), rotation=90, fontsize=15)  # Set fontsize to 12
-    scatter2 = axs[2].scatter(index_x, gaussian_fits[:,2], c=gaussian_fits[:,-1], cmap="inferno", norm=mcolors.LogNorm())
+    axs[2].set_xticks(np.arange(0, len(unique_runs), 1))
+    axs[2].set_xticklabels(unique_runs.astype(int), rotation=90, fontsize=15)
+    scatter2 = axs[2].scatter(index_x, gaussian_fits[:, 2], c=gaussian_fits[:, -1], cmap="inferno", norm=mcolors.LogNorm())
     cbar2 = fig.colorbar(scatter2, ax=axs[2])
     cbar2.set_label("#points in fit", fontsize=18)
     cbar2.ax.tick_params(labelsize=15)
     axs[2].set_xlabel("runnumber", fontsize=18)
-    axs[2].set_ylabel("dE/dx gaussian fit of MIP pions", fontsize=18)
     axs[2].grid()
 
     plt.savefig(os.path.join(plot_path, "mip_pi_trending.pdf"))
+
 else:
     LOG.info("No data for MIP trending. Skipping...")
 
