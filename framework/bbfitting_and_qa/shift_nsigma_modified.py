@@ -38,7 +38,11 @@ def collect_latest_trees(directory, prefix=""):
 #Crashes if there is more than one subdirectory
 #Returns array with tree names and the trees
 def read_tree(config):
-    root_file_path = config['dataset']['input_skimmedtree_path']
+    if config["process"].get("electronCleaning", False):
+        root_file_path = config['output']['electronCleaning']['tmva_training_output_path']
+    else:    
+        root_file_path = config['dataset']['input_skimmedtree_path']
+
     if not root_file_path or not os.path.exists(root_file_path):
         raise FileNotFoundError(f"[ERROR]: ROOT file not found at path: {root_file_path}")
     else:

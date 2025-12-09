@@ -97,7 +97,7 @@ def create_folders(config):
     LOG.info(f"Created training output folder {training_dir}")
     config["output"]["general"]["trees"] = tree_dir
     config["output"]["general"]["training"] = training_dir
-    processes = ["skimTreeQA", "fitBBGraph", "createTrainingDataset", "trainNeuralNet"]
+    processes = ["electronCleaning", "skimTreeQA", "fitBBGraph", "createTrainingDataset", "trainNeuralNet"]
     for process in processes:
         if config["process"][process]:
             qa_dir = os.path.join(outdir, "QA", process)
@@ -105,6 +105,11 @@ def create_folders(config):
             LOG.info(f"Setting up QA plot directory {qa_dir}")
             config["output"].setdefault(process, {})
             config["output"][process]["QApath"] = qa_dir
+    if config["process"].get("electronCleaning", False):
+        ec_dir = os.path.join(outdir, "electronCleaning")
+        os.makedirs(ec_dir, exist_ok=True)
+        LOG.info(f"Created electron cleaning output folder {ec_dir}")
+        config["output"]["electronCleaning"]["path"] = ec_dir
 
 def copy_config(config):
 

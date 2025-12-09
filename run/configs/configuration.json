@@ -1,6 +1,7 @@
 {
     "settings": {
         "framework": "/lustre/alice/users/csonnab/TPC/tpcpid-github-official",
+        "base_container": "/lustre/alice/users/csonnab/TPC/TPC_PRODUCTION/Containers/base.sif",
         "git": {
             "checkout": 0,
             "create_diff": 1,
@@ -9,6 +10,12 @@
             "commit": "latest",
             "tag": "N/A"
         }
+    },
+    "masterjob": {
+        "partition": "debug",
+        "time": "30",
+        "mem": "150G",
+        "cpus-per-task": "16"
     },
     "createTrainingDatasetOptions": {
         "labels_x": [
@@ -41,6 +48,7 @@
     },
     "process": {
         "severity": "INFO",
+        "electronCleaning": true,
         "createTrainingDataset": true,
         "fitBBGraph": true,
         "shiftNsigma": true,

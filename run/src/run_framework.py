@@ -29,7 +29,7 @@ try:
 
         subprocess.run([
             "apptainer", "exec",
-            "/lustre/alice/users/jwitte/singularity/python_hipe4ml_root.sif",
+            f"{CONFIG['settings']['base_container']}",
             "root", "-l", "-b", "-q",
             f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/plotSkimTreeQA2D_modified.C(\"{args.config}\")"
         ], check=True)
@@ -37,12 +37,33 @@ try:
         LOG.framework("--- plotSkimTreeQA2D_modified.C finished ---")
 
 
+    if CONFIG["process"]["electronCleaning"]:
+        LOG.framework("--- Starting tmva_application.py ---")
+
+        ### Since TMVA does not support passing a full path for the weights dir, this super ugly solution has to be taken
+        cmd = f"""
+cd {CONFIG["output"]["general"]["path"]}/electronCleaning && \
+apptainer exec {CONFIG['settings']['base_container']} root -l -b -q '{CONFIG["settings"]["framework"]}/framework/electron_cleaning/Train.cpp(\"{CONFIG['dataset']['input_skimmedtree_path']}\", \"{CONFIG['output']['general']['path']}/electronCleaning/TMVAC.root\", \"bdt\")'
+"""
+        subprocess.run(cmd, shell=True, check=True)
+        # os.system(f"rm -rf {CONFIG['output']['general']['path']}/electronCleaning/Train.cpp")
+        
+        subprocess.run([
+            "apptainer", "exec",
+            f"{CONFIG['settings']['base_container']}",
+            "python3",
+            f"{CONFIG['settings']['framework']}/framework/electron_cleaning/tmva_application.py",
+            "--config", args.config
+        ], check=True)
+
+        LOG.framework("--- tmva_application.py finished ---")
+
     if CONFIG["process"]["fitBBGraph"]:
         LOG.framework("--- Starting fitNormGraphdEdxvsBGpid_modified.C ---")
 
         subprocess.run([
             "apptainer", "exec",
-            "/lustre/alice/users/jwitte/singularity/python_hipe4ml_root.sif",
+            f"{CONFIG['settings']['base_container']}",
             "root", "-l", "-b", "-q",
             f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/fitNormGraphdEdxvsBGpid_modified.C(\"{args.config}\")"
         ], check=True)
@@ -55,7 +76,7 @@ try:
 
         subprocess.run([
             "apptainer", "exec",
-            "/lustre/alice/users/jwitte/singularity/python_hipe4ml_root.sif",
+            f"{CONFIG['settings']['base_container']}",
             "python3",
             f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/shift_nsigma_modified.py",
             "--config", args.config
@@ -69,7 +90,7 @@ try:
 
         subprocess.run([
             "apptainer", "exec",
-            "/lustre/alice/users/jwitte/singularity/python_hipe4ml_root.sif",
+            f"{CONFIG['settings']['base_container']}",
             "python3",
             f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/CreateDataset.py",
             "--config", args.config

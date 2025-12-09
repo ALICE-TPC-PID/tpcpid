@@ -33,22 +33,33 @@ can_we_continue() # Ask user if they want to continue with the given configurati
 create_folders(CONFIG)
 config_path = copy_config(CONFIG)
 
-framework_path = CONFIG['settings']['framework']
-output_path = CONFIG["output"]["general"]["path"]
+masterjob_defaults = {
+    "partition": "main",
+    "time": "60",
+    "mem": "150G",
+    "cpus-per-task": "16"
+}
 
-exec_script = """#!/bin/bash
-#SBATCH --job-name=TPCPID_MASTERJOB                                         # Task name
-#SBATCH --chdir={p}                                                         # Working directory on shared storage
-#SBATCH --time=30                                                           # Run time limit
-#SBATCH --mem=50G                                                           # job memory
-#SBATCH --partition=debug                                                   # job partition (debug, main)
-#SBATCH --output={l}/run_%j.out                                             # Standard output and error log
-#SBATCH --error={l}/run_%j.err                                              # Standard error log
+deep_update(masterjob_defaults, CONFIG.get('masterjob', {}), name="Masterjob settings", verbose=False)
+masterjob_defaults["framework_path"] = CONFIG['settings']['framework']
+masterjob_defaults["output_path"] = CONFIG["output"]["general"]["path"]
 
-time python3 {p}/run/src/run_framework.py --config $1
-""".format(p=framework_path, l=output_path, cont=CONFIG['trainNeuralNetOptions']['slurm']['rocm_container'])
+masterjob_defaults = replace_in_dict_keys(masterjob_defaults, '-', '_')
 
-script_path = os.path.join(framework_path, 'run/src/RUN_SLURM.sh')
+exec_script = f"""#!/bin/bash
+#SBATCH --job-name=TPCPID_MASTERJOB
+#SBATCH --chdir={masterjob_defaults['framework_path']}
+#SBATCH --time={masterjob_defaults['time']}
+#SBATCH --mem={masterjob_defaults['mem']}
+#SBATCH --partition={masterjob_defaults['partition']}
+#SBATCH --cpus-per-task={masterjob_defaults['cpus_per_task']}
+#SBATCH --output={masterjob_defaults['output_path']}/run_%j.out
+#SBATCH --error={masterjob_defaults['output_path']}/run_%j.err
+
+time python3 {masterjob_defaults['framework_path']}/run/src/run_framework.py --config $1
+"""
+
+script_path = os.path.join(masterjob_defaults["framework_path"], 'run/src/RUN_SLURM.sh')
 with open(script_path, 'w') as script_file:
     script_file.write(exec_script)
 
