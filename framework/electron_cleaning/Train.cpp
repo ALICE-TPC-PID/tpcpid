@@ -66,7 +66,7 @@ int Train(std::string input_file_path, std::string output_file_path, std::string
       "!V:!Silent:Color:DrawProgressBar:Transformations=I;D;P;G,D:AnalysisType="
       "Classification");
 
-  auto dataloader = std::make_unique<TMVA::DataLoader>("bdt");
+  auto dataloader = std::make_unique<TMVA::DataLoader>(weights_file_path.c_str());
 
   // --- Input variables
   dataloader->AddVariable("fGammaPsiPair", 'F');
