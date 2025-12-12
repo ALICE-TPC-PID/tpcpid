@@ -261,7 +261,7 @@ pions_at_mip = ((np.abs(fit_data[:, labels=="fTPCInnerParam"] - 0.4) < 0.01) * (
 run_numbers = np.sort(np.unique(fit_data[:, labels=="fRunNumber"]))
 gaussian_fits = list()
 for run in run_numbers:
-    LOG.info("Run: " + str(int(run)))
+    # LOG.info("Run: " + str(int(run)))
     run_mask = (fit_data[:, labels=="fRunNumber"] == run).flatten() * pions_at_mip
     run_data = fit_data[run_mask]
     for mult in tqdm(np.arange(0., 3., 0.1)):
@@ -370,10 +370,18 @@ def selector(X, Y, rangeX, rangeY, bins_sigma_mean = 200, p0 = [1.,0,0.1], use_g
     try:
         poly_mean = np.polyfit(x_ax[mask_poly],np.array(binned_mean[0])[mask_poly],deg=13)
         poly_sigma = np.polyfit(x_ax[mask_poly],(np.array(binned_mean[0])+np.array(binned_sigma[0]))[mask_poly],deg=13)
-        return (np.abs((Y - np.polyval(poly_mean,X))/(np.polyval(poly_sigma,X) - np.polyval(poly_mean, X))) < sigma_threshold), poly_mean, poly_sigma, binned_mean, binned_sigma
+        if poly_mean is None or poly_sigma is None:
+            LOG.warning("Polyfit failed!")
+            return np.ones(len(X)).astype(bool), poly_mean, poly_sigma, binned_mean, binned_sigma
+        else:
+            mask = (np.abs((Y - np.polyval(poly_mean,X))/(np.polyval(poly_sigma,X) - np.polyval(poly_mean, X))) < sigma_threshold),
+            if np.sum(mask) <= 100:
+                LOG.warning("Polyfit failed, less than 100 points selected!")
+                mask = np.ones(len(X)).astype(bool)
+            return mask, poly_mean, poly_sigma, binned_mean, binned_sigma
     except Exception as e:
         LOG.info(e)
-        return np.array([True]*len(X)), poly_mean, poly_sigma, binned_mean, binned_sigma
+        return np.ones(len(X)).astype(bool), poly_mean, poly_sigma, binned_mean, binned_sigma
 
 ### Excluding outside 3 sigma range for indiv. particle species
 
