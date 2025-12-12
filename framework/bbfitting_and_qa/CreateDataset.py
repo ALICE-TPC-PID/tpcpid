@@ -374,7 +374,7 @@ def selector(X, Y, rangeX, rangeY, bins_sigma_mean = 200, p0 = [1.,0,0.1], use_g
             LOG.warning("Polyfit failed!")
             return np.ones(len(X)).astype(bool), poly_mean, poly_sigma, binned_mean, binned_sigma
         else:
-            mask = (np.abs((Y - np.polyval(poly_mean,X))/(np.polyval(poly_sigma,X) - np.polyval(poly_mean, X))) < sigma_threshold),
+            mask = (np.abs((Y - np.polyval(poly_mean,X))/(np.polyval(poly_sigma,X) - np.polyval(poly_mean, X))) < sigma_threshold)
             if np.sum(mask) <= 100:
                 LOG.warning("Polyfit failed, less than 100 points selected!")
                 mask = np.ones(len(X)).astype(bool)
