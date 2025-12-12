@@ -14,8 +14,7 @@
     "masterjob": {
         "partition": "debug",
         "time": "30",
-        "mem": "150G",
-        "cpus-per-task": "16"
+        "mem": "150G"
     },
     "createTrainingDatasetOptions": {
         "labels_x": [
