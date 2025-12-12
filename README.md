@@ -112,3 +112,21 @@ Most important settings
 
 
 ~ Christian Sonnabend, Jonathan Witte (Dec. 2025)
+
+## General steps for deployment
+
+Since November/December 2025 we use for skimTreeCreattion the wagon: Samples4PID_V0Cascade_PbPb_apass3
+The TPC PID is taken from the CoreServiceWagon/PIDTPCService using a BB parametrization
+
+Onces the trains are finished, they are downloaded using getStandardDerivedTreesFromHyperloop.sh in https://github.com/ALICE-TPC-PID/
+
+The full process  BB fits and NN is run at GSI cluster: https://github.com/ALICE-TPC-PID/tpcpid/tree/main/run
+
+The results are then uploaded into the mastergoogle sheet: 
+https://docs.google.com/spreadsheets/d/1jKdVtoK414_XngL9Xh1Zfxkwp7AlYeipujFRiRaFkx0/edit?gid=0#gid=0
+and uploaded into the test-CCDB
+
+Using the NN in the test CCDB, new skimtrees are created: Samples_PIDNN_V0Cascade_PbPb_apass3
+The PIDTPCService should be a local one using the testCCDB and the QA is performed
+
+~ Ana Marin (Dec. 2025)
