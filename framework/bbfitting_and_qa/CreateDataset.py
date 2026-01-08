@@ -17,19 +17,6 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--config", default="configuration.json", help="Path to configuration file")
-parser.add_argument("-o", "--output-path", default="training_data", help="Output absolute path for the merged tree")
-parser.add_argument("-s", "--output-size", default="10000000", help="Output size for the merged tree.")
-parser.add_argument("-period", "--period", default=";;", help="Period to be processed, please check the script and adjust dir_tree if necessary!")
-parser.add_argument("-apass", "--apass", default=";;", help="Period to be processed, please check the script and adjust dir_tree if necessary!")
-parser.add_argument("-lm", "--loading-mode", default="full", help="Loading mode for the trees: 'full' -> Load all trees into one variable, 'separate' -> Loads V0 and TPC-TOF trees separately and applies V0 selections to V0 tree")
-parser.add_argument("-f", "--full-input-path", default=";;", help="If --full-path != ';;', then ignore -apass and -period and use the full path (this variable) instead.")
-parser.add_argument("-ce", "--cut-electrons", default="[np.log10(0.11),np.log10(5.)]", help="Momentum range for electrons.")
-parser.add_argument("-cpi", "--cut-pions", default="[np.log10(0.11),np.log10(20.)]", help="Momentum range for pions.")
-parser.add_argument("-cka", "--cut-kaons", default="[np.log10(0.12),np.log10(2.)]", help="Momentum range for kaons.")
-parser.add_argument("-cp", "--cut-protons", default="[np.log10(0.12),np.log10(15.)]", help="Momentum range for protons.")
-parser.add_argument("-cd", "--cut-deuterons", default="[np.log10(0.3),np.log10(2.)]", help="Momentum range for deuterons.")
-parser.add_argument("-ct", "--cut-tritons", default="[np.log10(0.3),np.log10(1.)]", help="Momentum range for tritons.")
-parser.add_argument("-sg","--sigmathreshold", type= int, default=3, help= "Define the sigmathreshold of what data should be selected")
 args = parser.parse_args()
 
 config = args.config
@@ -48,7 +35,6 @@ period = CONFIG['dataset']['period']
 apass = CONFIG['dataset']['pass']
 output_path = os.path.join(CONFIG['output']['general']['path'],"trees","merged_tree_for_training.root")
 CONFIG["output"]["createTrainingDataset"]["training_data"] = output_path
-write_config(CONFIG, args.config)
 
 date = datetime.today().strftime('%d%m%Y')
 plot_path = os.path.join(CONFIG['output']['general']['path'], "QA", "createTrainingDataset")
@@ -193,7 +179,7 @@ LABELS_Y = CONFIG['createTrainingDatasetOptions']['labels_y']
 
 cload = load_tree()
 TTree = cload.trees(dir_tree)
-mode = args.loading_mode
+mode = CONFIG['createTrainingDatasetOptions'].get("loading_mode", "full")
 import_labels = [*LABELS_Y, *LABELS_X, 'fPidIndex','fRunNumber']
 LOG.debug(f"Import labels are {import_labels}")
 if mode=="full":
@@ -386,12 +372,12 @@ def selector(X, Y, rangeX, rangeY, bins_sigma_mean = 200, p0 = [1.,0,0.1], use_g
 ### Excluding outside 3 sigma range for indiv. particle species
 
 momentum_ranges = {
-    "Electrons": eval(args.cut_electrons),
-    "Pions": eval(args.cut_pions),
-    "Kaons": eval(args.cut_kaons),
-    "Protons": eval(args.cut_protons),
-    "Deuterons": eval(args.cut_deuterons),
-    "Tritons": eval(args.cut_tritons)
+    "Electrons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutElectrons', "[np.log10(0.11),np.log10(5.)]")),
+    "Pions": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutPions', "[np.log10(0.11),np.log10(20.)]")),
+    "Kaons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutKaons', "[np.log10(0.12),np.log10(2.)]")),
+    "Protons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutProtons', "[np.log10(0.12),np.log10(15.)]")),
+    "Deuterons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutDeuterons', "[np.log10(0.3),np.log10(2.)]")),
+    "Tritons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutTritons', "[np.log10(0.3),np.log10(1.)]"))
 }
 
 momentum_ranges_array = np.array(list(momentum_ranges.values()))
@@ -404,6 +390,8 @@ x_space = np.logspace(-1., 1.5, 20*8)
 y_space = np.linspace(-5, 5, 20*8)
 
 collect_data = 0
+
+write_config(CONFIG, args.config)
 
 LOG.info("Processing data...")
 
