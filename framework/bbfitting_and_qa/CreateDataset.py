@@ -24,15 +24,22 @@ with open(config, 'r') as config_file:
     CONFIG = json.load(config_file)
 sys.path.append(CONFIG['settings']['framework'] + "/framework")
 from base import *
+from utils.classes.v0selection import *
 from math_functions import *
 from neural_network_class.NeuralNetworkClasses.extract_from_root import *
 
 LOG = logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="CreateDataset")
 
-LOG.info("--- Starting the data preparation script ---\n")
+LOG.info("--- Starting the data preparation script ---")
 
 period = CONFIG['dataset']['period']
 apass = CONFIG['dataset']['pass']
+mode = CONFIG['createTrainingDatasetOptions'].get("loading_mode", "full")
+sigma_threshold = int(CONFIG['createTrainingDatasetOptions'].setdefault('sigmarange', 3))
+LOG.info(f"Using minimum sigma threshold of {sigma_threshold} for initial selection of training data selection.")
+samplesize = int(CONFIG['createTrainingDatasetOptions']['samplesize'])
+LOG.info(f"Training data samplesize is set to {samplesize}")
+
 output_path = os.path.join(CONFIG['output']['general']['path'],"trees","merged_tree_for_training.root")
 CONFIG["output"]["createTrainingDataset"]["training_data"] = output_path
 
@@ -42,146 +49,28 @@ plot_path = os.path.join(CONFIG['output']['general']['path'], "QA", "createTrain
 dir_tree = CONFIG['output']['shiftNsigma']['Skimmedtree_shiftedNsigma_path']
 LOG.info("Period: " + period + "; apass: " + apass + "; input is: " + dir_tree)
 
-### V0 cleaning
+momentum_ranges = {
+    "Electrons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutElectrons', "[np.log10(0.11),np.log10(5.)]")),
+    "Pions": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutPions', "[np.log10(0.11),np.log10(20.)]")),
+    "Kaons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutKaons', "[np.log10(0.12),np.log10(2.)]")),
+    "Protons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutProtons', "[np.log10(0.12),np.log10(15.)]")),
+    "Deuterons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutDeuterons', "[np.log10(0.3),np.log10(2.)]")),
+    "Tritons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutTritons', "[np.log10(0.3),np.log10(1.)]"))
+}
+particles = particle_info['particles']
+masses = particle_info['masses']
 
-def checkV0(alpha, qt, **kwargs):
+write_config(CONFIG, args.config)
 
-    cutAlphaG = kwargs["cutAlphaG"]
-    cutQTG = kwargs["cutQTG"]
-    cutAlphaGLow = kwargs["cutAlphaGLow"]
-    cutAlphaGHigh = kwargs["cutAlphaGHigh"]
-    cutQTG2 = kwargs["cutQTG2"]
-    cutQTK0SLow = kwargs["cutQTK0SLow"]
-    cutQTK0SHigh = kwargs["cutQTK0SHigh"]
-    cutAPK0SLow = kwargs["cutAPK0SLow"]
-    cutAPK0SHigh = kwargs["cutAPK0SHigh"]
-    cutAPK0SHighTop = kwargs["cutAPK0SHighTop"]
-    cutQTL = kwargs["cutQTL"]
-    cutAlphaLLow = kwargs["cutAlphaLLow"]
-    cutAlphaLLow2 = kwargs["cutAlphaLLow2"]
-    cutAlphaLHigh = kwargs["cutAlphaLHigh"]
-    cutAPL1 = kwargs["cutAPL1"]
-    cutAPL2 = kwargs["cutAPL2"]
-    cutAPL3 = kwargs["cutAPL3"]
-    cutAPL1Low = kwargs["cutAPL1Low"]
-    cutAPL2Low = kwargs["cutAPL2Low"]
-    cutAPL3Low = kwargs["cutAPL3Low"]
-
-    GAMMAS = ((qt < cutQTG)*(np.abs(alpha) < cutAlphaG)) + ((qt < cutQTG2) * (cutAlphaGLow < np.abs(alpha)) * (np.abs(alpha) < cutAlphaGHigh))
-
-    # Check for K0S candidates
-    qtop =  cutQTK0SHigh * np.sqrt(np.abs(1. - alpha * alpha / (cutAPK0SHighTop * cutAPK0SHighTop)))
-    q = cutAPK0SLow * np.sqrt(np.abs(1 - alpha**2 / (cutAPK0SHigh**2)))
-    K0S = (cutQTK0SLow < qt) * (qt < cutQTK0SHigh) * (qt < cutAPK0SHighTop)  * (qtop > qt) * (q < qt)
-
-    # Check for Lambda candidates
-    q = cutAPL1 * np.sqrt(np.abs(1 - ((alpha + cutAPL2)**2) / (cutAPL3**2))) * (cutAlphaLLow < alpha)
-    q_2 = cutAPL1Low * np.sqrt(np.abs(1 - ((alpha + cutAPL2Low)**2) / (cutAPL3Low**2))) * (cutAlphaLLow2 < alpha)
-    LAMBDAS = (alpha < cutAlphaLHigh) * (cutQTL < qt) * (q > qt) * (q_2 < qt)
-
-    # Check for Anti-Lambda candidates
-    q = cutAPL1 * np.sqrt(np.abs(1 - ((alpha - cutAPL2)**2) / (cutAPL3**2))) * (alpha < -cutAlphaLLow)
-    q_2 = cutAPL1Low * np.sqrt(np.abs(1 - ((alpha - cutAPL2Low)**2 / (cutAPL3Low**2)))) * (alpha < -cutAlphaLLow2)
-    ANTILAMBDAS = (-cutAlphaLHigh < alpha) * (cutQTL < qt) * (q > qt) * (q_2 < qt)
-
-    return K0S, LAMBDAS, ANTILAMBDAS, GAMMAS
-
-def plot_cuts(**kwargs):
-    alpha = np.linspace(-1.05, 1.05, 1000)
-
-    cutAlphaG = kwargs["cutAlphaG"]
-    cutQTG = kwargs["cutQTG"]
-    cutAlphaGLow = kwargs["cutAlphaGLow"]
-    cutAlphaGHigh = kwargs["cutAlphaGHigh"]
-    cutQTG2 = kwargs["cutQTG2"]
-    cutQTK0SLow = kwargs["cutQTK0SLow"]
-    cutQTK0SHigh = kwargs["cutQTK0SHigh"]
-    cutAPK0SLow = kwargs["cutAPK0SLow"]
-    cutAPK0SHigh = kwargs["cutAPK0SHigh"]
-    cutAPK0SHighTop = kwargs["cutAPK0SHighTop"]
-    cutQTL = kwargs["cutQTL"]
-    cutAlphaLLow = kwargs["cutAlphaLLow"]
-    cutAlphaLLow2 = kwargs["cutAlphaLLow2"]
-    cutAlphaLHigh = kwargs["cutAlphaLHigh"]
-    cutAPL1 = kwargs["cutAPL1"]
-    cutAPL2 = kwargs["cutAPL2"]
-    cutAPL3 = kwargs["cutAPL3"]
-    cutAPL1Low = kwargs["cutAPL1Low"]
-    cutAPL2Low = kwargs["cutAPL2Low"]
-    cutAPL3Low = kwargs["cutAPL3Low"]
-
-    # K0S cut
-    def K0S_CUT(alpha):
-        q = cutAPK0SLow * np.sqrt(np.abs(1 - alpha**2 / (cutAPK0SHigh**2)))
-        q[~((cutQTK0SLow < q) * (q < cutQTK0SHigh))] = np.nan
-        return q
-    plt.plot(alpha, K0S_CUT(alpha), label="K0S Cut", color="black", linewidth = 4)
-
-    def K0S_CUT_UPPER(alpha):
-        q =  cutQTK0SHigh * np.sqrt(np.abs(1. - alpha**2 / (cutAPK0SHighTop**2)))
-        q[~((cutQTK0SLow < q) * (q < cutQTK0SHigh) * (q < cutAPK0SHighTop))] = np.nan
-        return q
-    plt.plot(alpha, K0S_CUT_UPPER(alpha), label="K0S Cut", color="black", linewidth = 4)
-
-    # Lambda cut
-    def LAMBDA_CUT(alpha):
-        q = cutAPL1 * np.sqrt(np.abs(1 - ((alpha + cutAPL2)**2) / (cutAPL3**2))) * (cutAlphaLLow < alpha)
-        q[~((alpha < cutAlphaLHigh) * (cutQTL < q))] = np.nan
-        return q
-    plt.plot(alpha, LAMBDA_CUT(alpha), label="Lambda Cut", color="red", linewidth = 4)
-
-    def LAMBDA_CUT_LOW(alpha):
-        q = cutAPL1Low * np.sqrt(np.abs(1 - ((alpha + cutAPL2Low)**2) / (cutAPL3Low**2))) * (cutAlphaLLow2 < alpha)
-        q[~((alpha < cutAlphaLHigh) * (cutQTL < q))] = np.nan
-        return q
-    plt.plot(alpha, LAMBDA_CUT_LOW(alpha), label="Lambda Cut", color="red", linewidth = 4)
-
-    # Anti-Lambda cut
-    def ANTILAMBDA_CUT(alpha):
-        q = cutAPL1 * np.sqrt(np.abs(1 - ((alpha - cutAPL2)**2 / (cutAPL3**2)))) * (alpha < -cutAlphaLLow)
-        q[~((-cutAlphaLHigh < alpha) * (cutQTL < q))] = np.nan
-        return q
-    plt.plot(alpha, ANTILAMBDA_CUT(alpha), label="Anti-Lambda Cut", color="red", linewidth = 4)
-
-    def ANTILAMBDA_CUT_LOW(alpha):
-        q = cutAPL1Low * np.sqrt(np.abs(1 - ((alpha - cutAPL2Low)**2 / (cutAPL3Low**2)))) * (alpha < -cutAlphaLLow2)
-        q[~((-cutAlphaLHigh < alpha) * (cutQTL < q))] = np.nan
-        return q
-    plt.plot(alpha, ANTILAMBDA_CUT_LOW(alpha), label="Anti-Lambda Cut", color="red", linewidth = 4)
-
-    # Gamma cuts
-    def GAMMA_CUT1(alpha):
-        return cutQTG * np.ones_like(alpha)
-
-    def GAMMA_CUT2(alpha):
-        return cutQTG2 * np.ones_like(alpha)
-
-    def GAMMA_CUT_REGION(alpha):
-        region = np.full_like(alpha, np.nan)
-        mask1 = (np.abs(alpha) < cutAlphaG)
-        mask2 = (cutAlphaGLow < np.abs(alpha)) & (np.abs(alpha) < cutAlphaGHigh)
-        region[mask1] = cutQTG
-        region[mask2] = cutQTG2
-        return region
-
-    plt.plot(alpha, GAMMA_CUT1(alpha), label="Gamma Cut 1", color="purple", linestyle="--", linewidth=4)
-    plt.plot(alpha, GAMMA_CUT2(alpha), label="Gamma Cut 2", color="orange", linestyle="--", linewidth=4)
-    plt.plot(alpha, GAMMA_CUT_REGION(alpha), label="Gamma Region", color="green", linestyle="-", linewidth=4)
-
-###
+LABELS_X = CONFIG['createTrainingDatasetOptions']['labels_x']
+LABELS_Y = CONFIG['createTrainingDatasetOptions']['labels_y']
+import_labels = [*LABELS_Y, *LABELS_X, 'fPidIndex','fRunNumber']
+LOG.debug(f"Data import labels are {import_labels}")
 
 ## Loading data and models
 
-particles = particle_info['particles']
-masses = particle_info['masses']
-LABELS_X = CONFIG['createTrainingDatasetOptions']['labels_x']
-LABELS_Y = CONFIG['createTrainingDatasetOptions']['labels_y']
-
 cload = load_tree()
 TTree = cload.trees(dir_tree)
-mode = CONFIG['createTrainingDatasetOptions'].get("loading_mode", "full")
-import_labels = [*LABELS_Y, *LABELS_X, 'fPidIndex','fRunNumber']
-LOG.debug(f"Import labels are {import_labels}")
 if mode=="full":
     labels, fit_data = cload.load(use_vars=import_labels, path=dir_tree, load_latest=True, verbose=True)
 else:
@@ -211,6 +100,20 @@ else:
     fit_data = v0_data[mask_accept_V0]
     fit_data = np.vstack((fit_data, tpctof_data))
     del tpctof_data
+    
+def check_particle_content(lbls, data, messages=None):
+    particles_found = dict()
+    for i, m in enumerate(tqdm(np.sort(np.unique(data.T[lbls=='fMass']))[:4])):
+        mask = (data.T[lbls=='fMass'].flatten() == m)
+        particle = particles[np.where(np.abs(np.array(masses) - m)<0.001)[0][0]]
+        particles_found[particle] = np.sum(mask)
+    particles_found_str = ""
+    for particle, count in particles_found.items():
+        particles_found_str += f"{particle}: {count}, "
+    print_message = messages if messages is not None else "Particles found: "
+    LOG.info(print_message + f": {particles_found_str}")
+    
+check_particle_content(labels, fit_data, messages="Particles found at import")
 
 # Normalize fFT0Occ by a factor of 60000
 ft0occ_index = np.where(labels == 'fFt0Occ')[0][0]  # Locate the index of fFT0Occ in labels
@@ -222,9 +125,6 @@ if "fHadronicRate" in CONFIG['createTrainingDatasetOptions']['labels_x']:
     fHadronicRate_index = np.where(labels == 'fHadronicRate')[0][0]  # Locate the index of fHadronicRate in labels
     fit_data[:, fHadronicRate_index] /= 50
 
-samplesize = int(CONFIG['createTrainingDatasetOptions']['samplesize'])
-LOG.info(f"Training data samplesize is set to {samplesize}")
-
 # if len(fit_data) >= samplesize:
 #     ### Downsampling to defined sample size
 #     keep = samplesize/len(fit_data)
@@ -235,6 +135,8 @@ fig = plt.figure(figsize=(16,9))
 x_space = np.logspace(-1., 1., 20*8)
 plt.hist2d(fit_data[:,labels=="fTPCInnerParam"].flatten(), fit_data[:,labels=="fTPCSignal"].flatten(), bins=(x_space, np.arange(1,200,0.1)), range=[[-1.,2.],[1.,200.]], cmap=cm.jet, norm=mcolors.LogNorm())
 plt.xscale("log")
+plt.xlabel("p [GeV/c]")
+plt.ylabel("TPC dE/dx [a.u.]")
 plt.grid()
 plt.savefig(os.path.join(plot_path, "initial_dEdx_vs_p.pdf"))
 LOG.debug("Saved initial dE/dx vs. p plot.")
@@ -311,20 +213,19 @@ fit_data = fit_data[:,reorder_index]
 labels = labels[reorder_index]
 
 
-## Training data selection
+### Training data selection ###
 
-### Kinematic selections
+# Initial Nsigma selection
 new_data = fit_data
-# Initial 3 sigma selection
-sigma_threshold = int(CONFIG['createTrainingDatasetOptions']['sigmarange'])
 full_mask = np.zeros(len(new_data))
-
 for i, m in enumerate(np.sort(np.unique(new_data.T[labels=='fMass']))):
     mask = (new_data.T[labels=='fMass'].flatten() == m)
     ratio_data = (new_data.T[labels=='fTPCSignal'].flatten()[mask]*new_data.T[labels=='fInvDeDxExpTPC'].flatten()[mask] - 1.)/0.07
     full_mask[mask] = np.abs(ratio_data)<sigma_threshold
-
 new_data = new_data[full_mask.astype(bool)]
+check_particle_content(labels, new_data, messages=f"Particles found after initial {sigma_threshold}-sigma cut")
+
+LOG.info("Selecting data...")
 
 def selector(X, Y, rangeX, rangeY, bins_sigma_mean = 200, p0 = [1.,0,0.1], use_gauss=False):
 
@@ -369,37 +270,19 @@ def selector(X, Y, rangeX, rangeY, bins_sigma_mean = 200, p0 = [1.,0,0.1], use_g
         LOG.info(e)
         return np.ones(len(X)).astype(bool), poly_mean, poly_sigma, binned_mean, binned_sigma
 
-### Excluding outside 3 sigma range for indiv. particle species
-
-momentum_ranges = {
-    "Electrons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutElectrons', "[np.log10(0.11),np.log10(5.)]")),
-    "Pions": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutPions', "[np.log10(0.11),np.log10(20.)]")),
-    "Kaons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutKaons', "[np.log10(0.12),np.log10(2.)]")),
-    "Protons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutProtons', "[np.log10(0.12),np.log10(15.)]")),
-    "Deuterons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutDeuterons', "[np.log10(0.3),np.log10(2.)]")),
-    "Tritons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutTritons', "[np.log10(0.3),np.log10(1.)]"))
-}
 
 momentum_ranges_array = np.array(list(momentum_ranges.values()))
 p_cut = 10**momentum_ranges_array
-
 rangeY = [-1.,1.]
 bins_sigma_mean = 200
-
 x_space = np.logspace(-1., 1.5, 20*8)
 y_space = np.linspace(-5, 5, 20*8)
 
 collect_data = 0
-
-write_config(CONFIG, args.config)
-
-LOG.info("Processing data...")
-
 for i, m in enumerate(tqdm(np.sort(np.unique(new_data.T[labels=='fMass']))[:4])):
 
     mask = (new_data.T[labels=='fMass'].flatten() == m)
     particle = particles[np.where(np.abs(np.array(masses) - m)<0.001)[0][0]]
-    LOG.info("Particles found: " + str(np.sum(mask)) + " (" + str(particle) + ")")
 
     X = new_data[:,labels=="fTPCInnerParam"].flatten()[mask]
     Y = (new_data[:,labels=='fTPCSignal'].flatten()[mask]*new_data[:,labels=='fInvDeDxExpTPC'].flatten()[mask] - 1.)/0.07
@@ -450,9 +333,8 @@ for i, m in enumerate(tqdm(np.sort(np.unique(new_data.T[labels=='fMass']))[:4]))
 new_data = collect_data
 
 ### Down- / Oversampling
-import random
 
-LOG.info("Data-points before: " + str(np.shape(new_data)[0]))
+LOG.info("Data-points before down-/oversampling: " + str(np.shape(new_data)[0]))
 
 percentages = []
 for i, m in enumerate(np.sort(np.unique(new_data.T[labels=='fMass']))):
@@ -491,7 +373,7 @@ for i, m in enumerate(np.sort(np.unique(new_data.T[labels=='fMass']))):
         new_data = np.vstack((new_data, new_data[mask][randint]))
 
 
-LOG.info("Data-points after: " + str(np.shape(new_data)[0]))
+LOG.info("Data-points after down-/oversampling: " + str(np.shape(new_data)[0]))
 
 for i, m in enumerate(np.sort(np.unique(new_data.T[labels=='fMass']))):
     LOG.info(particles[np.where(np.abs(np.array(masses) - m)<0.001)[0][0]] + ": " + str(np.sum(new_data.T[labels=='fMass'].flatten() == m)*100/np.shape(new_data)[0]) + "%")
