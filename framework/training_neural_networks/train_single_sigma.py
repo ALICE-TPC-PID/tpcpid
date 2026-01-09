@@ -68,7 +68,7 @@ if verbose:
 
 if data_file.split(".")[-1] == "root":
     cload = load_tree()
-    labels, fit_data = cload.load(use_vars=LABELS_X+LABELS_Y, path=data_file)
+    labels, fit_data = cload.load(use_vars=LABELS_X+LABELS_Y, path=data_file, load_latest=True)
 elif data_file.split(".")[-1] == "txt":
     labels, fit_data = np.loadtxt(data_file, dtype='S')
 else:

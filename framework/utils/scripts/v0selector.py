@@ -51,8 +51,7 @@ print("Loading data...")
 COMMON_BRANCHES = ['fTPCInnerParam', 'fTgl', 'fSigned1Pt', 'fMass', 'fNormMultTPC', 'fNormNClustersTPC', 'fFt0Occ', 'fTPCSignal', 'fInvDeDxExpTPC', 'fRunNumber']
 V0_BRANCHES = ['fAlphaV0', 'fQtV0']
 cload = load_tree()
-labels_V0, fit_data_V0 = cload.load(use_vars=[*COMMON_BRANCHES, *V0_BRANCHES], key="O2tpcskimv0tree",
-                              path=args.input, load_latest=True, verbose=True)
+labels_V0, fit_data_V0 = cload.load(use_vars=[*COMMON_BRANCHES, *V0_BRANCHES], key="O2tpcskimv0tree", path=args.input, load_latest=True, verbose=True)
 
 ### V0 cleaning
 cut_dict = {
