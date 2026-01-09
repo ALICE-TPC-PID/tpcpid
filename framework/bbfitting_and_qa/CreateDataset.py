@@ -183,12 +183,12 @@ mode = CONFIG['createTrainingDatasetOptions'].get("loading_mode", "full")
 import_labels = [*LABELS_Y, *LABELS_X, 'fPidIndex','fRunNumber']
 LOG.debug(f"Import labels are {import_labels}")
 if mode=="full":
-    labels, fit_data = cload.load(use_vars=import_labels, limit = 100, path=dir_tree, load_latest=False, verbose=True)
+    labels, fit_data = cload.load(use_vars=import_labels, path=dir_tree, load_latest=True, verbose=True)
 else:
-    v0_labels, v0_data = cload.load(use_vars=import_labels, path=dir_tree, limit = 10000000, key="O2V0Tree", load_latest=False, verbose=True)
+    v0_labels, v0_data = cload.load(use_vars=import_labels, path=dir_tree, key="O2V0Tree", load_latest=True, verbose=True)
 
     ### Armenteros Podolanski selection
-    alphaQt_l, alphaQt_d = cload.load(use_vars=["fAlphaV0", "fQtV0"], path=dir_tree, limit = 10000000, key="O2V0Tree", load_latest=False, verbose=True)
+    alphaQt_l, alphaQt_d = cload.load(use_vars=["fAlphaV0", "fQtV0"], path=dir_tree, key="O2V0Tree", load_latest=True, verbose=True)
     v0_particle_type = checkV0(alphaQt_d[:,alphaQt_l=="fAlphaV0"].flatten(), alphaQt_d[:,alphaQt_l=="fQtV0"].flatten(), **v0_cut_dict) ### Returns boolean list of shape (4, n)
     mask_accept_V0 = np.sum(v0_particle_type, axis=0).astype(bool)
 
@@ -205,7 +205,7 @@ else:
 
     del alphaQt_d, alphaQt_l
 
-    tpctof_labels, tpctof_data = cload.load(use_vars=import_labels, path=dir_tree, limit = 10000000, key="O2tpctofTree", load_latest=False, verbose=True)
+    tpctof_labels, tpctof_data = cload.load(use_vars=import_labels, path=dir_tree, key="O2tpctofTree", load_latest=True, verbose=True)
 
     labels = tpctof_labels
     fit_data = v0_data[mask_accept_V0]
@@ -225,11 +225,11 @@ if "fHadronicRate" in CONFIG['createTrainingDatasetOptions']['labels_x']:
 samplesize = int(CONFIG['createTrainingDatasetOptions']['samplesize'])
 LOG.info(f"Training data samplesize is set to {samplesize}")
 
-if len(fit_data) >= samplesize:
-    ### Downsampling to defined sample size
-    keep = samplesize/len(fit_data) # Keep that many percent of the original data: Here keeping 60 mio., aribtrary but reasonable
-    mask_downsample = np.random.uniform(low=0.0, high=1.0, size=len(fit_data)) < keep
-    fit_data = fit_data[mask_downsample]
+# if len(fit_data) >= samplesize:
+#     ### Downsampling to defined sample size
+#     keep = samplesize/len(fit_data)
+#     mask_downsample = np.random.uniform(low=0.0, high=1.0, size=len(fit_data)) < keep
+#     fit_data = fit_data[mask_downsample]
 
 fig = plt.figure(figsize=(16,9))
 x_space = np.logspace(-1., 1., 20*8)

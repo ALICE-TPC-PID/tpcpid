@@ -67,7 +67,7 @@ jet_map_alpha = ListedColormap(jet_map)
 fontsize_axislabels = 30
 momentum = np.logspace(-2,3,1000)
 cload = load_tree()
-data = cload.load(use_vars=None, path=data_path, load_latest=False, verbose=True)
+data = cload.load(use_vars=None, path=data_path, load_latest=True, verbose=True)
 labels = np.array(data[0])
 fit_data = data[1]
 del data

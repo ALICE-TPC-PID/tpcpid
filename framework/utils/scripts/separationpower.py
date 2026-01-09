@@ -57,7 +57,7 @@ LABELS_Y = ['fTPCSignal', 'fInvDeDxExpTPC']
 ort_sess_full = ort.InferenceSession(nn_path)
 
 cload = load_tree()
-labels_all, fit_data_all = cload.load(data_file, use_vars = [*LABELS_X, *LABELS_Y, 'fHadronicRate'], load_latest=False, verbose = True)
+labels_all, fit_data_all = cload.load(data_file, use_vars = [*LABELS_X, *LABELS_Y, 'fHadronicRate'], load_latest=True, verbose = True)
 
 particles = ['Electrons', 'Muons', 'Pions', 'Kaons', 'Protons', 'Deuteron', 'Triton', r'Helium3']
 particle_labels = ['e', r'$\mu$', r'$\pi$', r'$K$', r'$p$', r'$d$', r'$t$', r'$^3$He']

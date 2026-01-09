@@ -51,7 +51,7 @@ print("Loading data...")
 COMMON_BRANCHES = ['fTPCInnerParam', 'fTgl', 'fSigned1Pt', 'fMass', 'fNormMultTPC', 'fNormNClustersTPC', 'fFt0Occ', 'fTPCSignal', 'fInvDeDxExpTPC', 'fRunNumber']
 V0_BRANCHES = ['fAlphaV0', 'fQtV0']
 cload = load_tree()
-labels_V0, fit_data_V0 = cload.load(use_vars=[*COMMON_BRANCHES, *V0_BRANCHES], key="O2tpcskimv0tree", path=args.input, load_latest=False, verbose=True)
+labels_V0, fit_data_V0 = cload.load(use_vars=[*COMMON_BRANCHES, *V0_BRANCHES], key="O2tpcskimv0tree", path=args.input, load_latest=True, verbose=True)
 
 ### V0 cleaning
 cut_dict = {
@@ -241,7 +241,7 @@ fit_data_V0 = fit_data_V0[:,accept_common_branches]
 
 print("Loading full data and exporting...")
 
-tpctof_labels, tpctof_data = cload.load(use_vars=COMMON_BRANCHES, key="O2tpctofskimtree", path=args.input, load_latest=False, verbose=True)
+tpctof_labels, tpctof_data = cload.load(use_vars=COMMON_BRANCHES, key="O2tpctofskimtree", path=args.input, load_latest=True, verbose=True)
 tpctof_data = np.vstack((fit_data_V0, tpctof_data))
 
 for i in range(np.ceil(len(tpctof_data)/float(args.export_size)).astype(int)):
