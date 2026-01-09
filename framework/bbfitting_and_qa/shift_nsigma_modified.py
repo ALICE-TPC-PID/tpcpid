@@ -351,7 +351,7 @@ def update_v0_tree(tree, name, calculate_dEdx, output_V0_tree, buffers):
 
         #writes every single entry to the output root tree
         output_V0_tree.Fill()
-    LOG.info("Particles found in V0 tree {name}: Electrons={nElectronV0}, Pions={nPionV0}, Kaons={nKaonV0}, Protons={nProtonV0}, Rest={nRestV0}")
+    LOG.info(f"Particles found in V0 tree {name}: Electrons={nElectronV0}, Pions={nPionV0}, Kaons={nKaonV0}, Protons={nProtonV0}, Rest={nRestV0}")
     return True
 
 def update_tpctof_tree(tree, name, calculate_dEdx, output_tpctof_tree, buffers):
@@ -512,8 +512,8 @@ def update_tpctof_tree(tree, name, calculate_dEdx, output_tpctof_tree, buffers):
 
         output_tpctof_tree.Fill()
 
-    LOG.info("Particles found in TPCTOF tree {name}: Electrons={nElectronV0}, Pions={nPionV0}, Kaons={nKaonV0}, Protons={nProtonV0}, Rest={nRestV0}")
-    LOG.info("Rejected particles in TPCTOF tree {name}: RejectedPions={nRejectedPionsV0}, RejectedKaons={nRejectedKaonsV0}, RejectedProtons={nRejectedProtonsV0}")
+    LOG.info(f"Particles found in TPCTOF tree {name}: Electrons={nElectronV0}, Pions={nPionV0}, Kaons={nKaonV0}, Protons={nProtonV0}, Rest={nRestV0}")
+    LOG.info(f"Rejected particles in TPCTOF tree {name}: RejectedPions={nRejectedPionsV0}, RejectedKaons={nRejectedKaonsV0}, RejectedProtons={nRejectedProtonsV0}")
     return True
 
 def collect_trees(root_dir, prefix=""):
