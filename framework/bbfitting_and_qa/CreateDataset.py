@@ -50,12 +50,12 @@ dir_tree = CONFIG['output']['shiftNsigma']['Skimmedtree_shiftedNsigma_path']
 LOG.info("Period: " + period + "; apass: " + apass + "; input is: " + dir_tree)
 
 momentum_ranges = {
-    "Electrons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutElectrons', "[np.log10(0.11),np.log10(5.)]")),
-    "Pions": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutPions', "[np.log10(0.11),np.log10(20.)]")),
-    "Kaons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutKaons', "[np.log10(0.12),np.log10(2.)]")),
-    "Protons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutProtons', "[np.log10(0.12),np.log10(15.)]")),
-    "Deuterons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutDeuterons', "[np.log10(0.3),np.log10(2.)]")),
-    "Tritons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutTritons', "[np.log10(0.3),np.log10(1.)]"))
+    "Electrons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutElectrons', "[0.11,5.]")),
+    "Pions": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutPions', "[0.11,20.]")),
+    "Kaons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutKaons', "[0.12,2.]")),
+    "Protons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutProtons', "[0.12,15.]")),
+    "Deuterons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutDeuterons', "[0.3,2.]")),
+    "Tritons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutTritons', "[0.3,1.]"))
 }
 particles = particle_info['particles']
 masses = particle_info['masses']
