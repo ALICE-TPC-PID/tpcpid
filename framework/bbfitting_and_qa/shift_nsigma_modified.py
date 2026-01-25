@@ -193,6 +193,7 @@ def create_output_tree(tree_name, title, output_file):
         "fTPCInnerParam",
         "fNormNClustersTPC",
         "fFt0Occ",
+        "fOccMedianTime",
         "fHadronicRate",
     ]
     int_branch_names = ["fPidIndex", "fRunNumber"]
@@ -236,6 +237,7 @@ def update_v0_tree(tree, name, calculate_dEdx, output_V0_tree, buffers):
     fTPCInnerParam = array.array('f', [0.0])
     fNormNClustersTPC = array.array('f', [0.0])
     fFt0Occ = array.array('f', [0.0])
+    fOccMedianTime = array.array('f', [0.0])
     fHadronicRate = array.array('f', [0.0])
 
     # Connect input branches
@@ -261,6 +263,7 @@ def update_v0_tree(tree, name, calculate_dEdx, output_V0_tree, buffers):
     tree.SetBranchAddress("fTPCInnerParam", fTPCInnerParam)
     tree.SetBranchAddress("fNormNClustersTPC", fNormNClustersTPC)
     tree.SetBranchAddress("fFt0Occ", fFt0Occ)
+    tree.SetBranchAddress("fOccMedianTime", fOccMedianTime)
     tree.SetBranchAddress("fHadronicRate", fHadronicRate)
 
     fsY = buffers["fY"]
@@ -280,6 +283,7 @@ def update_v0_tree(tree, name, calculate_dEdx, output_V0_tree, buffers):
     fsTPCInnerParam = buffers["fTPCInnerParam"]
     fsNormNClustersTPC = buffers["fNormNClustersTPC"]
     fsFt0Occ = buffers["fFt0Occ"]
+    fsOccMedianTime = buffers["fOccMedianTime"]
     fsHadronicRate = buffers["fHadronicRate"]
 
     nentries = tree.GetEntries()
@@ -331,6 +335,7 @@ def update_v0_tree(tree, name, calculate_dEdx, output_V0_tree, buffers):
         fsTPCInnerParam[0] = fTPCInnerParam[0]
         fsNormNClustersTPC[0] = fNormNClustersTPC[0]
         fsFt0Occ[0] = fFt0Occ[0]
+        fsOccMedianTime[0] = fOccMedianTime[0]
         fsHadronicRate[0] = fHadronicRate[0]
 
         expected_dEdx = calculate_dEdx(fsBetaGamma[0])
@@ -380,6 +385,7 @@ def update_tpctof_tree(tree, name, calculate_dEdx, output_tpctof_tree, buffers):
     fTPCInnerParam = array.array('f', [0.0])
     fNormNClustersTPC = array.array('f', [0.0])
     fFt0Occ = array.array('f', [0.0])
+    fOccMedianTime = array.array('f', [0.0])
     fHadronicRate = array.array('f', [0.0])
 
     # Connect input branches
@@ -405,6 +411,7 @@ def update_tpctof_tree(tree, name, calculate_dEdx, output_tpctof_tree, buffers):
     tree.SetBranchAddress("fTPCInnerParam", fTPCInnerParam)
     tree.SetBranchAddress("fNormNClustersTPC", fNormNClustersTPC)
     tree.SetBranchAddress("fFt0Occ", fFt0Occ)
+    tree.SetBranchAddress("fOccMedianTime", fOccMedianTime)
     tree.SetBranchAddress("fHadronicRate", fHadronicRate)
 
     fsY = buffers["fY"]
@@ -424,6 +431,7 @@ def update_tpctof_tree(tree, name, calculate_dEdx, output_tpctof_tree, buffers):
     fsTPCInnerParam = buffers["fTPCInnerParam"]
     fsNormNClustersTPC = buffers["fNormNClustersTPC"]
     fsFt0Occ = buffers["fFt0Occ"]
+    fsOccMedianTime = buffers["fOccMedianTime"]
     fsHadronicRate = buffers["fHadronicRate"]
 
     nentries = tree.GetEntries()
