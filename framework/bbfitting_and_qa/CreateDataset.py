@@ -145,6 +145,11 @@ if "fPhi" in CONFIG['createTrainingDatasetOptions']['labels_x']:
     for i in range(fit_data.shape[0]):
         fit_data[i, fPhi_index] = calculate_delta_phi(fit_data[i, fPhi_index])
 
+if "fOccMedianTime" in CONFIG['createTrainingDatasetOptions']['labels_x']:
+    LOG.info("Using Hadronic Rate option in CreateDataset and normalise OccMedianTime branch to 100")
+    fOccMedianTime_index = np.where(labels == 'fOccMedianTime')[0][0]  # Locate the index of fOccMedianTime in labels
+    fit_data[:, fOccMedianTime_index] /= 100
+
 # if len(fit_data) >= samplesize:
 #     ### Downsampling to defined sample size
 #     keep = samplesize/len(fit_data)

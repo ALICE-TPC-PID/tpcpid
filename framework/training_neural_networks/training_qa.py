@@ -446,10 +446,10 @@ for i, mass in enumerate(np.sort(np.unique(fit_data[:,labels=='fMass'].flatten()
         QA2D_NSigma_vs_Var(i, mass, plot_against = 'fPhi', log_x = False, range_hists = [[-0.03,0.38]]*6, plot_mode="raw_relsigma_fitted",xlabel = r'phi - k*pi/9')
 
     if(OccMedianTimeBool):
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fOccMedianTime', log_x = False, range_hists = [[-50,120]]*6, xlabel = r'occ. median time')
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fOccMedianTime', log_x = False, range_hists = [[-50,120]]*6, useNN=False, xlabel = r'occ. median time')
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fOccMedianTime', log_x = False, range_hists = [[-50,120]]*6, plot_mode="rel_sigma",xlabel = r'occ. median time')
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fOccMedianTime', log_x = False, range_hists = [[-50,120]]*6, plot_mode="raw_relsigma_fitted",xlabel = r'occ. median time')
+        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fOccMedianTime', log_x = False, range_hists = [[-0.5,1.2]]*6, xlabel = r'occ. median time [100us]')
+        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fOccMedianTime', log_x = False, range_hists = [[-0.5,1.2]]*6, useNN=False, xlabel = r'occ. median time [100us]')
+        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fOccMedianTime', log_x = False, range_hists = [[-0.5,1.2]]*6, plot_mode="rel_sigma",xlabel = r'occ. median time [100us]')
+        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fOccMedianTime', log_x = False, range_hists = [[-0.5,1.2]]*6, plot_mode="raw_relsigma_fitted",xlabel = r'occ. median time [100us]')
 
 
 separation_power(useNN=1, useMassAssumption=0)
