@@ -52,16 +52,16 @@ momentum_ranges = {
     "Pions": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutPions', "[0.11,20.]")),
     "Kaons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutKaons', "[0.12,2.]")),
     "Protons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutProtons', "[0.12,15.]")),
-    "Deuterons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutDeuterons', "[0.3,2.]")),
-    "Tritons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutTritons', "[0.3,1.]"))
+    "Deuteron": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutDeuteron', "[0.3,2.]")),
+    "Triton": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutTriton', "[0.3,1.]"))
 }
 sigmaranges = {
     "Electrons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('sigmarangeElectrons', "3")),
     "Pions": eval(CONFIG['createTrainingDatasetOptions'].setdefault('sigmarangePions', "3")),
     "Kaons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('sigmarangeKaons', "3")),
     "Protons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('sigmarangeProtons', "3")),
-    "Deuterons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('sigmarangeDeuterons', "3")),
-    "Tritons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('sigmarangeTritons', "3"))
+    "Deuteron": eval(CONFIG['createTrainingDatasetOptions'].setdefault('sigmarangeDeuteron', "3")),
+    "Triton": eval(CONFIG['createTrainingDatasetOptions'].setdefault('sigmarangeTriton', "3"))
 }
 particles = particle_info['particles']
 masses = particle_info['masses']
