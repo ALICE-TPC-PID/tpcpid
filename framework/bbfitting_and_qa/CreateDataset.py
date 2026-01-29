@@ -48,12 +48,12 @@ dir_tree = CONFIG['output']['shiftNsigma']['Skimmedtree_shiftedNsigma_path']
 LOG.info("Period: " + period + "; apass: " + apass + "; input is: " + dir_tree)
 
 momentum_ranges = {
-    "Electrons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutElectrons', "[np.log10(0.11),np.log10(5.)]")),
-    "Pions": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutPions', "[np.log10(0.11),np.log10(20.)]")),
-    "Kaons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutKaons', "[np.log10(0.12),np.log10(2.)]")),
-    "Protons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutProtons', "[np.log10(0.12),np.log10(15.)]")),
-    "Deuterons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutDeuterons', "[np.log10(0.3),np.log10(2.)]")),
-    "Tritons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutTritons', "[np.log10(0.3),np.log10(1.)]"))
+    "Electrons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutElectrons', "[0.11,5.]")),
+    "Pions": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutPions', "[0.11,20.]")),
+    "Kaons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutKaons', "[0.12,2.]")),
+    "Protons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutProtons', "[0.12,15.]")),
+    "Deuterons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutDeuterons', "[0.3,2.]")),
+    "Tritons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutTritons', "[0.3,1.]"))
 }
 sigmaranges = {
     "Electrons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('sigmarangeElectrons', "3")),
@@ -282,7 +282,7 @@ def selector(X, Y, rangeX, rangeY, bins_sigma_mean = 200, p0 = [1.,0,0.1], use_g
 
 
 momentum_ranges_array = np.array(list(momentum_ranges.values()))
-p_cut = 10**momentum_ranges_array
+log_momentum_ranges_array = np.log10(momentum_ranges_array)
 rangeY = [-1.,1.]
 bins_sigma_mean = 200
 x_space = np.logspace(-1., 1.5, 20*8)
@@ -297,42 +297,42 @@ for i, m in enumerate(tqdm(np.sort(np.unique(new_data.T[labels=='fMass']))[:4]))
     X = new_data[:,labels=="fTPCInnerParam"].flatten()[mask]
     Y = (new_data[:,labels=='fTPCSignal'].flatten()[mask]*new_data[:,labels=='fInvDeDxExpTPC'].flatten()[mask] - 1.)/0.07
 
-    new_mask, poly_mean, poly_sigma, binned_mean, binned_sigma = selector(X, Y, 10**momentum_ranges_array[i], rangeY, bins_sigma_mean, p0 = "meansigma")
+    new_mask, poly_mean, poly_sigma, binned_mean, binned_sigma = selector(X, Y, momentum_ranges_array[i], rangeY, bins_sigma_mean, p0 = "meansigma")
 
     test_data = new_data[mask]
 
     if i == 0:
-        collect_data = test_data[new_mask * (test_data[:,labels=='fTPCInnerParam'].flatten() > p_cut[i][0]) * (test_data[:,labels=='fTPCInnerParam'].flatten() < p_cut[i][1])]# + ((test_data[:,labels=='fTPCInnerParam'].flatten() >0.93) * (test_ratio > -1.2) * (test_ratio < 2.7))]
+        collect_data = test_data[new_mask * (test_data[:,labels=='fTPCInnerParam'].flatten() > momentum_ranges_array[i][0]) * (test_data[:,labels=='fTPCInnerParam'].flatten() < momentum_ranges_array[i][1])]# + ((test_data[:,labels=='fTPCInnerParam'].flatten() >0.93) * (test_ratio > -1.2) * (test_ratio < 2.7))]
     elif i == 1:
-        collect_data = np.vstack((collect_data, test_data[new_mask * (test_data[:,labels=='fTPCInnerParam'].flatten() > p_cut[i][0]) * (test_data[:,labels=='fTPCInnerParam'].flatten() < p_cut[i][1])]))
+        collect_data = np.vstack((collect_data, test_data[new_mask * (test_data[:,labels=='fTPCInnerParam'].flatten() > momentum_ranges_array[i][0]) * (test_data[:,labels=='fTPCInnerParam'].flatten() < momentum_ranges_array[i][1])]))
     elif i == 2:
         # test_data = new_data[new_data.T[labels=='fMass'].flatten() == m]
         # test_ratio = (test_data[:,labels=='fTPCSignal'].flatten()*test_data[:,labels=='fInvDeDxExpTPC'].flatten() - 1)/0.05
-        collect_data = np.vstack((collect_data, test_data[new_mask * (test_data[:,labels=='fTPCInnerParam'].flatten() > p_cut[i][0]) * (test_data[:,labels=='fTPCInnerParam'].flatten() < p_cut[i][1])]))
+        collect_data = np.vstack((collect_data, test_data[new_mask * (test_data[:,labels=='fTPCInnerParam'].flatten() > momentum_ranges_array[i][0]) * (test_data[:,labels=='fTPCInnerParam'].flatten() < momentum_ranges_array[i][1])]))
     elif i == 3:
-        collect_data = np.vstack((collect_data, test_data[new_mask * (test_data[:,labels=='fTPCInnerParam'].flatten() > p_cut[i][0]) * (test_data[:,labels=='fTPCInnerParam'].flatten() < p_cut[i][1])]))
+        collect_data = np.vstack((collect_data, test_data[new_mask * (test_data[:,labels=='fTPCInnerParam'].flatten() > momentum_ranges_array[i][0]) * (test_data[:,labels=='fTPCInnerParam'].flatten() < momentum_ranges_array[i][1])]))
     elif i == 4:
-        collect_data = np.vstack((collect_data, test_data[new_mask * (test_data[:,labels=='fTPCInnerParam'].flatten() > p_cut[i][0]) * (test_data[:,labels=='fTPCInnerParam'].flatten() < p_cut[i][1])]))
+        collect_data = np.vstack((collect_data, test_data[new_mask * (test_data[:,labels=='fTPCInnerParam'].flatten() > momentum_ranges_array[i][0]) * (test_data[:,labels=='fTPCInnerParam'].flatten() < momentum_ranges_array[i][1])]))
     elif i == 5:
-        collect_data = np.vstack((collect_data, test_data[new_mask * (test_data[:,labels=='fTPCInnerParam'].flatten() > p_cut[i][0]) * (test_data[:,labels=='fTPCInnerParam'].flatten() < p_cut[i][1])]))
+        collect_data = np.vstack((collect_data, test_data[new_mask * (test_data[:,labels=='fTPCInnerParam'].flatten() > momentum_ranges_array[i][0]) * (test_data[:,labels=='fTPCInnerParam'].flatten() < momentum_ranges_array[i][1])]))
     else:
         LOG.info("This mass (" + str(m) + ") is not supported!")
 
     fig = plt.figure(figsize=(16,9))
     plt.hist2d(X, Y, bins = (x_space, y_space), cmap=cm.jet, norm=mcolors.LogNorm())
     plt.colorbar()
-    plt.errorbar(np.logspace(momentum_ranges_array[i][0], momentum_ranges_array[i][1], bins_sigma_mean), binned_mean[0], yerr=binned_sigma[0], xerr=0, fmt='.', capsize=2., c='black', ls='none', elinewidth=1.)
-    plt.plot(10**np.linspace(momentum_ranges_array[i][0],momentum_ranges_array[i][1], 1000),np.polyval(poly_mean,np.linspace(momentum_ranges_array[i][0],momentum_ranges_array[i][1], 1000)), linewidth=3., label='Poly. fit (deg = 13), mean')
-    plt.plot(10**np.linspace(momentum_ranges_array[i][0],momentum_ranges_array[i][1], 1000),np.polyval(poly_sigma,np.linspace(momentum_ranges_array[i][0],momentum_ranges_array[i][1], 1000)), linewidth=3.,  label='Poly. fit (deg = 13), sigma')
-    plt.plot(10**np.linspace(momentum_ranges_array[i][0],momentum_ranges_array[i][1], 1000),
-            3*(np.polyval(poly_sigma,np.linspace(momentum_ranges_array[i][0],momentum_ranges_array[i][1], 1000))-np.polyval(poly_mean,np.linspace(momentum_ranges_array[i][0],momentum_ranges_array[i][1], 1000))) + np.polyval(poly_mean,np.linspace(momentum_ranges_array[i][0],momentum_ranges_array[i][1], 1000)),
+    plt.errorbar(np.logspace(log_momentum_ranges_array[i][0],log_momentum_ranges_array[i][1], bins_sigma_mean), binned_mean[0], yerr=binned_sigma[0], xerr=0, fmt='.', capsize=2., c='black', ls='none', elinewidth=1.)
+    plt.plot(10**np.linspace(log_momentum_ranges_array[i][0],log_momentum_ranges_array[i][1], 1000),np.polyval(poly_mean,np.linspace(log_momentum_ranges_array[i][0],log_momentum_ranges_array[i][1], 1000)), linewidth=3., label='Poly. fit (deg = 13), mean')
+    plt.plot(10**np.linspace(log_momentum_ranges_array[i][0],log_momentum_ranges_array[i][1], 1000),np.polyval(poly_sigma,np.linspace(log_momentum_ranges_array[i][0],log_momentum_ranges_array[i][1], 1000)), linewidth=3.,  label='Poly. fit (deg = 13), sigma')
+    plt.plot(10**np.linspace(log_momentum_ranges_array[i][0],log_momentum_ranges_array[i][1], 1000),
+            3*(np.polyval(poly_sigma,np.linspace(log_momentum_ranges_array[i][0],log_momentum_ranges_array[i][1], 1000))-np.polyval(poly_mean,np.linspace(log_momentum_ranges_array[i][0],log_momentum_ranges_array[i][1], 1000))) + np.polyval(poly_mean,np.linspace(log_momentum_ranges_array[i][0],log_momentum_ranges_array[i][1], 1000)),
             c="black", linewidth=3.,  label='Poly. fit (deg = 13), 3 sigma')
-    plt.plot(10**np.linspace(momentum_ranges_array[i][0],momentum_ranges_array[i][1], 1000),
-            -3*(np.polyval(poly_sigma,np.linspace(momentum_ranges_array[i][0],momentum_ranges_array[i][1], 1000))-np.polyval(poly_mean,np.linspace(momentum_ranges_array[i][0],momentum_ranges_array[i][1], 1000))) + np.polyval(poly_mean,np.linspace(momentum_ranges_array[i][0],momentum_ranges_array[i][1], 1000)),
+    plt.plot(10**np.linspace(log_momentum_ranges_array[i][0],log_momentum_ranges_array[i][1], 1000),
+            -3*(np.polyval(poly_sigma,np.linspace(log_momentum_ranges_array[i][0],log_momentum_ranges_array[i][1], 1000))-np.polyval(poly_mean,np.linspace(log_momentum_ranges_array[i][0],log_momentum_ranges_array[i][1], 1000))) + np.polyval(poly_mean,np.linspace(log_momentum_ranges_array[i][0],log_momentum_ranges_array[i][1], 1000)),
             c="black", linewidth=3.,  label='Poly. fit (deg = 13), -3 sigma')
 
-    plt.axvline(p_cut[i][0], c='black')
-    plt.axvline(p_cut[i][1], c='black')
+    plt.axvline(momentum_ranges_array[i][0], c='black')
+    plt.axvline(momentum_ranges_array[i][1], c='black')
 
     plt.xscale('log')
     plt.xlabel('p [GeV/c]')
