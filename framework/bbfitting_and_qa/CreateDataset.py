@@ -35,8 +35,6 @@ LOG.info("--- Starting the data preparation script ---")
 period = CONFIG['dataset']['period']
 apass = CONFIG['dataset']['pass']
 mode = CONFIG['createTrainingDatasetOptions'].get("loading_mode", "full")
-sigma_threshold = int(CONFIG['createTrainingDatasetOptions'].setdefault('sigmarange', 3))
-LOG.info(f"Using minimum sigma threshold of {sigma_threshold} for initial selection of training data selection.")
 samplesize = int(CONFIG['createTrainingDatasetOptions']['samplesize'])
 LOG.info(f"Training data samplesize is set to {samplesize}")
 
@@ -54,8 +52,16 @@ momentum_ranges = {
     "Pions": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutPions', "[0.11,20.]")),
     "Kaons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutKaons', "[0.12,2.]")),
     "Protons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutProtons', "[0.12,15.]")),
-    "Deuterons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutDeuterons', "[0.3,2.]")),
-    "Tritons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutTritons', "[0.3,1.]"))
+    "Deuteron": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutDeuteron', "[0.3,2.]")),
+    "Triton": eval(CONFIG['createTrainingDatasetOptions'].setdefault('cutTriton', "[0.3,1.]"))
+}
+sigmaranges = {
+    "Electrons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('sigmarangeElectrons', "3")),
+    "Pions": eval(CONFIG['createTrainingDatasetOptions'].setdefault('sigmarangePions', "3")),
+    "Kaons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('sigmarangeKaons', "3")),
+    "Protons": eval(CONFIG['createTrainingDatasetOptions'].setdefault('sigmarangeProtons', "3")),
+    "Deuteron": eval(CONFIG['createTrainingDatasetOptions'].setdefault('sigmarangeDeuteron', "3")),
+    "Triton": eval(CONFIG['createTrainingDatasetOptions'].setdefault('sigmarangeTriton', "3"))
 }
 particles = particle_info['particles']
 masses = particle_info['masses']
@@ -220,6 +226,8 @@ new_data = fit_data
 full_mask = np.zeros(len(new_data))
 for i, m in enumerate(np.sort(np.unique(new_data.T[labels=='fMass']))):
     mask = (new_data.T[labels=='fMass'].flatten() == m)
+    particle_name = particles[np.where(np.abs(np.array(masses) - m)<0.001)[0][0]]
+    sigma_threshold = sigmaranges[particle_name]
     ratio_data = (new_data.T[labels=='fTPCSignal'].flatten()[mask]*new_data.T[labels=='fInvDeDxExpTPC'].flatten()[mask] - 1.)/0.07
     full_mask[mask] = np.abs(ratio_data)<sigma_threshold
 new_data = new_data[full_mask.astype(bool)]
@@ -261,6 +269,8 @@ def selector(X, Y, rangeX, rangeY, bins_sigma_mean = 200, p0 = [1.,0,0.1], use_g
             LOG.warning("Polyfit failed!")
             return np.ones(len(X)).astype(bool), poly_mean, poly_sigma, binned_mean, binned_sigma
         else:
+            particle_name = particles[np.where(np.abs(np.array(masses) - m)<0.001)[0][0]]
+            sigma_threshold = sigmaranges[particle_name]
             mask = (np.abs((Y - np.polyval(poly_mean,X))/(np.polyval(poly_sigma,X) - np.polyval(poly_mean, X))) < sigma_threshold)
             if np.sum(mask) <= 100:
                 LOG.warning("Polyfit failed, less than 100 points selected!")
