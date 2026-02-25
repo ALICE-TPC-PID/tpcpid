@@ -43,10 +43,6 @@ PhiBool = "fPhi" in CONFIG['createTrainingDatasetOptions']['labels_x']
 if PhiBool:
     LOG.debug("Using Phi option")
 
-OccMedianTimeBool = "fOccMedianTime" in CONFIG['createTrainingDatasetOptions']['labels_x']
-if OccMedianTimeBool:
-    LOG.debug("Using Occupancy Median Time option")
-
 ### Data preparation
 
 ## Loading data and models
@@ -383,14 +379,6 @@ if PhiBool:
 else:
     LOG.debug("No folder for QA plots for Phi (disabled)")
 
-if OccMedianTimeBool:
-    os.system("rm -rf " + qa_dir + "/fOccMedianTime")
-    os.makedirs(qa_dir + "/fOccMedianTime")
-    LOG.debug("Created folder for QA plots for OccMedianTime")
-else:
-    LOG.debug("No folder for QA plots for OccMedianTime (disabled)")
-
-
 for i, mass in enumerate(np.sort(np.unique(fit_data[:,labels=='fMass'].flatten()))):
 
     def transform_ncl(x):
@@ -444,13 +432,6 @@ for i, mass in enumerate(np.sort(np.unique(fit_data[:,labels=='fMass'].flatten()
         QA2D_NSigma_vs_Var(i, mass, plot_against = 'fPhi', log_x = False, range_hists = [[-0.03,0.38]]*6, useNN=False, xlabel = r'phi - k*pi/9')
         QA2D_NSigma_vs_Var(i, mass, plot_against = 'fPhi', log_x = False, range_hists = [[-0.03,0.38]]*6, plot_mode="rel_sigma",xlabel = r'phi - k*pi/9')
         QA2D_NSigma_vs_Var(i, mass, plot_against = 'fPhi', log_x = False, range_hists = [[-0.03,0.38]]*6, plot_mode="raw_relsigma_fitted",xlabel = r'phi - k*pi/9')
-
-    if(OccMedianTimeBool):
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fOccMedianTime', log_x = False, range_hists = [[-0.5,1.2]]*6, xlabel = r'occ. median time [100us]')
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fOccMedianTime', log_x = False, range_hists = [[-0.5,1.2]]*6, useNN=False, xlabel = r'occ. median time [100us]')
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fOccMedianTime', log_x = False, range_hists = [[-0.5,1.2]]*6, plot_mode="rel_sigma",xlabel = r'occ. median time [100us]')
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fOccMedianTime', log_x = False, range_hists = [[-0.5,1.2]]*6, plot_mode="raw_relsigma_fitted",xlabel = r'occ. median time [100us]')
-
 
 separation_power(useNN=1, useMassAssumption=0)
 separation_power(useNN=0, useMassAssumption=0)
