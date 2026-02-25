@@ -63,6 +63,21 @@ sigmaranges = {
     "Deuteron": eval(CONFIG['createTrainingDatasetOptions'].setdefault('sigmarangeDeuteron', "3")),
     "Triton": eval(CONFIG['createTrainingDatasetOptions'].setdefault('sigmarangeTriton', "3"))
 }
+normalizations = {
+    "fHadronicRate": eval(CONFIG['createTrainingDatasetOptions']['normalizations'].setdefault('fHadronicRate', "lambda x: x / 50")),
+    "fFT0Occ": eval(CONFIG['createTrainingDatasetOptions']['normalizations'].setdefault('fFT0Occ', "lambda x: x / 60000")),
+}
+def to_callable(v):
+    if isinstance(v, (int, float)):
+        return lambda x, a=v: x / a
+    if isinstance(v, str):
+        v = v.strip()
+        if v.startswith("lambda"):
+            return eval(v)
+        return lambda x, a=float(v): x / a
+    raise TypeError(f"Unsupported type: {type(v)}")
+normalizations = {k: to_callable(v) for k, v in normalizations.items()}
+
 particles = particle_info['particles']
 masses = particle_info['masses']
 
@@ -106,7 +121,7 @@ else:
     fit_data = v0_data[mask_accept_V0]
     fit_data = np.vstack((fit_data, tpctof_data))
     del tpctof_data
-    
+
 def check_particle_content(lbls, data, messages=None):
     particles_found = dict()
     for i, m in enumerate(tqdm(np.sort(np.unique(data.T[lbls=='fMass']))[:4])):
@@ -118,18 +133,20 @@ def check_particle_content(lbls, data, messages=None):
         particles_found_str += f"{particle}: {count}, "
     print_message = messages if messages is not None else "Particles found: "
     LOG.info(print_message + f": {particles_found_str}")
-    
+
 check_particle_content(labels, fit_data, messages="Particles found at import")
 
-# Normalize fFT0Occ by a factor of 60000
-ft0occ_index = np.where(labels == 'fFt0Occ')[0][0]  # Locate the index of fFT0Occ in labels
-fit_data[:, ft0occ_index] /= 60000
-LOG.debug("FT0 occupancy normalization set to 60000")
+# Normalize fFT0Occ
+if "fFt0Occ" in CONFIG['createTrainingDatasetOptions']['labels_x']:
+    ft0occ_index = np.where(labels == 'fFt0Occ')[0][0]  # Locate the index of fFT0Occ in labels
+    fit_data[:, ft0occ_index] = normalizations["fFt0Occ"](fit_data[:, ft0occ_index])
+    LOG.debug("Using FT0 occupancy option in CreateDataset")
 
+# Normalize fHadronicRate
 if "fHadronicRate" in CONFIG['createTrainingDatasetOptions']['labels_x']:
-    LOG.info("Using Hadronic Rate option in CreateDataset and normalise HadronicRate branch to 50")
     fHadronicRate_index = np.where(labels == 'fHadronicRate')[0][0]  # Locate the index of fHadronicRate in labels
-    fit_data[:, fHadronicRate_index] /= 50
+    fit_data[:, fHadronicRate_index] = normalizations["fHadronicRate"](fit_data[:, fHadronicRate_index])
+    LOG.debug("Using Hadronic Rate option in CreateDataset")
 
 # if len(fit_data) >= samplesize:
 #     ### Downsampling to defined sample size
