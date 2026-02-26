@@ -385,22 +385,22 @@ def checkV0(alpha, qt, **kwargs):
     cutAPL2Low = kwargs["cutAPL2Low"]
     cutAPL3Low = kwargs["cutAPL3Low"]
 
-    GAMMAS = ((qt < cutQTG)*(np.abs(alpha) < cutAlphaG)) + ((qt < cutQTG2) * (cutAlphaGLow < np.abs(alpha)) * (np.abs(alpha) < cutAlphaGHigh))
+    GAMMAS = ((qt < cutQTG)*(np.abs(alpha) < cutAlphaG)) | ((qt < cutQTG2) * (cutAlphaGLow < np.abs(alpha)) * (np.abs(alpha) < cutAlphaGHigh))
 
     # Check for K0S candidates
     qtop =  cutQTK0SHigh * np.sqrt(np.abs(1. - alpha * alpha / (cutAPK0SHighTop * cutAPK0SHighTop)))
     q = cutAPK0SLow * np.sqrt(np.abs(1 - alpha**2 / (cutAPK0SHigh**2)))
-    K0S = (cutQTK0SLow < qt) * (qt < cutQTK0SHigh) * (qt < cutAPK0SHighTop)  * (qtop > qt) * (q < qt)
+    K0S = (cutQTK0SLow < qt) * (qt < cutQTK0SHigh) * (qtop > qt) * (q < qt)
 
     # Check for Lambda candidates
     q = cutAPL1 * np.sqrt(np.abs(1 - ((alpha + cutAPL2)**2) / (cutAPL3**2))) * (cutAlphaLLow < alpha)
     q_2 = cutAPL1Low * np.sqrt(np.abs(1 - ((alpha + cutAPL2Low)**2) / (cutAPL3Low**2))) * (cutAlphaLLow2 < alpha)
-    LAMBDAS = (alpha < cutAlphaLHigh) * (cutQTL < qt) * (q > qt) * (q_2 < qt)
+    LAMBDAS = (alpha < cutAlphaLHigh) * (cutQTL < qt) * (q > qt) # * (q_2 < qt)
 
     # Check for Anti-Lambda candidates
     q = cutAPL1 * np.sqrt(np.abs(1 - ((alpha - cutAPL2)**2) / (cutAPL3**2))) * (alpha < -cutAlphaLLow)
     q_2 = cutAPL1Low * np.sqrt(np.abs(1 - ((alpha - cutAPL2Low)**2 / (cutAPL3Low**2)))) * (alpha < -cutAlphaLLow2)
-    ANTILAMBDAS = (-cutAlphaLHigh < alpha) * (cutQTL < qt) * (q > qt) * (q_2 < qt)
+    ANTILAMBDAS = (-cutAlphaLHigh < alpha) * (cutQTL < qt) * (q > qt)# * (q_2 < qt)
 
     return K0S, LAMBDAS, ANTILAMBDAS, GAMMAS
 
@@ -419,7 +419,7 @@ def plot_cuts(**kwargs):
     cutAPK0SHighTop = kwargs["cutAPK0SHighTop"]
     cutQTL = kwargs["cutQTL"]
     cutAlphaLLow = kwargs["cutAlphaLLow"]
-    cutAlphaLLow2 = kwargs["cutAlphaLLow2"]
+    cutAlphaLLow2 = kwargs["cutAlphaLLow2"] # == cutAlphaLLow
     cutAlphaLHigh = kwargs["cutAlphaLHigh"]
     cutAPL1 = kwargs["cutAPL1"]
     cutAPL2 = kwargs["cutAPL2"]
@@ -452,7 +452,7 @@ def plot_cuts(**kwargs):
         q = cutAPL1Low * np.sqrt(np.abs(1 - ((alpha + cutAPL2Low)**2) / (cutAPL3Low**2))) * (cutAlphaLLow2 < alpha)
         q[~((alpha < cutAlphaLHigh) * (cutQTL < q))] = np.nan
         return q
-    plt.plot(alpha, LAMBDA_CUT_LOW(alpha), color="blue", linewidth = 4)
+    # plt.plot(alpha, LAMBDA_CUT_LOW(alpha), color="blue", linewidth = 4)
 
     # Anti-Lambda cut
     def ANTILAMBDA_CUT(alpha):
@@ -465,7 +465,7 @@ def plot_cuts(**kwargs):
         q = cutAPL1Low * np.sqrt(np.abs(1 - ((alpha - cutAPL2Low)**2 / (cutAPL3Low**2)))) * (alpha < -cutAlphaLLow2)
         q[~((-cutAlphaLHigh < alpha) * (cutQTL < q))] = np.nan
         return q
-    plt.plot(alpha, ANTILAMBDA_CUT_LOW(alpha), color="blue", linewidth = 4)
+    # plt.plot(alpha, ANTILAMBDA_CUT_LOW(alpha), color="blue", linewidth = 4)
 
     # Gamma cuts
     def GAMMA_CUT1(alpha):
@@ -490,12 +490,15 @@ def plot_cuts(**kwargs):
     plt.plot([cutAlphaGHigh, cutAlphaGHigh], [cutQTG, 0], color="purple", linewidth=4)
     plt.plot([-cutAlphaGHigh, -cutAlphaGHigh], [cutQTG, 0], color="purple", linewidth=4)
 
-    qT_Lambda = [cutAPL1Low * np.sqrt(np.abs(1 - ((cutAlphaLHigh + cutAPL2Low)**2) / (cutAPL3Low**2))) * (cutAlphaLLow2 < cutAlphaLHigh), cutAPL1 * np.sqrt(np.abs(1 - ((cutAlphaLHigh + cutAPL2)**2) / (cutAPL3**2))) * (cutAlphaLLow < cutAlphaLHigh)]
+    # qT_Lambda = [cutAPL1Low * np.sqrt(np.abs(1 - ((cutAlphaLHigh + cutAPL2Low)**2) / (cutAPL3Low**2))) * (cutAlphaLLow2 < cutAlphaLHigh), cutAPL1 * np.sqrt(np.abs(1 - ((cutAlphaLHigh + cutAPL2)**2) / (cutAPL3**2))) * (cutAlphaLLow < cutAlphaLHigh)]
+    qT_Lambda = [cutQTL, cutAPL1 * np.sqrt(np.abs(1 - ((cutAlphaLHigh + cutAPL2)**2) / (cutAPL3**2))) * (cutAlphaLLow < cutAlphaLHigh)]
     plt.plot([cutAlphaLHigh, cutAlphaLHigh], qT_Lambda, color='blue', linewidth=4)
     plt.plot([-cutAlphaLHigh, -cutAlphaLHigh], qT_Lambda, color='blue', linewidth=4)
 
-    plt.plot([-cutAPL2Low-cutAPL3Low, cutAlphaLLow], [cutQTL, cutQTL], color='blue', linewidth=4)
-    plt.plot([cutAPL2Low+cutAPL3Low, -cutAlphaLLow], [cutQTL, cutQTL], color='blue', linewidth=4)
+    # plt.plot([-cutAPL2Low-cutAPL3Low, cutAlphaLLow], [cutQTL, cutQTL], color='blue', linewidth=4)
+    # plt.plot([cutAPL2Low+cutAPL3Low, -cutAlphaLLow], [cutQTL, cutQTL], color='blue', linewidth=4)
+    plt.plot([cutAlphaLLow, cutAlphaLHigh], [cutQTL, cutQTL], color='blue', linewidth=4)
+    plt.plot([-cutAlphaLLow, -cutAlphaLHigh], [cutQTL, cutQTL], color='blue', linewidth=4)
 
     qT_Lambda_2 = cutAPL1 * np.sqrt(np.abs(1 - ((cutAlphaLLow + cutAPL2)**2) / (cutAPL3**2)))
     plt.plot([cutAlphaLLow, cutAlphaLLow], [cutQTL, qT_Lambda_2], color='blue', linewidth=4)
@@ -519,7 +522,7 @@ cut_dict = {
     "cutQTK0SHigh": 0.215,
     "cutAPK0SLow": 0.199,
     "cutAPK0SHigh": 0.8,
-    "cutAPK0SHighTop": 1.,
+    "cutAPK0SHighTop": 0.9,
 
     # Lambda & Anti-Lambda cuts
     "cutQTL": 0.03,
@@ -574,12 +577,14 @@ xlbl = r"$\alpha = \frac{\mathit{p}_{\parallel}^+ - \mathit{p}_{\parallel}^-}{\m
 ylbl = r"$\mathit{q}_T$ (GeV/$\mathit{c}$)"
 plt.text(0,0.02, horizontalalignment='center', verticalalignment='center', fontsize=35, s=r"$\gamma$", c="black", zorder=2)
 plt.text(0,0.185, horizontalalignment='center', verticalalignment='center', fontsize=30, s=r"K$^{S}_0$", c="black", zorder=2)
-plt.text(-0.7,0.07, horizontalalignment='center', verticalalignment='center', fontsize=35, s=r"$\overline{\Lambda}$", c="black", zorder=2)
-plt.text(0.7,0.07, horizontalalignment='center', verticalalignment='center', fontsize=35, s=r"$\Lambda$", c="black", zorder=2)
+# plt.text(-0.7,0.07, horizontalalignment='center', verticalalignment='center', fontsize=35, s=r"$\overline{\Lambda}$", c="black", zorder=2)
+# plt.text(0.7,0.07, horizontalalignment='center', verticalalignment='center', fontsize=35, s=r"$\Lambda$", c="black", zorder=2)
+plt.text(-0.75,0.07, horizontalalignment='center', verticalalignment='center', fontsize=35, s=r"$\overline{\Lambda}$", c="black", zorder=2)
+plt.text(0.75,0.07, horizontalalignment='center', verticalalignment='center', fontsize=35, s=r"$\Lambda$", c="black", zorder=2)
 plt.text(-0.69, 0.2265, "ALICE performance, 2024\nPb$-$Pb, $\sqrt{s_{NN}}=$5.36 TeV", ha="center", fontsize=20, bbox=dict(facecolor="white", edgecolor="none", boxstyle="square,pad=0.5"))
 v0 = plot_th2_from_uproot(v0histos_gpucf[idxvar("hV0APplot", v0histos_lbl)], cmap=plt.cm.jet, ax=ax,
-                          xlabel=xlbl, ylabel=ylbl, xscale=None, yscale=None,
+                          xlabel=xlbl, ylabel=ylbl, xscale=None, yscale=None, xlimits=[-1,1],
                           title=None, show=False, plot_colorbar=True, plot_legend=True,
                           legend_args={"loc": "upper right", "fontsize": 20, "title_fontsize": 20, "framealpha": 1, "title": "V0 selections", "bbox_to_anchor": (1.0, 1.0)})
 plt.savefig(args.output, bbox_inches='tight')
-plt.show()
+plt.close()
