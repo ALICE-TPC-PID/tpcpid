@@ -65,7 +65,7 @@ sigmaranges = {
 }
 norm_cfg = CONFIG['createTrainingDatasetOptions'].setdefault('normalizations', {})
 norm_cfg.setdefault('fHadronicRate', 50)     # or "50" or "lambda x: x/50"
-norm_cfg.setdefault('fFT0Occ', 60000)
+norm_cfg.setdefault('fFt0Occ', 60000)
 
 def to_callable(v):
     if callable(v):
