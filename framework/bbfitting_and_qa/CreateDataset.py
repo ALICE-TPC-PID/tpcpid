@@ -63,20 +63,23 @@ sigmaranges = {
     "Deuteron": eval(CONFIG['createTrainingDatasetOptions'].setdefault('sigmarangeDeuteron', "3")),
     "Triton": eval(CONFIG['createTrainingDatasetOptions'].setdefault('sigmarangeTriton', "3"))
 }
-normalizations = {
-    "fHadronicRate": eval(CONFIG['createTrainingDatasetOptions']['normalizations'].setdefault('fHadronicRate', "lambda x: x / 50")),
-    "fFT0Occ": eval(CONFIG['createTrainingDatasetOptions']['normalizations'].setdefault('fFT0Occ', "lambda x: x / 60000")),
-}
+norm_cfg = CONFIG['createTrainingDatasetOptions'].setdefault('normalizations', {})
+norm_cfg.setdefault('fHadronicRate', 50)     # or "50" or "lambda x: x/50"
+norm_cfg.setdefault('fFT0Occ', 60000)
+
 def to_callable(v):
+    if callable(v):
+        return v
     if isinstance(v, (int, float)):
         return lambda x, a=v: x / a
     if isinstance(v, str):
         v = v.strip()
         if v.startswith("lambda"):
-            return eval(v)
+            return eval(v, {"__builtins__": {}})
         return lambda x, a=float(v): x / a
     raise TypeError(f"Unsupported type: {type(v)}")
-normalizations = {k: to_callable(v) for k, v in normalizations.items()}
+
+normalizations = {k: to_callable(v) for k, v in norm_cfg.items()}
 
 particles = particle_info['particles']
 masses = particle_info['masses']
