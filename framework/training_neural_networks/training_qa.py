@@ -373,48 +373,68 @@ for i, mass in enumerate(np.sort(np.unique(fit_data[:,labels=='fMass'].flatten()
     def transform_ncl(x):
         return 152./(x**2)
 
-    val = CONFIG['trainNeuralNetOptions'].get('isSmallSystem', 'False')
-    IsSmallSystem = val.lower() == "true"
+    isSmallSystem = CONFIG['trainNeuralNetOptions'].get('isSmallSystem', 'False').lower() == "true"
+    isLowBField = CONFIG['trainNeuralNetOptions'].get('isLowBField', 'False').lower() == "true"
 
-    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTPCInnerParam', log_x = True, range_hists = [[-1.,1.]]*6, useNN=False)
-    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTPCInnerParam', log_x = True, range_hists = [[-1.,1.]]*6)
-    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTPCInnerParam', log_x = True, range_hists = [[-1.,1.]]*6, plot_mode="rel_sigma")
-    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTPCInnerParam', log_x = True, range_hists = [[-1.,1.]]*6, plot_mode="raw_relsigma_fitted")
+    default_ranges = {
+        "fTPCInnerParam": [-1., 1.],
+        "fTgl": [-1., 1.],
+        "fNormNClustersTPC": [0.5, 152.5],
+        "fNormMultTPC": [-2., 0.],
+        "fFt0Occ": [-0.1, 1.],
+        "fHadronicRate": [-1., 0.3]
+    }
+    default_scaling_x = {
+        "fTPCInnerParam": True, # log_x
+        "fTgl": False,
+        "fNormNClustersTPC": False,
+        "fNormMultTPC": False,
+        "fFt0Occ": False,
+        "fHadronicRate": False
+    }
 
-    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTgl', log_x = False, range_hists = [[-1.,1.]]*6, xlabel = r'tan($\lambda$)')
-    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTgl', log_x = False, range_hists = [[-1.,1.]]*6, useNN=False, xlabel = r'tan($\lambda$)')
-    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTgl', log_x = False, range_hists = [[-1.,1.]]*6, xlabel = r'tan($\lambda$)', plot_mode="rel_sigma")
-    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTgl', log_x = False, range_hists = [[-1.,1.]]*6, xlabel = r'tan($\lambda$)', plot_mode="raw_relsigma_fitted")
+    adjust_ranges = CONFIG['trainNeuralNetOptions'].get('plotRanges', {})
+    adjust_scaling_x = CONFIG['trainNeuralNetOptions'].get('plotScalingX', {})
 
-    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fNormNClustersTPC', log_x = False, bins_sig_mean = 152, range_hists = [[0.5,152.5]]*6, transform_x = transform_ncl, xlabel = r'NCl')
-    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fNormNClustersTPC', log_x = False, bins_sig_mean = 152, range_hists = [[0.5,152.5]]*6, useNN=False, transform_x = transform_ncl, xlabel = r'NCl')
-    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fNormNClustersTPC', log_x = False, bins_sig_mean = 152, range_hists = [[0.5,152.5]]*6, transform_x = transform_ncl, xlabel = r'NCl', plot_mode="rel_sigma")
-    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fNormNClustersTPC', log_x = False, bins_sig_mean = 152, range_hists = [[0.5,152.5]]*6, transform_x = transform_ncl, xlabel = r'NCl', plot_mode="raw_relsigma_fitted")
+    ranges = deep_update(default_ranges, adjust_ranges)
+    scaling_x = deep_update(default_scaling_x, adjust_scaling_x)
 
-    if IsSmallSystem:
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fNormMultTPC', log_x = True, range_hists = [[-2,0.]]*6, xlabel = r'norm. TPC multiplicity')
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fNormMultTPC', log_x = True, range_hists = [[-2,0.]]*6, useNN=False, xlabel = r'norm. TPC multiplicity')
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fNormMultTPC', log_x = True, range_hists = [[-2,0.]]*6, xlabel = r'norm. TPC multiplicity', plot_mode="rel_sigma")
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fNormMultTPC', log_x = True, range_hists = [[-2,0.]]*6, xlabel = r'norm. TPC multiplicity', plot_mode="raw_relsigma_fitted")
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fFt0Occ', log_x = False, range_hists = [[-0.1,1.]]*6, xlabel = r'norm. FT0 occupancy')
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fFt0Occ', log_x = False, range_hists = [[-0.1,1.]]*6, useNN=False, xlabel = r'norm. FT0 occupancy')
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fFt0Occ', log_x = False, range_hists = [[-0.1,1.]]*6, xlabel = r'norm. FT0 occupancy', plot_mode="rel_sigma")
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fFt0Occ', log_x = False, range_hists = [[-0.1,1.]]*6, xlabel = r'norm. FT0 occupancy', plot_mode="raw_relsigma_fitted")
-    else:
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fNormMultTPC', log_x = False, range_hists = [[0.,3.]]*6, xlabel = r'norm. TPC multiplicity')
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fNormMultTPC', log_x = False, range_hists = [[0.,3.]]*6, useNN=False, xlabel = r'norm. TPC multiplicity')
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fNormMultTPC', log_x = False, range_hists = [[0.,3.]]*6, xlabel = r'norm. TPC multiplicity', plot_mode="rel_sigma")
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fNormMultTPC', log_x = False, range_hists = [[0.,3.]]*6, xlabel = r'norm. TPC multiplicity', plot_mode="raw_relsigma_fitted")
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fFt0Occ', log_x = False, range_hists = [[-0.3,5.]]*6, xlabel = r'norm. FT0 occupancy')
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fFt0Occ', log_x = False, range_hists = [[-0.3,5.]]*6, useNN=False, xlabel = r'norm. FT0 occupancy')
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fFt0Occ', log_x = False, range_hists = [[-0.3,5.]]*6, xlabel = r'norm. FT0 occupancy', plot_mode="rel_sigma")
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fFt0Occ', log_x = False, range_hists = [[-0.3,5.]]*6, xlabel = r'norm. FT0 occupancy', plot_mode="raw_relsigma_fitted")
+    if isSmallSystem:
+        ranges['fNormMultTPC'] = [-2., 0.]
+        ranges['fFt0Occ'] = [-0.1, 1.]
+    if isLowBField:
+        ranges['fTPCInnerParam'] = [np.log10(0.003), 1.]
+
+    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTPCInnerParam', log_x = scaling_x['fTPCInnerParam'], range_hists = [ranges['fTPCInnerParam']]*6)
+    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTPCInnerParam', log_x = scaling_x['fTPCInnerParam'], range_hists = [ranges['fTPCInnerParam']]*6, useNN=False)
+    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTPCInnerParam', log_x = scaling_x['fTPCInnerParam'], range_hists = [ranges['fTPCInnerParam']]*6, plot_mode="rel_sigma")
+    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTPCInnerParam', log_x = scaling_x['fTPCInnerParam'], range_hists = [ranges['fTPCInnerParam']]*6, plot_mode="raw_relsigma_fitted")
+
+    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTgl', log_x = scaling_x['fTgl'], range_hists = [ranges['fTgl']]*6, xlabel = r'tan($\lambda$)')
+    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTgl', log_x = scaling_x['fTgl'], range_hists = [ranges['fTgl']]*6, useNN=False, xlabel = r'tan($\lambda$)')
+    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTgl', log_x = scaling_x['fTgl'], range_hists = [ranges['fTgl']]*6, xlabel = r'tan($\lambda$)', plot_mode="rel_sigma")
+    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTgl', log_x = scaling_x['fTgl'], range_hists = [ranges['fTgl']]*6, xlabel = r'tan($\lambda$)', plot_mode="raw_relsigma_fitted")
+
+    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fNormNClustersTPC', log_x = scaling_x['fNormNClustersTPC'], bins_sig_mean = 152, range_hists = [ranges['fNormNClustersTPC']]*6, transform_x = transform_ncl, xlabel = r'NCl')
+    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fNormNClustersTPC', log_x = scaling_x['fNormNClustersTPC'], bins_sig_mean = 152, range_hists = [ranges['fNormNClustersTPC']]*6, useNN=False, transform_x = transform_ncl, xlabel = r'NCl')
+    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fNormNClustersTPC', log_x = scaling_x['fNormNClustersTPC'], bins_sig_mean = 152, range_hists = [ranges['fNormNClustersTPC']]*6, transform_x = transform_ncl, xlabel = r'NCl', plot_mode="rel_sigma")
+    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fNormNClustersTPC', log_x = scaling_x['fNormNClustersTPC'], bins_sig_mean = 152, range_hists = [ranges['fNormNClustersTPC']]*6, transform_x = transform_ncl, xlabel = r'NCl', plot_mode="raw_relsigma_fitted")
+
+    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fNormMultTPC', log_x = scaling_x['fNormMultTPC'], range_hists = [ranges['fNormMultTPC']]*6, xlabel = r'norm. TPC multiplicity')
+    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fNormMultTPC', log_x = scaling_x['fNormMultTPC'], range_hists = [ranges['fNormMultTPC']]*6, useNN=False, xlabel = r'norm. TPC multiplicity')
+    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fNormMultTPC', log_x = scaling_x['fNormMultTPC'], range_hists = [ranges['fNormMultTPC']]*6, xlabel = r'norm. TPC multiplicity', plot_mode="rel_sigma")
+    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fNormMultTPC', log_x = scaling_x['fNormMultTPC'], range_hists = [ranges['fNormMultTPC']]*6, xlabel = r'norm. TPC multiplicity', plot_mode="raw_relsigma_fitted")
+
+    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fFt0Occ', log_x = scaling_x['fFt0Occ'], range_hists = [ranges['fFt0Occ']]*6, xlabel = r'norm. FT0 occupancy')
+    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fFt0Occ', log_x = scaling_x['fFt0Occ'], range_hists = [ranges['fFt0Occ']]*6, useNN=False, xlabel = r'norm. FT0 occupancy')
+    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fFt0Occ', log_x = scaling_x['fFt0Occ'], range_hists = [ranges['fFt0Occ']]*6, xlabel = r'norm. FT0 occupancy', plot_mode="rel_sigma")
+    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fFt0Occ', log_x = scaling_x['fFt0Occ'], range_hists = [ranges['fFt0Occ']]*6, xlabel = r'norm. FT0 occupancy', plot_mode="raw_relsigma_fitted")
 
     if(HadronicRateBool):
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fHadronicRate', log_x = True, range_hists = [[-1.,0.3]]*6, xlabel = r'Hadronic Rate [50kHz]')
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fHadronicRate', log_x = True, range_hists = [[-1.,0.3]]*6, useNN=False, xlabel = r'Hadronic Rate [50kHz]')
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fHadronicRate', log_x = True, range_hists = [[-1.,0.3]]*6, plot_mode="rel_sigma",xlabel = r'Hadronic Rate [50kHz]')
-        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fHadronicRate', log_x = True, range_hists = [[-1.,0.3]]*6, plot_mode="raw_relsigma_fitted",xlabel = r'Hadronic Rate [50kHz]')
+        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fHadronicRate', log_x = scaling_x['fHadronicRate'], range_hists = [ranges['fHadronicRate']]*6, xlabel = r'Hadronic Rate [50kHz]')
+        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fHadronicRate', log_x = scaling_x['fHadronicRate'], range_hists = [ranges['fHadronicRate']]*6, useNN=False, xlabel = r'Hadronic Rate [50kHz]')
+        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fHadronicRate', log_x = scaling_x['fHadronicRate'], range_hists = [ranges['fHadronicRate']]*6, plot_mode="rel_sigma",xlabel = r'Hadronic Rate [50kHz]')
+        QA2D_NSigma_vs_Var(i, mass, plot_against = 'fHadronicRate', log_x = scaling_x['fHadronicRate'], range_hists = [ranges['fHadronicRate']]*6, plot_mode="raw_relsigma_fitted",xlabel = r'Hadronic Rate [50kHz]')
 
 separation_power(useNN=1, useMassAssumption=0)
 separation_power(useNN=0, useMassAssumption=0)
