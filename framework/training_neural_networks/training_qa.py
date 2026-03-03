@@ -393,8 +393,11 @@ for i, mass in enumerate(np.sort(np.unique(fit_data[:,labels=='fMass'].flatten()
         "fHadronicRate": False
     }
 
-    ranges = CONFIG['trainNeuralNetOptions'].get('plotRanges', default_ranges)
-    scaling_x = CONFIG['trainNeuralNetOptions'].get('plotScalingX', default_scaling_x)
+    adjust_ranges = CONFIG['trainNeuralNetOptions'].get('plotRanges', {})
+    adjust_scaling_x = CONFIG['trainNeuralNetOptions'].get('plotScalingX', {})
+
+    ranges = deep_update(default_ranges, adjust_ranges)
+    scaling_x = deep_update(default_scaling_x, adjust_scaling_x)
 
     if isSmallSystem:
         ranges['fNormMultTPC'] = [-2., 0.]
@@ -402,13 +405,13 @@ for i, mass in enumerate(np.sort(np.unique(fit_data[:,labels=='fMass'].flatten()
     if isLowBField:
         ranges['fTPCInnerParam'] = [np.log10(0.003), 1.]
 
-    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTPCInnerParam', log_x = scaling_x['fTPCInnerParam'], range_hists = [ranges['fTPCInnerParam']]*6, useNN=False)
     QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTPCInnerParam', log_x = scaling_x['fTPCInnerParam'], range_hists = [ranges['fTPCInnerParam']]*6)
+    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTPCInnerParam', log_x = scaling_x['fTPCInnerParam'], range_hists = [ranges['fTPCInnerParam']]*6, useNN=False)
     QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTPCInnerParam', log_x = scaling_x['fTPCInnerParam'], range_hists = [ranges['fTPCInnerParam']]*6, plot_mode="rel_sigma")
     QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTPCInnerParam', log_x = scaling_x['fTPCInnerParam'], range_hists = [ranges['fTPCInnerParam']]*6, plot_mode="raw_relsigma_fitted")
 
     QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTgl', log_x = scaling_x['fTgl'], range_hists = [ranges['fTgl']]*6, xlabel = r'tan($\lambda$)')
-    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTgl', log_x = scaling_x['fTgl'], range_hists = [ranges['fTgl']]*6, useNN=scaling_x['fTgl'], xlabel = r'tan($\lambda$)')
+    QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTgl', log_x = scaling_x['fTgl'], range_hists = [ranges['fTgl']]*6, useNN=False, xlabel = r'tan($\lambda$)')
     QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTgl', log_x = scaling_x['fTgl'], range_hists = [ranges['fTgl']]*6, xlabel = r'tan($\lambda$)', plot_mode="rel_sigma")
     QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTgl', log_x = scaling_x['fTgl'], range_hists = [ranges['fTgl']]*6, xlabel = r'tan($\lambda$)', plot_mode="raw_relsigma_fitted")
 
