@@ -14,7 +14,7 @@ import matplotlib.colors as mcolors
 import pandas as pd
 import argparse
 
-sys.path.append("../../../Neural-Network-Class/NeuralNetworkClasses")
+sys.path.append("../../neural_network_class/NeuralNetworkClasses")
 from extract_from_root import *
 
 # Argument parser
