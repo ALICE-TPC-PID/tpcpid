@@ -393,17 +393,17 @@ for i, mass in enumerate(np.sort(np.unique(fit_data[:,labels=='fMass'].flatten()
         "fHadronicRate": False
     }
 
+    if isSmallSystem:
+        default_ranges['fNormMultTPC'] = [-2., 0.]
+        default_ranges['fFt0Occ'] = [-0.1, 1.]
+    if isLowBField:
+        default_ranges['fTPCInnerParam'] = [np.log10(0.003), 1.]
+
     adjust_ranges = CONFIG['trainNeuralNetOptions'].get('plotRanges', {})
     adjust_scaling_x = CONFIG['trainNeuralNetOptions'].get('plotScalingX', {})
 
     ranges = deep_update(default_ranges, adjust_ranges)
     scaling_x = deep_update(default_scaling_x, adjust_scaling_x)
-
-    if isSmallSystem:
-        ranges['fNormMultTPC'] = [-2., 0.]
-        ranges['fFt0Occ'] = [-0.1, 1.]
-    if isLowBField:
-        ranges['fTPCInnerParam'] = [np.log10(0.003), 1.]
 
     QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTPCInnerParam', log_x = scaling_x['fTPCInnerParam'], range_hists = [ranges['fTPCInnerParam']]*6)
     QA2D_NSigma_vs_Var(i, mass, plot_against = 'fTPCInnerParam', log_x = scaling_x['fTPCInnerParam'], range_hists = [ranges['fTPCInnerParam']]*6, useNN=False)
