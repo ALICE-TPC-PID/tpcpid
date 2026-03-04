@@ -386,7 +386,7 @@ void fitNormGraphdEdxvsBGpid_modified(std::string config_path="../configuration.
 	    hNormdEdxvsMomDataPion->Fill(fBetaGamma,fTPCSignal/dBBtheo);
 	    ntrkPion++;
 	  }
-	  else if(fabs(ipid)==3){
+	  else if(fabs(ipid)==3 && fabs(fNSigTPC) < 2.5 && (fTPCInnerMom < 0.4 || fabs(fNSigTOF) < 5)) {
 	    hdEdxvsMomDataKaon->Fill(fBetaGamma,fTPCSignal);
 	    hNormdEdxvsMomDataKaon->Fill(fBetaGamma,fTPCSignal/dBBtheo);
 	    ntrkKaon++;
@@ -405,7 +405,7 @@ void fitNormGraphdEdxvsBGpid_modified(std::string config_path="../configuration.
 	    hNormdEdxvsMomDataPionNeg->Fill(fBetaGamma,fTPCSignal/dBBtheo);
 	    ntrkPion++;
 	  }
-	  else if(fabs(ipid)==3){
+	  else if(fabs(ipid)==3 && fabs(fNSigTPC) < 2.5 && (fTPCInnerMom < 0.4 || fabs(fNSigTOF) < 5)){
 	    hdEdxvsMomDataKaonNeg->Fill(fBetaGamma,fTPCSignal);
 	    hNormdEdxvsMomDataKaonNeg->Fill(fBetaGamma,fTPCSignal/dBBtheo);
 	    ntrkKaon++;
