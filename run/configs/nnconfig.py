@@ -107,7 +107,7 @@ DICT_FULL = {
     },
     "NET_DEF": {
         "n_neurons_intermediate": 8,
-        "n_layers": 4,
+        "n_layers": 6,
         "n_neurons_output": 2
     },
     "NET_SETTINGS": {
