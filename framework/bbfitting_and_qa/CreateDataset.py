@@ -7,7 +7,6 @@ from matplotlib import cm
 import tqdm
 import matplotlib.colors as mcolors
 import argparse
-import math
 
 # import matplotlib as mpl
 # import mplhep as hep
@@ -139,9 +138,9 @@ def check_particle_content(lbls, data, messages=None):
     LOG.info(print_message + f": {particles_found_str}")
 
 def calculate_delta_phi(phi):
-    sector_width = math.pi / 9.0
-    phi = phi % (2 * math.pi)
-    idx = int(math.floor(phi / sector_width))
+    sector_width = np.pi / 9.0
+    phi = phi % (2 * np.pi)
+    idx = int(np.floor(phi / sector_width))
     lower_boundary = idx * sector_width
     return phi - lower_boundary
     
