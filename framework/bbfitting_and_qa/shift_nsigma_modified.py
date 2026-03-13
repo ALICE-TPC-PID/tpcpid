@@ -2,6 +2,7 @@ import ROOT
 import os, sys, json
 import array
 import argparse
+import numpy
 
 #This is the python equivalent to shiftNsigma.C
 #This script takes as input the Data tree with the clean samples, and the BB parameters from the fitting macro.
@@ -506,6 +507,9 @@ def update_tpctof_tree(tree, name, calculate_dEdx, output_tpctof_tree, buffers):
             nRejectedKaonsV0 += 1
             continue
         if(fPidIndex[0]==3 and (fsNSigTPC[0]<-2.5)):
+            nRejectedKaonsV0 += 1
+            continue
+        if(fPidIndex[0]==3 and fTPCInnerParam[0] > 0.4 and numpy.fabs(fNSigTOF)>5):
             nRejectedKaonsV0 += 1
             continue
 
