@@ -137,6 +137,13 @@ def check_particle_content(lbls, data, messages=None):
     print_message = messages if messages is not None else "Particles found: "
     LOG.info(print_message + f": {particles_found_str}")
 
+def calculate_delta_phi(phi):
+    sector_width = np.pi / 9.0
+    phi = phi % (2 * np.pi)
+    idx = int(np.floor(phi / sector_width))
+    lower_boundary = idx * sector_width
+    return phi - lower_boundary
+    
 check_particle_content(labels, fit_data, messages="Particles found at import")
 
 # Normalize fFT0Occ
@@ -150,6 +157,12 @@ if "fHadronicRate" in CONFIG['createTrainingDatasetOptions']['labels_x']:
     fHadronicRate_index = np.where(labels == 'fHadronicRate')[0][0]  # Locate the index of fHadronicRate in labels
     fit_data[:, fHadronicRate_index] = normalizations["fHadronicRate"](fit_data[:, fHadronicRate_index])
     LOG.debug("Using Hadronic Rate option in CreateDataset")
+
+if "fPhi" in CONFIG['createTrainingDatasetOptions']['labels_x']:
+    LOG.info("Using phi option in CreateDataset and calculate the delta phi angle (within a given ALICE sector)")
+    fPhi_index = np.where(labels == 'fPhi')[0][0]  # Locate the index of fPhi in labels
+    for i in range(fit_data.shape[0]):
+        fit_data[i, fPhi_index] = calculate_delta_phi(fit_data[i, fPhi_index])
 
 # if len(fit_data) >= samplesize:
 #     ### Downsampling to defined sample size
