@@ -107,21 +107,7 @@ export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 time srun apptainer exec %(rocm_container)s python3 %(job_script)s --config $1 --train-mode $2
 """ % job_dict
 
-                else:
-                    script += """#SBATCH --nodes=1                          # number of nodes
-#SBATCH --gres=gpu:%(ngpus)s   		                                        # reservation for GPU
-#SBATCH --ntasks-per-node=%(ngpus)s                                         # number of tasks, for MULTI-GPU training
-
-export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
-
-time srun apptainer exec %(rocm_container)s python3 %(job_script)s --config $1 --train-mode $2
-""" % job_dict
-
-                bash_file = open(bash_path, "w")
-                bash_file.write(script)
-                bash_file.close()
-
-            elif job_dict["device"] == "MI50_GPU":
+            if job_dict["device"] == "HYDRA":
 
                 bash_path = path.join(full_path_out, "TRAIN.sh")
                 script="""#!/bin/bash
@@ -132,18 +118,17 @@ time srun apptainer exec %(rocm_container)s python3 %(job_script)s --config $1 -
 #SBATCH --partition=gpu                                                     # job partition (debug, main)
 #SBATCH --mail-type=%(mail-type)s                                           # notify via email
 #SBATCH --mail-user=%(mail-user)s                                           # recipient
-#SBATCH --constraint=mi50
 """ % job_dict
                 if "ngpus" in job_dict.keys() and int(job_dict['ngpus']) > 8:
                     job_dict['nodes'] = int(job_dict['ngpus']) // 8
                     job_dict['ntasks_per_node'] = 8
-                    script += """#SBATCH --nodes=1                          # number of nodes
+                    script += """#SBATCH --nodes=%(nodes)s                  # number of nodes
 #SBATCH --gres=gpu:8   		                                                # reservation for GPU
 #SBATCH --ntasks-per-node=%(ntasks_per_node)s                               # number of tasks, for MULTI-GPU training
 
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 
-time srun apptainer exec %(rocm_container)s python3 %(job_script)s --config $1 --train-mode $2
+time srun apptainer exec --nv %(hydra_container)s python3 %(job_script)s --config $1 --train-mode $2
 """ % job_dict
 
                 else:
@@ -153,7 +138,7 @@ time srun apptainer exec %(rocm_container)s python3 %(job_script)s --config $1 -
 
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 
-time srun apptainer exec %(rocm_container)s python3 %(job_script)s --config $1 --train-mode $2
+time srun apptainer exec --nv %(hydra_container)s python3 %(job_script)s --config $1 --train-mode $2
 """ % job_dict
 
                 bash_file = open(bash_path, "w")
@@ -180,7 +165,7 @@ time apptainer exec %(cuda_container)s python3 %(job_script)s --config $1 --trai
                 bash_file.close()
 
             else:
-                LOG.info("Choose a given device (GPU or CPU)!")
+                LOG.info("Choose a given device (CPU, MI100_GPU, HYDRA)!")
                 LOG.info("Stopping.")
                 exit()
 
