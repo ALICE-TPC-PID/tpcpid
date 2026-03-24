@@ -1,3 +1,8 @@
+import os
+import timeit
+import socket
+import onnx
+
 import numpy as np
 
 import torch
@@ -9,153 +14,7 @@ from torch.distributed import init_process_group, destroy_process_group
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader, DistributedSampler
 
-
 from .custom_loss_functions import *
-
-from .linear import fc_layer
-from .conv2d import conv2d_layer
-from .conv1d import conv1d_layer
-from .maxpool2d import maxpool2d_layer
-from .batchnorm2d import batchnorm2d_layer
-from .adaptiveAvgPool2d import adaptiveAvgPool2d_layer
-from .flatten import flatten
-from .resnet_basic import resnet_basic_layer
-from .dropout import dropout_layer
-from .RBF import gaussian_layer
-
-
-import os
-import timeit
-import socket
-import onnx
-
-
-### This layer dictionary will be used to assign the
-### layers in General_NN accoriding to a list of strings
-
-layer_dictionary = {
-    "fc" : "fc_layer",
-    "conv2d" : "conv2d_layer",
-    "conv1d" : "conv1d_layer",
-    "maxpool" : "maxpool2d_layer",
-    "flatten" : "flatten",
-    "dropout" : "dropout_layer",
-    "adapool" : "adaptiveAvgPool2d_layer",
-    "downsample" : "downsampling2d_channels_layer",
-    "resnet_basic" : "resnet_basic_layer",
-    "rbf_gaussian" : "gaussian_layer",
-    "resnet_full" : "ResNetImg"
-
-}
-
-### General_NN: A class which can define a Neural network according to strings given in layer_types,
-### activation funcitons given in act_func and parameters given in params (typically dimensions of in, out and kernel)
-
-
-class General_NN(nn.Module):
-
-
-    def __init__(self, params=[[1, 1, 3]], layer_types = ['conv1d'], act_func=[nn.ReLU], w_init=torch.nn.init.xavier_uniform_, scale_data=True, verbose=False, **options):
-
-        super(General_NN, self).__init__()
-
-        self.mode = 'eval'
-
-        self.hidden, self.act_func = params, act_func
-        self.verbose = verbose and (int(os.environ.get("SLURM_PROCID", "0")) == 0)
-
-        self.scaling_X = []
-        self.scaling_y = []
-        self.inverse_X = []
-        self.inverse_Y = []
-        self.scale = scale_data
-
-
-        if len(params) != len(act_func):
-
-            raise ValueError("len(layers_sizes): {val1} and len(act_func): {val2} have different length, but must be of same length!".format(
-                val1=len(params), val2=len(act_func)))
-
-        ########### Define the network ##############
-
-        self.layers = nn.ModuleList()
-
-        if self.verbose:
-            print("\nThis is the network structure:\n")
-
-        for i in range(len(params)):
-            self.layers.append(eval(layer_dictionary[layer_types[i]] + "(params=self.hidden[i], activation=self.act_func[i], weight_init=w_init, verbose=self.verbose, **options)"))
-
-        self.layers_seq = nn.Sequential(*self.layers)
-
-
-    @torch.jit.ignore
-    def forward(self, X):
-
-        if self.mode=='train':
-
-            ### Data is expected to be scaled already
-
-            output = self.layers_seq(X.float())
-
-
-        elif self.mode=='eval':
-
-            ### Check for device and datascaling
-
-            self.copy_to_dev = torch.cuda.is_available()
-
-            if isinstance(X, np.ndarray):
-
-                if self.scale and self.scaling_X:
-                    scaled = self.scaling_X.scale(X)
-                else:
-                    scaled = torch.tensor(X)
-
-                predict = self.layers_seq(scaled.float())
-
-                if self.scale and self.inverse_Y:
-                    output = self.inverse_Y.scale(predict.cpu().detach().numpy())
-                else:
-                    output = predict
-
-            elif isinstance(X, torch.Tensor):
-
-                if self.scale and self.scaling_X:
-                    scaled = self.scaling_X.scale(X.cpu().detach().numpy())
-                else:
-                    scaled = X
-
-                predict = self.layers_seq(scaled.float())
-
-                if self.scale and self.inverse_Y:
-                    output = self.inverse_Y.scale(predict.cpu().detach().numpy())
-                else:
-                    output = predict
-
-            else:
-
-                print("Data was neither numpy.ndarray nor torch.Tensor... Evaluating by conversion...")
-
-                if self.scale and self.scaling_X:
-                    scaled = self.scaling_X.scale(np.array(X))
-                else:
-                    scaled = torch.tensor(X)
-
-                predict = self.layers_seq(scaled.float())
-
-                if self.scale and self.inverse_Y:
-                    output = self.inverse_Y.scale(predict.cpu().detach().numpy())
-                else:
-                    output = predict
-
-        else:
-
-            print("Network must be in mode (eval) or (train). Please specify!")
-            output = False
-
-        return output
-
 
 ### NN: A class for training a Neural network and predicting output (so to say a wrapper class for a General_NN)
 

@@ -136,8 +136,7 @@ else:
 
 ##### Network training #####
 
-H_SIZES, LAYER_TYPES, ACTIVATION = nnconfig.network_def(**dict_config["NET_DEF"])
-NeuralNet = NN(General_NN(params = H_SIZES, layer_types = LAYER_TYPES, act_func =ACTIVATION, **dict_config["NET_SETTINGS"]))
+NeuralNet = NN(nnconfig.model(dict_config))
 
 ### data preparation
 X_train, X_test, y_train, y_test = train_test_split(X,y,**dict_config["DATA_SPLIT"])
