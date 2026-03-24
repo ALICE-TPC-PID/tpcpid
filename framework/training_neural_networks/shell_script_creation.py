@@ -172,9 +172,9 @@ time apptainer exec %(cuda_container)s python3 %(job_script)s --config $1 --trai
     else: ### QA job
         
         container = {
-            "HYDRA": "srun apptainer exec " + job_dict["hydra_container"] + "python3",
-            "MI100_GPU": "apptainer exec " + job_dict["rocm_container"] + "python3",
-            "CPU": "apptainer exec " + job_dict["cuda_container"] + "python3",
+            "HYDRA": "srun apptainer exec " + job_dict["hydra_container"] + " python3",
+            "MI100_GPU": "apptainer exec " + job_dict["rocm_container"] + " python3",
+            "CPU": "apptainer exec " + job_dict["cuda_container"] + " python3",
             "EPN": "python3.9"
         }
         
