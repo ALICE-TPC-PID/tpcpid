@@ -1,18 +1,6 @@
 from sklearn import preprocessing
-import itertools
 import torch.nn as nn
 import torch.optim as optim
-import sys
-import os
-import json
-
-def network_def(n_neurons_input, n_neurons_intermediate, n_neurons_output, n_layers):
-
-    h_sizes = list(itertools.chain(*[[[n_neurons_input,n_neurons_intermediate]],[[n_neurons_intermediate,n_neurons_intermediate]]*n_layers,[[n_neurons_intermediate,n_neurons_output]]]))
-    layer_types = list(itertools.chain(*[['fc']*(len(h_sizes)-2), ['fc'], ['fc']]))
-    activation = list(itertools.chain(*[[nn.Tanh()]*(len(h_sizes)-1), [nn.Identity()]]))
-
-    return h_sizes, layer_types, activation
 
 ########### Import the Neural Network class ###########
 
@@ -129,3 +117,20 @@ DICT_FULL = {
         "verbose": True
     }
 }
+
+
+class model(nn.Module):
+    
+    def __init__(self, dict_config):
+        super(model, self).__init__()
+        self.net_def = dict_config["NET_DEF"]
+    
+        self.network = nn.Sequential(
+            nn.Linear(self.net_def["n_neurons_input"], self.net_def["n_neurons_intermediate"]),
+            nn.ReLU(),
+            *[nn.Sequential(nn.Linear(self.net_def["n_neurons_intermediate"], self.net_def["n_neurons_intermediate"]), nn.ReLU()) for i in range(self.net_def["n_layers"]-1)],
+            nn.Linear(self.net_def["n_neurons_intermediate"], self.net_def["n_neurons_output"])
+        )
+        
+    def forward(self, x):
+        return self.network(x)
