@@ -31,6 +31,9 @@ def add_name_and_path(config):
     if "fHadronicRate" in config["createTrainingDatasetOptions"]["labels_x"]:
         config["dataset"]["HadronicRate"] = "True"
 
+    if "fPhi" in config["createTrainingDatasetOptions"]["labels_x"]:
+        config["dataset"]["Phi"] = "True"
+
     dataset = config.get('dataset', {})
     required_keys = ['year', 'period', 'pass', 'dEdxSelection']
     missing = [key for key in required_keys if key not in dataset]
@@ -42,6 +45,8 @@ def add_name_and_path(config):
         name += f"_{dataset['optTag']}"
     if dataset.get("HadronicRate", "False") == "True":
         name += "_HadronicRate"
+    if dataset.get("Phi", "False") == "True":
+        name += "_DeltaPhi"
     output_section = config.setdefault('output', {})
     output_section['name'] = name
     config["output"].setdefault('general', {})
