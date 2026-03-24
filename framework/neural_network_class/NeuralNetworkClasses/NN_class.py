@@ -21,7 +21,6 @@ from .custom_loss_functions import *
 
 class NN():
 
-
     def __init__(self, neural_net):
         self.network = neural_net.float()
 
@@ -231,9 +230,9 @@ class NN():
 
             tr_loss = tr_loss.cpu()/len(train_dataloader)
             val_loss = val_loss.cpu()
-            training_loss.append(tr_loss.detach().numpy())
-            validation_loss.append(val_loss.detach().numpy())
-            self.scheduler.step(val_loss)
+            training_loss.append(float(tr_loss.detach().cpu()))
+            validation_loss.append(float(val_loss.detach().cpu()))
+            self.scheduler.step(val_loss.detach().item())
 
             #----------------------------
 
@@ -370,7 +369,7 @@ class NN():
             except OSError:
                 pass
 
-    def save_net(self, path="./net.pt", avoid_q = False):
+    def save_net(self, path="./net.pt", avoid_q=False):
 
         if self.rank == 0:
             if isinstance(self.network, torch.nn.parallel.DistributedDataParallel):
@@ -378,27 +377,51 @@ class NN():
             else:
                 model = self.network
 
-            if not avoid_q:
-                if os.path.isfile(path):
+            checkpoint = {
+                "model_state_dict": model.to("cpu").state_dict(),
+                "training_loss": getattr(self, "training_loss", None),
+                "validation_loss": getattr(self, "validation_loss", None),
+            }
 
-                    response = input("File exists. Do you want to overwrite it? [y/n] ")
-                    if response == ('y' or 'yes' or 'Y' or 'Yes' or 'YES'):
-                        #torch.save(self.network.state_dict(), path)
-                        torch.save(model.to(device="cpu"), path)
-                        print("Network saved")
-                    else:
-                        print("Network not saved!")
+            if hasattr(self, "optimizer"):
+                checkpoint["optimizer_state_dict"] = self.optimizer.state_dict()
 
-                else:
-                    #torch.save(self.network.state_dict(), path)
-                    torch.save(model.to(device="cpu"), path)
-                    print("Network saved")
+            if hasattr(self, "scheduler"):
+                checkpoint["scheduler_state_dict"] = self.scheduler.state_dict()
 
-            else:
+            if not avoid_q and os.path.isfile(path):
+                response = input("File exists. Do you want to overwrite it? [y/n] ")
+                if response.lower() not in ["y", "yes"]:
+                    print("Network not saved!")
+                    return
 
-                torch.save(model.to(device="cpu"), path)
-                print("Network saved")
+            torch.save(checkpoint, path)
+            print("Network saved")
 
+    def load_net(self, path, map_location="cpu", load_optimizer=False, load_scheduler=False):
+        checkpoint = torch.load(path, map_location=map_location, weights_only=False)
+
+        model = self.network.module if isinstance(
+            self.network, torch.nn.parallel.DistributedDataParallel
+        ) else self.network
+
+        if "model_state_dict" in checkpoint:
+            model.load_state_dict(checkpoint["model_state_dict"])
+
+            if load_optimizer and hasattr(self, "optimizer") and "optimizer_state_dict" in checkpoint:
+                self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+
+            if load_scheduler and hasattr(self, "scheduler") and "scheduler_state_dict" in checkpoint:
+                self.scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
+
+            if "training_loss" in checkpoint:
+                self.training_loss = checkpoint["training_loss"]
+            if "validation_loss" in checkpoint:
+                self.validation_loss = checkpoint["validation_loss"]
+        else:
+            model.load_state_dict(checkpoint)
+
+        model.eval()
 
     def jit_script_model(self):
 

@@ -170,7 +170,14 @@ time apptainer exec %(cuda_container)s python3 %(job_script)s --config $1 --trai
                 exit()
 
     else: ### QA job
-
+        
+        container = {
+            "HYDRA": "srun apptainer exec " + job_dict["hydra_container"] + "python3",
+            "MI100_GPU": "apptainer exec " + job_dict["rocm_container"] + "python3",
+            "CPU": "apptainer exec " + job_dict["cuda_container"] + "python3",
+            "EPN": "python3.9"
+        }
+        
         actual_job_script = job_script
 
         if job_dict["device"] == "EPN": ### Setup to submit to EPN nodes
@@ -186,9 +193,9 @@ time apptainer exec %(cuda_container)s python3 %(job_script)s --config $1 --trai
 #SBATCH --mail-type=%(mail-type)s                                               # notify via email
 #SBATCH --mail-user=%(mail-user)s                                               # recipient
 
-time python3.9 %(actual_job_script)s --config $1
+time %(container)s %(actual_job_script)s --config $1
 
-""" % {**job_dict, 'actual_job_script': actual_job_script, 'qa_dir': qa_dir})
+""" % {**job_dict, 'container': container[job_dict["device"]], 'actual_job_script': actual_job_script, 'qa_dir': qa_dir})
 
         else:
 
@@ -203,9 +210,9 @@ time python3.9 %(actual_job_script)s --config $1
 #SBATCH --mail-type=%(mail-type)s                                               # notify via email
 #SBATCH --mail-user=%(mail-user)s                                               # recipient
 
-time apptainer exec %(cuda_container)s python3 %(actual_job_script)s --config $1
+time %(container)s %(actual_job_script)s --config $1
 
-""" % {**job_dict, 'actual_job_script': actual_job_script, 'qa_dir': qa_dir})
+""" % {**job_dict, 'container': container[job_dict["device"]], 'actual_job_script': actual_job_script, 'qa_dir': qa_dir})
             bash_file.close()
 
 elif scheduler.lower() == "htcondor":

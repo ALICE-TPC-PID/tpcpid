@@ -68,6 +68,7 @@
         "slurm": {
             "rocm_container": "/lustre/alice/users/csonnab/TPC/TPC_PRODUCTION/Containers/rocm_torch_env.sif",
             "cuda_container": "/lustre/alice/users/csonnab/TPC/TPC_PRODUCTION/Containers/cuda_torch_env.sif",
+            "hydra_container": "/lustre/alice/users/csonnab/TPC/TPC_PRODUCTION/Containers/cuda_torch_hydra.sif",
             "job-name": "TPCPID_TRAINING",
             "partition": "main",
             "time": 480,
