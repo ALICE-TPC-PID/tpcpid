@@ -1,7 +1,10 @@
-import os
+import subprocess
 
 print("Running CI tests...")
 
-os.system("python3 run/run.py --config ciconfig.json")
+result = subprocess.run(
+    ["python3", "run/run.py", "--config", "ciconfig.json"],
+    check=True  # this will raise if it fails
+)
 
 print("CI tests completed successfully!")
