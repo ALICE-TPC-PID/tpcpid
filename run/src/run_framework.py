@@ -3,6 +3,7 @@ from argparse import ArgumentParser
 
 parser = ArgumentParser(description="Setup the TPC PID analysis")
 parser.add_argument("-c", "--config", type=str, default="configuration.json", help="Path to configuration file")
+parser.add_argument("-ci", "--ci-run", type=int, default=0, help="Run in CI mode")
 args = parser.parse_args()
 
 with open(args.config, 'r') as config_file:
@@ -14,30 +15,37 @@ try:
     LOG = logger("Framework")
     LOG.framework("Setup completed successfully. Ready to launch!")
 
-    full_git_config(
-        save_to_file=os.path.join(CONFIG["output"]["general"]["path"], "git_info.txt"),
-        verbose=False,
-        path=CONFIG['settings']['framework']
-    )
-
-    if CONFIG["settings"]["git"].get("create_diff", False):
-        diff, repo_url, tag = diff_to_latest_upstream_tag(path=CONFIG["settings"]["framework"], diff_file=os.path.join(CONFIG["output"]["general"]["path"], "git_diff.patch"), info_file=os.path.join(CONFIG["output"]["general"]["path"], "git_info.txt"))
+    if not args.ci_run:
+        full_git_config(
+            save_to_file=os.path.join(CONFIG["output"]["general"]["path"], "git_info.txt"),
+            verbose=False,
+            path=CONFIG['settings']['framework']
+        )
+        if CONFIG["settings"]["git"].get("create_diff", False):
+            diff, repo_url, tag = diff_to_latest_upstream_tag(path=CONFIG["settings"]["framework"], diff_file=os.path.join(CONFIG["output"]["general"]["path"], "git_diff.patch"), info_file=os.path.join(CONFIG["output"]["general"]["path"], "git_info.txt"))
 
 
     if CONFIG["process"]["skimTreeQA"]:
         LOG.framework("--- Starting plotSkimTreeQA2D_modified.C ---")
 
-        subprocess.run([
-            "apptainer", "exec",
-            f"{CONFIG['settings']['base_container']}",
-            "root", "-l", "-b", "-q",
-            f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/plotSkimTreeQA2D_modified.C(\"{args.config}\")"
-        ], check=True)
+        if args.ci_run:
+            subprocess.run([
+                "root", "-l", "-b", "-q",
+                f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/plotSkimTreeQA2D_modified.C(\"{args.config}\")"
+            ], check=True)
+        else:
+            subprocess.run([
+                "apptainer", "exec",
+                f"{CONFIG['settings']['base_container']}",
+                "root", "-l", "-b", "-q",
+                f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/plotSkimTreeQA2D_modified.C(\"{args.config}\")"
+            ], check=True)
 
         LOG.framework("--- plotSkimTreeQA2D_modified.C finished ---")
 
 
     if CONFIG["process"]["electronCleaning"]:
+        # Currently not supported in the CI
         LOG.framework("--- Starting tmva_application.py ---")
 
         ### Since TMVA does not support passing a full path for the weights dir, this super ugly solution has to be taken
@@ -47,7 +55,7 @@ apptainer exec {CONFIG['settings']['base_container']} root -l -b -q '{CONFIG["se
 """
         subprocess.run(cmd, shell=True, check=True)
         # os.system(f"rm -rf {CONFIG['output']['general']['path']}/electronCleaning/Train.cpp")
-        
+
         subprocess.run([
             "apptainer", "exec",
             f"{CONFIG['settings']['base_container']}",
@@ -61,12 +69,18 @@ apptainer exec {CONFIG['settings']['base_container']} root -l -b -q '{CONFIG["se
     if CONFIG["process"]["fitBBGraph"]:
         LOG.framework("--- Starting fitNormGraphdEdxvsBGpid_modified.C ---")
 
-        subprocess.run([
-            "apptainer", "exec",
-            f"{CONFIG['settings']['base_container']}",
-            "root", "-l", "-b", "-q",
-            f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/fitNormGraphdEdxvsBGpid_modified.C(\"{args.config}\")"
-        ], check=True)
+        if args.ci_run:
+            subprocess.run([
+                "root", "-l", "-b", "-q",
+                f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/fitNormGraphdEdxvsBGpid_modified.C(\"{args.config}\")"
+            ], check=True)
+        else:
+            subprocess.run([
+                "apptainer", "exec",
+                f"{CONFIG['settings']['base_container']}",
+                "root", "-l", "-b", "-q",
+                f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/fitNormGraphdEdxvsBGpid_modified.C(\"{args.config}\")"
+            ], check=True)
 
         LOG.framework("--- fitNormGraphdEdxvsBGpid_modified.C finished ---")
 
@@ -74,13 +88,21 @@ apptainer exec {CONFIG['settings']['base_container']} root -l -b -q '{CONFIG["se
     if CONFIG["process"]["shiftNsigma"]:
         LOG.framework("--- Starting shift_nsigma_modified.py ---")
 
-        subprocess.run([
-            "apptainer", "exec",
-            f"{CONFIG['settings']['base_container']}",
-            "python3",
-            f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/shift_nsigma_modified.py",
-            "--config", args.config
-        ], check=True)
+        if args.ci_run:
+            subprocess.run([
+                "python3",
+                f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/shift_nsigma_modified.py",
+                "--config", args.config
+            ], check=True)
+        else:
+            subprocess.run([
+                "apptainer", "exec",
+                f"{CONFIG['settings']['base_container']}",
+                "python3",
+                f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/shift_nsigma_modified.py",
+                "--config", args.config
+            ], check=True)
+
 
         LOG.framework("--- shift_nsigma_modified.py finished ---")
 
@@ -88,13 +110,20 @@ apptainer exec {CONFIG['settings']['base_container']} root -l -b -q '{CONFIG["se
     if CONFIG["process"]["createTrainingDataset"]:
         LOG.framework("--- Starting CreateDataset.py ---")
 
-        subprocess.run([
-            "apptainer", "exec",
-            f"{CONFIG['settings']['base_container']}",
-            "python3",
-            f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/CreateDataset.py",
-            "--config", args.config
-        ], check=True)
+        if args.ci_run:
+            subprocess.run([
+                "python3",
+                f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/CreateDataset.py",
+                "--config", args.config
+            ], check=True)
+        else:
+            subprocess.run([
+                "apptainer", "exec",
+                f"{CONFIG['settings']['base_container']}",
+                "python3",
+                f"{CONFIG['settings']['framework']}/framework/bbfitting_and_qa/CreateDataset.py",
+                "--config", args.config
+            ], check=True)
 
         LOG.framework("--- CreateDataset.py finished ---")
 

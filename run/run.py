@@ -4,7 +4,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--config", default="configuration.json", help="Path to the configuration file")
 parser.add_argument("-skip-q", "--skip-question", type=int, default=0, help="Skip the confirmation question to proceed with the run (1 to skip, 0 to ask)")
-parser.add_argument("-ci", "--ci-check", type=int, default=0, help="Run in CI mode")
+parser.add_argument("-ci", "--ci-run", type=int, default=0, help="Run in CI mode")
 args = parser.parse_args()
 
 if "*" in args.config:
@@ -22,7 +22,7 @@ for i, config_file in enumerate(args.config):
     with open(config_file, 'r') as cf:
         CONFIG = json.load(cf)
 
-    if args.ci_check:
+    if args.ci_run:
         CONFIG['settings']['framework'] = os.getcwd()
         CONFIG['trainNeuralNetOptions']['configuration'] = os.getcwd() + "/run/ci/nnconfig.py"
         framework_path = os.getcwd() + "/framework"
@@ -37,7 +37,9 @@ for i, config_file in enumerate(args.config):
         copied_config = copy_config(CONFIG)
         subprocess.run([
             "python3",
-            f"{CONFIG['settings']['framework']}/run/src/run_framework.py", "--config", copied_config
+            f"{CONFIG['settings']['framework']}/run/src/run_framework.py",
+            "--config", copied_config,
+            "--ci-run", "1"
         ], check=True)
 
     else:

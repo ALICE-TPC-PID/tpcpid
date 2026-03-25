@@ -60,7 +60,7 @@
     },
     "trainNeuralNetOptions": {
         "execution_mode": "FULL",
-        "configuration": "run/ci/nnconfigs.py",
+        "configuration": "",
         "training_file": "train_single_sigma.py",
         "numberOfEpochs": "2",
         "num_networks": 1,
