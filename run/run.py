@@ -25,6 +25,7 @@ for i, config_file in enumerate(args.config):
     if args.ci_run:
         CONFIG['settings']['framework'] = os.getcwd()
         CONFIG['trainNeuralNetOptions']['configuration'] = os.getcwd() + "/run/ci/nnconfig.py"
+        CONFIG['createTrainingDatasetOptions']['dataset']['input_skimmedtree_path'] = os.getcwd() + "/run/ci/data/AO2D_mini.root"
         framework_path = os.getcwd() + "/framework"
         sys.path.append(framework_path)
         from base import *

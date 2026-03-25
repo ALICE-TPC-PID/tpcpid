@@ -40,7 +40,7 @@
     "dataset": {
         "dEdxSelection": "TPCSignal",
         "pass": "apass5",
-        "period": "zzo",
+        "period": "zzf",
         "year": "23",
         "optTag": "CI",
         "input_skimmedtree_path": "/lustre/alice/users/marin/R3A/TPCTreeswithNN/PbPbapass5_HR_251006/TPCTrees_HR_LHC23zzf_251006/AO2D_merge_LHC23zzf.root"

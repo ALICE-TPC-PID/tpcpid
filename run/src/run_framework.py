@@ -44,7 +44,7 @@ try:
         LOG.framework("--- plotSkimTreeQA2D_modified.C finished ---")
 
 
-    if CONFIG["process"]["electronCleaning"]:
+    if CONFIG["process"]["electronCleaning"] and (not args.ci_run):
         # Currently not supported in the CI
         LOG.framework("--- Starting tmva_application.py ---")
 
@@ -131,7 +131,7 @@ apptainer exec {CONFIG['settings']['base_container']} root -l -b -q '{CONFIG["se
     LOG.framework("All steps completed successfully! Continuing with NN training")
 
 
-    if CONFIG["process"]["trainNeuralNet"]:
+    if CONFIG["process"]["trainNeuralNet"] and (not args.ci_run):
         # args.config = "/lustre/alice/users/csonnab/TPC/tpcpid-github-official/output/LHC23/pass5/zzh/LHC23zzh_pass5_First_FullTest_TPCSignal_HR_True/20251128/configuration.json"
         # config = read_config(path=args.config)
         subprocess.run([
