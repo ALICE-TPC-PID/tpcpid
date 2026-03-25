@@ -4,7 +4,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--config", default="configuration.json", help="Path to the configuration file")
 parser.add_argument("-skip-q", "--skip-question", type=int, default=0, help="Skip the confirmation question to proceed with the run (1 to skip, 0 to ask)")
-parser.add_argument("-ci", "--ci", action="store_true", help="Run in CI mode")
+parser.add_argument("-ci", "--ci-check", action="store_true", help="Run in CI mode")
 args = parser.parse_args()
 
 if "*" in args.config:
@@ -67,7 +67,7 @@ for i, config_file in enumerate(args.config):
 
     masterjob_defaults = replace_in_dict_keys(masterjob_defaults, '-', '_')
 
-    if args.ci:
+    if args.ci_check:
         LOG.framework("Running in CI mode...")
         subprocess.run([
             "python3",
