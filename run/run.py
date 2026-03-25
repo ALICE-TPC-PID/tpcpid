@@ -23,9 +23,9 @@ for i, config_file in enumerate(args.config):
         CONFIG = json.load(cf)
 
     if args.ci_check:
-        framework_path = os.getcwd() + "/framework"
-        CONFIG['settings']['framework'] = framework_path
+        CONFIG['settings']['framework'] = os.getcwd()
         CONFIG['trainNeuralNetOptions']['configuration'] = os.getcwd() + "/run/ci/nnconfig.py"
+        framework_path = os.getcwd() + "/framework"
         sys.path.append(framework_path)
         from base import *
         LOG = logger("Framework")
