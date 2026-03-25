@@ -1,0 +1,96 @@
+{
+    "settings": {
+        "framework": "/lustre/alice/users/csonnab/TPC/tpcpid-github-official",
+        "base_container": "/lustre/alice/users/csonnab/TPC/TPC_PRODUCTION/Containers/base.sif",
+        "git": {
+            "checkout": 0,
+            "create_diff": 1,
+            "remote": "https://github.com/ALICE-TPC-PID/tpcpid.git",
+            "branch": "main",
+            "commit": "latest",
+            "tag": "N/A"
+        }
+    },
+    "masterjob": {
+        "partition": "debug",
+        "time": "30",
+        "mem": "150G"
+    },
+    "createTrainingDatasetOptions": {
+        "labels_x": [
+            "fTPCInnerParam",
+            "fTgl",
+            "fSigned1Pt",
+            "fMass",
+            "fNormMultTPC",
+            "fNormNClustersTPC",
+            "fFt0Occ"
+        ],
+        "labels_y": [
+            "fTPCSignal",
+            "fInvDeDxExpTPC"
+        ],
+        "samplesize": "10000000",
+        "sigmarange": "3",
+        "normalizations": {
+            "fHadronicRate": 100,
+            "fFt0Occ": "lambda x: x / 30000"
+        }
+    },
+    "dataset": {
+        "dEdxSelection": "TPCSignal",
+        "pass": "apass5",
+        "period": "zzo",
+        "year": "23",
+        "optTag": "CI",
+        "input_skimmedtree_path": "/lustre/alice/users/marin/R3A/TPCTreeswithNN/PbPbapass5_HR_251006/TPCTrees_HR_LHC23zzf_251006/AO2D_merge_LHC23zzf.root"
+    },
+    "general": {
+        "V0treename": "O2tpcskimv0wde",
+        "tpctoftreename": "O2tpctofskimwde"
+    },
+    "process": {
+        "severity": "INFO",
+        "electronCleaning": false,
+        "createTrainingDataset": true,
+        "fitBBGraph": true,
+        "shiftNsigma": true,
+        "skimTreeQA": true,
+        "trainNeuralNet": false
+    },
+    "trainNeuralNetOptions": {
+        "execution_mode": "FULL",
+        "configuration": "/lustre/alice/users/csonnab/TPC/tpcpid-github-official/run/configs/nnconfig.py",
+        "training_file": "train_single_sigma.py",
+        "numberOfEpochs": "2",
+        "num_networks": 1,
+        "qa_file": "training_qa.py",
+        "enable_qa": "True",
+        "save_as_pt": "True",
+        "save_as_onnx": "True",
+        "save_loss_in_files": "True",
+        "slurm": {
+            "rocm_container": "/lustre/alice/users/csonnab/TPC/TPC_PRODUCTION/Containers/rocm_torch_env.sif",
+            "cuda_container": "/lustre/alice/users/csonnab/TPC/TPC_PRODUCTION/Containers/cuda_torch_env.sif",
+            "hydra_container": "/lustre/alice/users/csonnab/TPC/TPC_PRODUCTION/Containers/cuda_torch_hydra.sif",
+            "job-name": "TPCPID_TRAINING",
+            "partition": "main",
+            "time": 480,
+            "device": "MI100_GPU",
+            "cpus-per-task": 4,
+            "mem": "180G",
+            "mail-type": "END,FAIL,INVALID_DEPEND",
+            "mail-user": "",
+            "ngpus": 8
+        },
+        "htcondor": {
+            "universe": "vanilla",
+            "+JobFlavour": "workday",
+            "request_cpus": "10",
+            "request_memory": "10GB",
+            "request_disk": "10GB",
+            "notify_user": "christian.sonnabend@cern.ch",
+            "notification": "Complete,Error"
+        }
+    }
+}
