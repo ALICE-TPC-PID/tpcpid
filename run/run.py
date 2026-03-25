@@ -22,52 +22,14 @@ for i, config_file in enumerate(args.config):
     with open(config_file, 'r') as cf:
         CONFIG = json.load(cf)
 
-    current_framework_path = CONFIG['settings']['framework'] + "/framework"
-    framework_changed = False
-    if i == 0 or framework_path != current_framework_path:
-        if i == 0 and framework_path != "":
-            sys.path.remove(framework_path)
-        framework_path = CONFIG['settings']['framework'] + "/framework"
-        framework_changed = True
-
-    if framework_changed:
+    if args.ci_check:
+        framework_path = os.getcwd() + "/framework"
+        CONFIG['settings']['framework'] = framework_path
         sys.path.append(framework_path)
         from base import *
-
         LOG = logger("Framework")
         LOG.welcome_message()
 
-        fetch_upstream("origin", path=CONFIG['settings']['framework'])
-        fetch_upstream("upstream", path=CONFIG['settings']['framework'])
-
-    if CONFIG['settings'].get('git', {}).get('checkout', 0) == 1:
-        LOG.framework("Checking out the specified git commit/tag/branch...")
-        git_config = CONFIG['settings']['git']
-        checkout_from_config(
-            git_config=git_config,
-            path=CONFIG['settings']['framework']
-        )
-    full_git_config(verbose=True, path=CONFIG['settings']['framework'])
-
-    CONFIG = add_name_and_path(CONFIG)
-    if args.skip_question == 0:
-        can_we_continue() # Ask user if they want to continue with the given configuration, recreates the output folders if necessary
-    create_folders(CONFIG)
-    config_path = copy_config(CONFIG)
-
-    masterjob_defaults = {
-        "partition": "main",
-        "time": "60",
-        "mem": "150G"
-    }
-
-    deep_update(masterjob_defaults, CONFIG.get('masterjob', {}), name="Masterjob settings", verbose=False)
-    masterjob_defaults["framework_path"] = CONFIG['settings']['framework']
-    masterjob_defaults["output_path"] = CONFIG["output"]["general"]["path"]
-
-    masterjob_defaults = replace_in_dict_keys(masterjob_defaults, '-', '_')
-
-    if args.ci_check:
         LOG.framework("Running in CI mode...")
         subprocess.run([
             "python3",
@@ -76,6 +38,50 @@ for i, config_file in enumerate(args.config):
         ], check=True)
 
     else:
+        current_framework_path = CONFIG['settings']['framework'] + "/framework"
+        framework_changed = False
+        if i == 0 or framework_path != current_framework_path:
+            if i == 0 and framework_path != "":
+                sys.path.remove(framework_path)
+            framework_path = CONFIG['settings']['framework'] + "/framework"
+            framework_changed = True
+
+        if framework_changed:
+            sys.path.append(framework_path)
+            from base import *
+
+            LOG = logger("Framework")
+            LOG.welcome_message()
+
+            fetch_upstream("origin", path=CONFIG['settings']['framework'])
+            fetch_upstream("upstream", path=CONFIG['settings']['framework'])
+
+        if CONFIG['settings'].get('git', {}).get('checkout', 0) == 1:
+            LOG.framework("Checking out the specified git commit/tag/branch...")
+            git_config = CONFIG['settings']['git']
+            checkout_from_config(
+                git_config=git_config,
+                path=CONFIG['settings']['framework']
+            )
+        full_git_config(verbose=True, path=CONFIG['settings']['framework'])
+
+        CONFIG = add_name_and_path(CONFIG)
+        if args.skip_question == 0:
+            can_we_continue() # Ask user if they want to continue with the given configuration, recreates the output folders if necessary
+        create_folders(CONFIG)
+        config_path = copy_config(CONFIG)
+
+        masterjob_defaults = {
+            "partition": "main",
+            "time": "60",
+            "mem": "150G"
+        }
+
+        deep_update(masterjob_defaults, CONFIG.get('masterjob', {}), name="Masterjob settings", verbose=False)
+        masterjob_defaults["framework_path"] = CONFIG['settings']['framework']
+        masterjob_defaults["output_path"] = CONFIG["output"]["general"]["path"]
+
+        masterjob_defaults = replace_in_dict_keys(masterjob_defaults, '-', '_')
 
         exec_script = f"""#!/bin/bash
 #SBATCH --job-name=TPCPID_MASTERJOB
