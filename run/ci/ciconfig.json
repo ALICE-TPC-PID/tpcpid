@@ -60,7 +60,7 @@
     },
     "trainNeuralNetOptions": {
         "execution_mode": "FULL",
-        "configuration": "/lustre/alice/users/csonnab/TPC/tpcpid-github-official/run/configs/nnconfig.py",
+        "configuration": "run/ci/nnconfigs.py",
         "training_file": "train_single_sigma.py",
         "numberOfEpochs": "2",
         "num_networks": 1,
