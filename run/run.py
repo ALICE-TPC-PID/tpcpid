@@ -4,6 +4,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--config", default="configuration.json", help="Path to the configuration file")
 parser.add_argument("-skip-q", "--skip-question", type=int, default=0, help="Skip the confirmation question to proceed with the run (1 to skip, 0 to ask)")
+parser.add_argument("-ci", "--ci", action="store_true", help="Run in CI mode")
 args = parser.parse_args()
 
 if "*" in args.config:
@@ -13,14 +14,14 @@ else:
 
 framework_path = ""
 for i, config_file in enumerate(args.config):
-    
+
     if not os.path.isfile(config_file):
         print(f"Configuration file {config_file} not found. Aborting")
         sys.exit(1)
-        
+
     with open(config_file, 'r') as cf:
         CONFIG = json.load(cf)
-    
+
     current_framework_path = CONFIG['settings']['framework'] + "/framework"
     framework_changed = False
     if i == 0 or framework_path != current_framework_path:
@@ -38,7 +39,7 @@ for i, config_file in enumerate(args.config):
 
         fetch_upstream("origin", path=CONFIG['settings']['framework'])
         fetch_upstream("upstream", path=CONFIG['settings']['framework'])
-        
+
     if CONFIG['settings'].get('git', {}).get('checkout', 0) == 1:
         LOG.framework("Checking out the specified git commit/tag/branch...")
         git_config = CONFIG['settings']['git']
@@ -66,7 +67,17 @@ for i, config_file in enumerate(args.config):
 
     masterjob_defaults = replace_in_dict_keys(masterjob_defaults, '-', '_')
 
-    exec_script = f"""#!/bin/bash
+    if args.ci:
+        LOG.framework("Running in CI mode...")
+        subprocess.run([
+            "python3",
+            f"{CONFIG['settings']['framework']}/run/src/run_framework.py",
+            "--config", config_path
+        ], check=True)
+
+    else:
+
+        exec_script = f"""#!/bin/bash
 #SBATCH --job-name=TPCPID_MASTERJOB
 #SBATCH --chdir={masterjob_defaults['framework_path']}
 #SBATCH --time={masterjob_defaults['time']}
@@ -76,11 +87,11 @@ for i, config_file in enumerate(args.config):
 #SBATCH --error={masterjob_defaults['output_path']}/run_%j.err
 
 time python3 {masterjob_defaults['framework_path']}/run/src/run_framework.py --config $1
-    """
+"""
 
-    script_path = os.path.join(masterjob_defaults["framework_path"], 'run/src/RUN_SLURM.sh')
-    with open(script_path, 'w') as script_file:
-        script_file.write(exec_script)
+        script_path = os.path.join(masterjob_defaults["framework_path"], 'run/src/RUN_SLURM.sh')
+        with open(script_path, 'w') as script_file:
+            script_file.write(exec_script)
 
-    slurm_out = subprocess.check_output(f"sbatch {script_path} {config_path}", shell=True).decode().strip('\n')
-    LOG.framework(f"TPCPID_MASTERJOB job submitted successfully. Job ID: {slurm_out.split()[-1]}")
+        slurm_out = subprocess.check_output(f"sbatch {script_path} {config_path}", shell=True).decode().strip('\n')
+        LOG.framework(f"TPCPID_MASTERJOB job submitted successfully. Job ID: {slurm_out.split()[-1]}")
