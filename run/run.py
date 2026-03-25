@@ -31,6 +31,8 @@ for i, config_file in enumerate(args.config):
         LOG.welcome_message()
 
         LOG.framework("Running in CI mode...")
+        CONFIG = add_name_and_path(CONFIG)
+        create_folders(CONFIG)
         copied_config = copy_config(CONFIG)
         subprocess.run([
             "python3",
