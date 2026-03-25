@@ -31,10 +31,10 @@ for i, config_file in enumerate(args.config):
         LOG.welcome_message()
 
         LOG.framework("Running in CI mode...")
+        copied_config = copy_config(CONFIG)
         subprocess.run([
             "python3",
-            f"{CONFIG['settings']['framework']}/run/src/run_framework.py",
-            "--config", config_path
+            f"{CONFIG['settings']['framework']}/run/src/run_framework.py", "--config", copied_config
         ], check=True)
 
     else:
@@ -69,7 +69,7 @@ for i, config_file in enumerate(args.config):
         if args.skip_question == 0:
             can_we_continue() # Ask user if they want to continue with the given configuration, recreates the output folders if necessary
         create_folders(CONFIG)
-        config_path = copy_config(CONFIG)
+        copied_config = copy_config(CONFIG)
 
         masterjob_defaults = {
             "partition": "main",
@@ -99,5 +99,5 @@ time python3 {masterjob_defaults['framework_path']}/run/src/run_framework.py --c
         with open(script_path, 'w') as script_file:
             script_file.write(exec_script)
 
-        slurm_out = subprocess.check_output(f"sbatch {script_path} {config_path}", shell=True).decode().strip('\n')
+        slurm_out = subprocess.check_output(f"sbatch {script_path} {copied_config}", shell=True).decode().strip('\n')
         LOG.framework(f"TPCPID_MASTERJOB job submitted successfully. Job ID: {slurm_out.split()[-1]}")
