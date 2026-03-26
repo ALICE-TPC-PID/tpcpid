@@ -1,5 +1,8 @@
 # The ALICE TPC PID framework
 
+[![CI (main)](https://github.com/ALICE-TPC-PID/tpcpid/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ALICE-TPC-PID/tpcpid/actions/workflows/ci.yml)
+![Latest weekly tag](https://img.shields.io/github/v/tag/ALICE-TPC-PID/tpcpid?filter=weekly-*&label=latest%20weekly%20tag)
+
 Framework for the PID calibration of the ALICE TPC in Run 3 and beyond
 
 This framework perfroms the full calibration, from AO2D data taken from the ALICE asynchronous reconstructions to the calibrated Nsigma corrections. To run this framework:
