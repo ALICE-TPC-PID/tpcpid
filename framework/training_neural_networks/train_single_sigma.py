@@ -67,9 +67,11 @@ if verbose:
 
 ########### Import the data ###########
 
+LOG.info("Loading data from ROOT file " + data_file)
 if data_file.split(".")[-1] == "root":
     cload = load_tree()
-    LOG.info("Loading data from ROOT file " + data_file)
+    trees = cload.trees(data_file)
+    print("Trees in file:", trees)
     labels, fit_data = cload.load(use_vars=LABELS_X + LABELS_Y, path=data_file, load_latest=True)
 elif data_file.split(".")[-1] == "txt":
     labels, fit_data = np.loadtxt(data_file, dtype='S')
