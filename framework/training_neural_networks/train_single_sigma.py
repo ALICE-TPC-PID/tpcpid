@@ -14,6 +14,7 @@ import json
 from copy import deepcopy
 import onnxruntime as ort
 import torch
+import time
 
 from sklearn.model_selection import train_test_split
 
@@ -69,7 +70,7 @@ if verbose:
 
 LOG.info("Loading data from ROOT file " + data_file)
 if data_file.split(".")[-1] == "root":
-    os.wait(5) # wait for the file to be fully written
+    time.sleep(5) # wait for the file to be fully written
     cload = load_tree()
     trees = cload.trees(data_file)
     print("Trees in file:", trees)
