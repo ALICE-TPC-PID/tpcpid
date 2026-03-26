@@ -24,8 +24,23 @@ for i, config_file in enumerate(args.config):
 
     if args.ci_run:
         CONFIG['settings']['framework'] = os.getcwd()
-        CONFIG['trainNeuralNetOptions']['configuration'] = os.getcwd() + "/run/ci/nnconfig.py"
         CONFIG['dataset']['input_skimmedtree_path'] = os.getcwd() + "/run/ci/data/AO2D_mini.root"
+        CONFIG['trainNeuralNetOptions'] = {
+            "execution_mode": "MEAN",                                   ### Only run one network as a proof of principle
+            "configuration": os.getcwd() + "/run/ci/nnconfig.py",
+            "training_file": "train_single_sigma.py",
+            "numberOfEpochs": "2",
+            "num_networks": 1,
+            "qa_file": "training_qa.py",
+            "enable_qa": "False",
+            "save_as_pt": "True",
+            "save_as_onnx": "True",
+            "save_loss_in_files": "False",
+            "scheduler": "local",
+            "local": {
+                "use_container": False
+            }
+        }
         framework_path = os.getcwd() + "/framework"
         sys.path.append(framework_path)
         from base import *

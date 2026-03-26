@@ -14,6 +14,7 @@ import json
 from copy import deepcopy
 import onnxruntime as ort
 import torch
+import time as timesleep
 
 from sklearn.model_selection import train_test_split
 
@@ -55,18 +56,19 @@ EPOCHS          = CONFIG['trainNeuralNetOptions']['numberOfEpochs']
 ########### Print the date, time and location for identification ###########
 
 date = dt.datetime.now().date()
-time = dt.datetime.now().time()
+exectime = dt.datetime.now().time()
 job_id = os.environ.get('SLURM_JOB_ID', 'local_run')
 verbose = (int(os.environ.get("SLURM_PROCID", "0")) == 0)
 
 if verbose:
     LOG.info("SLURM job ID: " + str(job_id))
     LOG.info("Date (dd/mm/yyyy): " + date.strftime('%02d/%02m/%04Y'))
-    LOG.info("Time (hh/mm/ss): " + time.strftime('%02H:%02M:%02S'))
+    LOG.info("Time (hh/mm/ss): " + exectime.strftime('%02H:%02M:%02S'))
     LOG.info("Output-folder: " + output_folder)
 
 ########### Import the data ###########
 
+LOG.info("Loading data from ROOT file " + data_file)
 if data_file.split(".")[-1] == "root":
     cload = load_tree()
     labels, fit_data = cload.load(use_vars=LABELS_X + LABELS_Y, path=data_file, load_latest=True)

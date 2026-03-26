@@ -143,7 +143,7 @@ def calculate_delta_phi(phi):
     idx = int(np.floor(phi / sector_width))
     lower_boundary = idx * sector_width
     return phi - lower_boundary
-    
+
 check_particle_content(labels, fit_data, messages="Particles found at import")
 
 # Normalize fFT0Occ
@@ -383,7 +383,7 @@ percentages = []
 for i, m in enumerate(np.sort(np.unique(new_data.T[labels=='fMass']))):
     percentages.append(np.sum(new_data.T[labels=='fMass'].flatten() == m)*100/np.shape(new_data)[0])
 
-desired_size = int(CONFIG['createTrainingDatasetOptions']['samplesize'])
+desired_size = samplesize if samplesize>0 else np.shape(new_data)[0]
 num_particles = np.shape(np.unique(fit_data.T[labels=='fMass']))[0]
 
 if len(np.unique(new_data.T[labels=='fMass']))==5:

@@ -29,6 +29,7 @@ DICT_MEAN = {
         "verbose": True
     },
     "NET_TRAINING": {
+        "multigpu": 0,
         "epochs_ls": [0,30,50,80],
         "weights": False,
         "optimizer": optim.Adam,
@@ -67,6 +68,7 @@ DICT_SIGMA = {
         "verbose": True
     },
     "NET_TRAINING": {
+        "multigpu": 0,
         "epochs_ls": [0,30,50,80],
         "weights": False,
         "optimizer": optim.Adam,
@@ -105,6 +107,7 @@ DICT_FULL = {
         "verbose": True
     },
     "NET_TRAINING": {
+        "multigpu": 0,
         "epochs_ls": [0,30,50,80],
         "weights": False,
         "optimizer": optim.Adam,
@@ -120,17 +123,17 @@ DICT_FULL = {
 
 
 class model(nn.Module):
-    
+
     def __init__(self, dict_config):
         super(model, self).__init__()
         self.net_def = dict_config["NET_DEF"]
-    
+
         self.network = nn.Sequential(
             nn.Linear(self.net_def["n_neurons_input"], self.net_def["n_neurons_intermediate"]),
             nn.ReLU(),
             *[nn.Sequential(nn.Linear(self.net_def["n_neurons_intermediate"], self.net_def["n_neurons_intermediate"]), nn.ReLU()) for i in range(self.net_def["n_layers"]-1)],
             nn.Linear(self.net_def["n_neurons_intermediate"], self.net_def["n_neurons_output"])
         )
-        
+
     def forward(self, x):
         return self.network(x)

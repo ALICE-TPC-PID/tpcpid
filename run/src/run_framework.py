@@ -131,7 +131,7 @@ apptainer exec {CONFIG['settings']['base_container']} root -l -b -q '{CONFIG["se
     LOG.framework("All steps completed successfully! Continuing with NN training")
 
 
-    if CONFIG["process"]["trainNeuralNet"] and (not args.ci_run):
+    if CONFIG["process"]["trainNeuralNet"]:
         # args.config = "/lustre/alice/users/csonnab/TPC/tpcpid-github-official/output/LHC23/pass5/zzh/LHC23zzh_pass5_First_FullTest_TPCSignal_HR_True/20251128/configuration.json"
         # config = read_config(path=args.config)
         subprocess.run([
@@ -144,7 +144,8 @@ apptainer exec {CONFIG['settings']['base_container']} root -l -b -q '{CONFIG["se
         subprocess.run([
             "python3",
             f"{CONFIG['settings']['framework']}/framework/training_neural_networks/run_jobs.py",
-            "--config", args.config
+            "--config", args.config,
+            "--ci-run", str(args.ci_run)
         ], check=True)
 
 
