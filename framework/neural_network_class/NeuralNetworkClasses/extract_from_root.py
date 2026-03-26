@@ -211,6 +211,7 @@ class load_tree():
         print("[DEBUG] dict keys:", list(dicts.keys()))
         print("[DEBUG] dict empty:", len(dicts) == 0)
 
+        file['data_tree'] = dicts
         file.close()
 
         print("[DEBUG] wrote file, exists:", os.path.exists(path))
