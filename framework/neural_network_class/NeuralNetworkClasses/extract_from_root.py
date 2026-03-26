@@ -32,12 +32,31 @@ class load_tree():
                                 file_handler=uproot.MultithreadedFileSource,
                                 num_workers=self.num_workers)
 
-        entries = list()
-        all_ttrees= dict()
-        for i, cls in enumerate(root_file.items()):
-            if isinstance(cls[1], uproot.TTree):
-                all_ttrees[cls[0]] = cls[1]
-                entries.append(cls[1].num_entries)
+        entries = []
+        all_ttrees = {}
+
+        print(f"[DEBUG] Reading ROOT file: {path}")
+        print(f"[DEBUG] Top-level keys: {list(root_file.keys())}")
+
+        for key, obj in root_file.items():
+            print(f"[DEBUG] Key: {key}, type: {type(obj)}")
+
+            is_tree = isinstance(obj, uproot.TTree)
+
+            # Fallback: some uproot objects may still behave like trees
+            if not is_tree:
+                is_tree = hasattr(obj, "num_entries") and hasattr(obj, "keys")
+
+            if is_tree:
+                all_ttrees[key] = obj
+                entries.append(obj.num_entries)
+                print(f"[DEBUG] -> accepted as tree, entries={obj.num_entries}")
+
+        if len(all_ttrees) == 0:
+            raise RuntimeError(
+                f"No TTrees found in ROOT file: {path}. "
+                f"Available keys: {list(root_file.keys())}"
+            )
 
         # Get the list of branch names
         all_branch_names = list(all_ttrees[list(all_ttrees.keys())[0]].keys())
@@ -166,6 +185,14 @@ class load_tree():
 
     def export_to_tree(self, path, labels, data, overwrite=False):
 
+        print("[DEBUG] export path:", path)
+        print("[DEBUG] abs export path:", os.path.abspath(path))
+        print("[DEBUG] labels:", labels)
+        print("[DEBUG] labels.tolist():", labels.tolist())
+        print("[DEBUG] data.shape:", data.shape)
+        print("[DEBUG] writing_data.shape:", data.T.shape)
+        print("[DEBUG] number of branches to write:", len(labels.tolist()))
+
         if not os.path.isabs(path):
             raise ValueError(f"Path must be absolute, got: {path}")
 
@@ -178,7 +205,18 @@ class load_tree():
         dicts = {}
 
         for i, key in enumerate(labels.tolist()):
+            print(f"[DEBUG] branch {i}: name={key}, shape={writing_data[i].shape}, dtype={writing_data[i].dtype}")
             dicts[key] = writing_data[i]
 
-        file['data_tree'] = dicts
+        print("[DEBUG] dict keys:", list(dicts.keys()))
+        print("[DEBUG] dict empty:", len(dicts) == 0)
+
         file.close()
+
+        print("[DEBUG] wrote file, exists:", os.path.exists(path))
+        print("[DEBUG] file size:", os.path.getsize(path))
+
+        f = uproot.open(path)
+        print("[DEBUG] top-level keys after write:", list(f.keys()))
+        for k, obj in f.items():
+            print("[DEBUG] key:", k, "type:", type(obj))
