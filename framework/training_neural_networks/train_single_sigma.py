@@ -69,6 +69,7 @@ if verbose:
 
 LOG.info("Loading data from ROOT file " + data_file)
 if data_file.split(".")[-1] == "root":
+    os.wait(5) # wait for the file to be fully written
     cload = load_tree()
     trees = cload.trees(data_file)
     print("Trees in file:", trees)
