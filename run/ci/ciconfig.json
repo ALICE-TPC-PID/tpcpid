@@ -30,7 +30,7 @@
             "fTPCSignal",
             "fInvDeDxExpTPC"
         ],
-        "samplesize": "10000000",
+        "samplesize": -1,
         "sigmarange": "3",
         "normalizations": {
             "fHadronicRate": 100,
