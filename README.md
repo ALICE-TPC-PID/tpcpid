@@ -1,7 +1,7 @@
 # The ALICE TPC PID framework
 
 [![CI (main)](https://github.com/ALICE-TPC-PID/tpcpid/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ALICE-TPC-PID/tpcpid/actions/workflows/ci.yml)
-![Latest weekly tag](https://img.shields.io/github/v/tag/ALICE-TPC-PID/tpcpid?filter=weekly-*&label=latest%20weekly%20tag)
+[![Weekly tag status](https://github.com/ALICE-TPC-PID/tpcpid/actions/workflows/weekly-tag.yml/badge.svg?event=schedule)](https://github.com/ALICE-TPC-PID/tpcpid/actions/workflows/weekly-tag.yml)
 
 Framework for the PID calibration of the ALICE TPC in Run 3 and beyond
 
