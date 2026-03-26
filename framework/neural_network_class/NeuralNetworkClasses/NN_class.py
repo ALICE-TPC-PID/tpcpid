@@ -37,7 +37,8 @@ class NN():
     def training(self, data, multigpu=-1, pin_memory=1, epochs=1, epochs_ls=[0],
                  optimizer=optim.Adam, scheduler=optim.lr_scheduler.ReduceLROnPlateau,
                  learning_rate=0.01, weight_decay=0, loss_function=nn.MSELoss(), weights=False,
-                 verbose=True, nsamples=np.inf, copy_to_device = 1, patience=5, factor=0.5):
+                 verbose=True, nsamples=np.inf, copy_to_device = 1, patience=5, factor=0.5,
+                 shuffle_every_epoch=False, device=None, cpu_threads=1):
 
         self.rank = 0
         self.worldsize = 1
@@ -53,7 +54,7 @@ class NN():
         ### Setting the device on which to run ###
 
         if not self.multigpu:
-            if self.settings["MACHINE_OPTIONS"]["device"] is None:
+            if device is None:
                 if torch.cuda.is_available():
                     self.device = "cuda:0"
                     # if self.settings["MACHINE_OPTIONS"]["device_id"] is None or "all":
@@ -65,9 +66,9 @@ class NN():
                 else:
                     self.device = "cpu"
             else:
-                self.device = self.settings["MACHINE_OPTIONS"]["device"]
+                self.device = device
 
-            self.network.to(device=self.device, dtype=self.dtype)
+            self.network.to(device=self.device)
 
         ### Printing device information
         if self.multigpu:
@@ -91,8 +92,8 @@ class NN():
                 if self.verbose:
                     print("\nRunning on MPS\n")
             else:
-                if self.settings["MACHINE_OPTIONS"]["cpu_threads"] is not None:
-                    torch.set_num_threads(int(self.settings["MACHINE_OPTIONS"]["cpu_threads"]))
+                if cpu_threads is not None:
+                    torch.set_num_threads(int(cpu_threads))
                 if self.verbose:
                     print("\nRunning on CPU")
                     print("{} CPU threads\n".format(torch.get_num_threads()))
@@ -153,7 +154,7 @@ class NN():
                 batch_size=data.batch_sizes[idx_tr],
                 num_workers=data.num_workers,
                 pin_memory=self.pin_memory,
-                shuffle=(False if self.multigpu else self.settings["DATA_OPTIONS"]["shuffle_every_epoch"]),
+                shuffle=(False if self.multigpu else shuffle_every_epoch),
                 sampler=sampler
             )
 
@@ -293,12 +294,12 @@ class NN():
         # ----------------------------------------------------------------------
         # 1. Read Slurm variables
         # ----------------------------------------------------------------------
-        slurm_procid   = int(os.environ["SLURM_PROCID"])    # global rank
-        slurm_localid  = int(os.environ["SLURM_LOCALID"])   # local rank on this node
-        slurm_ntasks   = int(os.environ["SLURM_NTASKS"])    # total tasks (world size)
-        slurm_nodeid   = int(os.environ["SLURM_NODEID"])    # node index (0 .. nnodes-1)
-        slurm_nnodes   = int(os.environ["SLURM_NNODES"])    # number of nodes
-        slurm_jobid    = int(os.environ["SLURM_JOBID"])
+        slurm_procid   = int(os.environ.get("SLURM_PROCID", "0"))    # global rank
+        slurm_localid  = int(os.environ.get("SLURM_LOCALID", "0"))   # local rank on this node
+        slurm_ntasks   = int(os.environ.get("SLURM_NTASKS", "1"))    # total tasks (world size)
+        slurm_nodeid   = int(os.environ.get("SLURM_NODEID", "0"))    # node index (0 .. nnodes-1)
+        slurm_nnodes   = int(os.environ.get("SLURM_NNODES", "1"))    # number of nodes
+        slurm_jobid    = int(os.environ.get("SLURM_JOBID", "0"))
         user           = os.environ["USER"]
 
         # Let user-provided n_gpus override Slurm if desired

@@ -15,215 +15,272 @@ from os import path
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--config", default="configuration.json", help="Path to the configuration file")
 parser.add_argument("-jbscript", "--job-script", default=".", help="Path to job script")
-parser.add_argument("-trm", "--training-mode", default='MEAN', help="Training mode") #  choices=['MEAN', 'SIGMA', 'FULL', 'ENSEMBLE'] fails (?)
+parser.add_argument("-trm", "--training-mode", default='MEAN', help="Training mode")
 args = parser.parse_args()
 
-job_script      = str(args.job_script)
-train_mode      = str(args.training_mode)
+job_script = str(args.job_script)
+train_mode = str(args.training_mode)
 
 with open(args.config, 'r') as config_file:
     CONFIG = json.load(config_file)
+
 sys.path.append(CONFIG['settings']['framework'] + "/framework")
 from base import *
 
 LOG = logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="shell_script_creation")
 
-output_folder           = CONFIG["output"]["general"]["training"]
-scheduler               = CONFIG["trainNeuralNetOptions"]["scheduler"]
-job_dict                = CONFIG["trainNeuralNetOptions"][scheduler]
+output_folder = CONFIG["output"]["general"]["training"]
+scheduler = CONFIG["trainNeuralNetOptions"]["scheduler"]
+qa_dir = CONFIG["output"]["trainNeuralNet"]["QApath"]
 
-full_path_out           = output_folder
-qa_dir                  = CONFIG["output"]["trainNeuralNet"]["QApath"]
-job_dict["chdir"]       = full_path_out
-job_dict["job_script"]  = job_script
+if scheduler not in CONFIG["trainNeuralNetOptions"]:
+    LOG.info(f"Scheduler '{scheduler}' not found in config.")
+    LOG.info("Stopping.")
+    exit()
+
+job_dict = dict(CONFIG["trainNeuralNetOptions"][scheduler])
+full_path_out = output_folder
+job_dict["chdir"] = full_path_out
+job_dict["job_script"] = job_script
+
+
+def write_script(script_path, script_content, make_executable=True):
+    with open(script_path, "w") as bash_file:
+        bash_file.write(script_content)
+    if make_executable:
+        os.chmod(script_path, 0o755)
+
+
+def get_exec_command(job_dict):
+    use_container = job_dict.get("use_container", False)
+    device = job_dict.get("device", "CPU")
+    python_cmd = job_dict.get("python", "python3")
+
+    if not use_container:
+        return python_cmd
+
+    runtime = job_dict.get("container_runtime", "apptainer").lower()
+
+    if runtime != "apptainer":
+        raise ValueError(f"Unsupported container runtime: {runtime}")
+
+    if device == "HYDRA":
+        return f'apptainer exec --nv "{job_dict["hydra_container"]}" {python_cmd}'
+    elif device == "MI100_GPU":
+        return f'apptainer exec "{job_dict["rocm_container"]}" {python_cmd}'
+    elif device == "CPU" or scheduler.lower() == "local":
+        return f'apptainer exec "{job_dict["cuda_container"]}" {python_cmd}'
+    elif device == "EPN":
+        return job_dict.get("python", "python3.9")
+    else:
+        raise ValueError(f"Unknown device: {device}")
+
 
 if scheduler.lower() == "slurm":
 
     if train_mode != "QA":
 
-        if job_dict["device"] == "EPN": ### Setup to submit to EPN nodes
+        exec_cmd = get_exec_command(job_dict)
+        bash_path = path.join(full_path_out, "TRAIN.sh")
 
-            bash_path = path.join(full_path_out, "TRAIN.sh")
+        if job_dict["device"] == "EPN":
             script = """#!/bin/bash
-#SBATCH --job-name=%(name)s                                                 # Task name
-#SBATCH --chdir=%(pj)s                                                      # Working directory on shared storage
-#SBATCH --time=%(time)s                                                     # Run time limit
-#SBATCH --mem=%(mem)s                                                       # job memory
-#SBATCH --partition=%(part)s                                                # job partition (debug, main)
-#SBATCH --mail-type=%(notify)s                                              # notify via email
-#SBATCH --mail-user=%(email)s                                               # recipient
+#SBATCH --job-name=%(name)s
+#SBATCH --chdir=%(pj)s
+#SBATCH --time=%(time)s
+#SBATCH --mem=%(mem)s
+#SBATCH --partition=%(part)s
+#SBATCH --mail-type=%(notify)s
+#SBATCH --mail-user=%(email)s
 """ % job_dict
 
-            if "ngpus" in job_dict.keys() and int(job_dict['ngpus']) > 8:
-                job_dict['nodes'] = int(job_dict['ngpus']) // 8
-                job_dict['ntasks_per_node'] = 8
-                script += """#SBATCH --nodes=%(nodes)s                      # number of nodes
-#SBATCH --gres=gpu:8   		                                                # reservation for GPU
-#SBATCH --ntasks-per-node=%(ntasks_per_node)s                               # number of tasks, for MULTI-GPU training
+            if "ngpus" in job_dict and int(job_dict["ngpus"]) > 8:
+                job_dict["nodes"] = int(job_dict["ngpus"]) // 8
+                job_dict["ntasks_per_node"] = 8
+                script += f"""#SBATCH --nodes={job_dict['nodes']}
+#SBATCH --gres=gpu:8
+#SBATCH --ntasks-per-node={job_dict['ntasks_per_node']}
 
-export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
+export OMP_NUM_THREADS=${{SLURM_CPUS_PER_TASK:-1}}
 
-time srun /bin/python3.9 python3 %(job_script)s --config $1 --train-mode $2
-""" % job_dict
-
+time srun {exec_cmd} "{job_script}" --config "$1" --train-mode "$2"
+"""
             else:
-                script += """#SBATCH --nodes=1                              # number of nodes
-#SBATCH --gres=gpu:%(ngpus)s   		                                        # reservation for GPU
-#SBATCH --ntasks-per-node=%(ngpus)s                                         # number of tasks, for MULTI-GPU training
+                script += f"""#SBATCH --nodes=1
+#SBATCH --gres=gpu:{job_dict['ngpus']}
+#SBATCH --ntasks-per-node={job_dict['ngpus']}
 
-export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
+export OMP_NUM_THREADS=${{SLURM_CPUS_PER_TASK:-1}}
 
-time srun /bin/python3.9 python3 %(job_script)s --config $1 --train-mode $2
-""" % job_dict
+time srun {exec_cmd} "{job_script}" --config "$1" --train-mode "$2"
+"""
+            write_script(bash_path, script)
 
-            bash_file = open(bash_path, "w")
-            bash_file.write(script)
-            bash_file.close()
-
-        else: ### Setup for GSI batch farm (default)
-
-            if job_dict["device"] == "MI100_GPU":
-
-                bash_path = path.join(full_path_out, "TRAIN.sh")
-                script="""#!/bin/bash
-#SBATCH --job-name=%(job-name)s                                             # Task name
-#SBATCH --chdir=%(chdir)s                                                   # Working directory on shared storage
-#SBATCH --time=%(time)s                                                     # Run time limit
-#SBATCH --mem=%(mem)s                                                       # job memory
-#SBATCH --partition=gpu                                                     # job partition (debug, main)
-#SBATCH --mail-type=%(mail-type)s                                           # notify via email
-#SBATCH --mail-user=%(mail-user)s                                           # recipient
+        elif job_dict["device"] == "MI100_GPU":
+            script = """#!/bin/bash
+#SBATCH --job-name=%(job-name)s
+#SBATCH --chdir=%(chdir)s
+#SBATCH --time=%(time)s
+#SBATCH --mem=%(mem)s
+#SBATCH --partition=gpu
+#SBATCH --mail-type=%(mail-type)s
+#SBATCH --mail-user=%(mail-user)s
 #SBATCH --constraint=mi100
 """ % job_dict
-                if "ngpus" in job_dict.keys() and int(job_dict['ngpus']) > 8:
-                    job_dict['nodes'] = int(job_dict['ngpus']) // 8
-                    job_dict['ntasks_per_node'] = 8
-                    script += """#SBATCH --nodes=%(nodes)s                  # number of nodes
-#SBATCH --gres=gpu:8   		                                                # reservation for GPU
-#SBATCH --ntasks-per-node=%(ntasks_per_node)s                               # number of tasks, for MULTI-GPU training
 
-export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
+            if "ngpus" in job_dict and int(job_dict["ngpus"]) > 8:
+                job_dict["nodes"] = int(job_dict["ngpus"]) // 8
+                job_dict["ntasks_per_node"] = 8
+                script += f"""#SBATCH --nodes={job_dict['nodes']}
+#SBATCH --gres=gpu:8
+#SBATCH --ntasks-per-node={job_dict['ntasks_per_node']}
 
-time srun apptainer exec %(rocm_container)s python3 %(job_script)s --config $1 --train-mode $2
-""" % job_dict
+export OMP_NUM_THREADS=${{SLURM_CPUS_PER_TASK:-1}}
 
-            if job_dict["device"] == "HYDRA":
-
-                bash_path = path.join(full_path_out, "TRAIN.sh")
-                script="""#!/bin/bash
-#SBATCH --job-name=%(job-name)s                                             # Task name
-#SBATCH --chdir=%(chdir)s                                                   # Working directory on shared storage
-#SBATCH --time=%(time)s                                                     # Run time limit
-#SBATCH --mem=%(mem)s                                                       # job memory
-#SBATCH --partition=gpu                                                     # job partition (debug, main)
-#SBATCH --mail-type=%(mail-type)s                                           # notify via email
-#SBATCH --mail-user=%(mail-user)s                                           # recipient
-""" % job_dict
-                if "ngpus" in job_dict.keys() and int(job_dict['ngpus']) > 8:
-                    job_dict['nodes'] = int(job_dict['ngpus']) // 8
-                    job_dict['ntasks_per_node'] = 8
-                    script += """#SBATCH --nodes=%(nodes)s                  # number of nodes
-#SBATCH --gres=gpu:8   		                                                # reservation for GPU
-#SBATCH --ntasks-per-node=%(ntasks_per_node)s                               # number of tasks, for MULTI-GPU training
-
-export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
-
-time srun apptainer exec --nv %(hydra_container)s python3 %(job_script)s --config $1 --train-mode $2
-""" % job_dict
-
-                else:
-                    script += """#SBATCH --nodes=1                          # number of nodes
-#SBATCH --gres=gpu:%(ngpus)s   		                                        # reservation for GPU
-#SBATCH --ntasks-per-node=%(ngpus)s                                         # number of tasks, for MULTI-GPU training
-
-export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
-
-time srun apptainer exec --nv %(hydra_container)s python3 %(job_script)s --config $1 --train-mode $2
-""" % job_dict
-
-                bash_file = open(bash_path, "w")
-                bash_file.write(script)
-                bash_file.close()
-
-            elif job_dict["device"] == "CPU":
-
-                bash_file = open(path.join(full_path_out, "TRAIN.sh".format(train_mode)), "w")
-                bash_file.write(
-"""#!/bin/bash
-#SBATCH --job-name=%(job-name)s                                             # Task name
-#SBATCH --chdir=%(chdir)s                                                   # Working directory on shared storage
-#SBATCH --time=%(time)s                                                     # Run time limit
-#SBATCH --mem=%(mem)s                                                       # job memory
-#SBATCH --cpus-per-task=%(cpus-per-task)s                                   # cpus per task
-#SBATCH --partition=%(partition)s                                           # job partition (debug, main)
-#SBATCH --mail-type=%(mail-type)s                                           # notify via email
-#SBATCH --mail-user=%(mail-user)s                                           # recipient
-
-time apptainer exec %(cuda_container)s python3 %(job_script)s --config $1 --train-mode $2
-
-""" % job_dict)
-                bash_file.close()
-
+time srun {exec_cmd} "{job_script}" --config "$1" --train-mode "$2"
+"""
             else:
-                LOG.info("Choose a given device (CPU, MI100_GPU, HYDRA)!")
-                LOG.info("Stopping.")
-                exit()
+                script += f"""#SBATCH --nodes=1
+#SBATCH --gres=gpu:{job_dict['ngpus']}
+#SBATCH --ntasks-per-node={job_dict['ngpus']}
 
-    else: ### QA job
-        
-        container = {
-            "HYDRA": "srun apptainer exec " + job_dict["hydra_container"] + " python3",
-            "MI100_GPU": "apptainer exec " + job_dict["rocm_container"] + " python3",
-            "CPU": "apptainer exec " + job_dict["cuda_container"] + " python3",
-            "EPN": "python3.9"
-        }
-        
-        actual_job_script = job_script
+export OMP_NUM_THREADS=${{SLURM_CPUS_PER_TASK:-1}}
 
-        if job_dict["device"] == "EPN": ### Setup to submit to EPN nodes
-            bash_file = open(path.join(qa_dir, "QA.sh"), "w")
-            bash_file.write(
+time srun {exec_cmd} "{job_script}" --config "$1" --train-mode "$2"
+"""
+            write_script(bash_path, script)
 
-"""#!/bin/bash
-#SBATCH --job-name=TPCPID_NNQA                                                  # Task name
-#SBATCH --chdir=%(qa_dir)s                                                      # Working directory on shared storage
-#SBATCH --time=10                                                               # Run time limit
-#SBATCH --mem=30G                                                               # job memory
-#SBATCH --partition=prod                                                        # job partition (debug, main)
-#SBATCH --mail-type=%(mail-type)s                                               # notify via email
-#SBATCH --mail-user=%(mail-user)s                                               # recipient
+        elif job_dict["device"] == "HYDRA":
+            script = """#!/bin/bash
+#SBATCH --job-name=%(job-name)s
+#SBATCH --chdir=%(chdir)s
+#SBATCH --time=%(time)s
+#SBATCH --mem=%(mem)s
+#SBATCH --partition=gpu
+#SBATCH --mail-type=%(mail-type)s
+#SBATCH --mail-user=%(mail-user)s
+""" % job_dict
 
-time %(container)s %(actual_job_script)s --config $1
+            if "ngpus" in job_dict and int(job_dict["ngpus"]) > 8:
+                job_dict["nodes"] = int(job_dict["ngpus"]) // 8
+                job_dict["ntasks_per_node"] = 8
+                script += f"""#SBATCH --nodes={job_dict['nodes']}
+#SBATCH --gres=gpu:8
+#SBATCH --ntasks-per-node={job_dict['ntasks_per_node']}
 
-""" % {**job_dict, 'container': container[job_dict["device"]], 'actual_job_script': actual_job_script, 'qa_dir': qa_dir})
+export OMP_NUM_THREADS=${{SLURM_CPUS_PER_TASK:-1}}
+
+time srun {exec_cmd} "{job_script}" --config "$1" --train-mode "$2"
+"""
+            else:
+                script += f"""#SBATCH --nodes=1
+#SBATCH --gres=gpu:{job_dict['ngpus']}
+#SBATCH --ntasks-per-node={job_dict['ngpus']}
+
+export OMP_NUM_THREADS=${{SLURM_CPUS_PER_TASK:-1}}
+
+time srun {exec_cmd} "{job_script}" --config "$1" --train-mode "$2"
+"""
+            write_script(bash_path, script)
+
+        elif job_dict["device"] == "CPU":
+            script = f"""#!/bin/bash
+#SBATCH --job-name={job_dict['job-name']}
+#SBATCH --chdir={job_dict['chdir']}
+#SBATCH --time={job_dict['time']}
+#SBATCH --mem={job_dict['mem']}
+#SBATCH --cpus-per-task={job_dict['cpus-per-task']}
+#SBATCH --partition={job_dict['partition']}
+#SBATCH --mail-type={job_dict['mail-type']}
+#SBATCH --mail-user={job_dict['mail-user']}
+
+export OMP_NUM_THREADS=${{SLURM_CPUS_PER_TASK:-1}}
+
+time {exec_cmd} "{job_script}" --config "$1" --train-mode "$2"
+"""
+            write_script(bash_path, script)
 
         else:
+            LOG.info("Choose a given device (CPU, MI100_GPU, HYDRA, EPN)!")
+            LOG.info("Stopping.")
+            exit()
 
-            bash_file = open(path.join(qa_dir, "QA.sh"), "w")
-            bash_file.write(
-"""#!/bin/bash
-#SBATCH --job-name=TPCPID_NNQA                                                  # Task name
-#SBATCH --chdir=%(qa_dir)s                                                      # Working directory on shared storage
-#SBATCH --time=10                                                               # Run time limit
-#SBATCH --mem=30G                                                               # job memory
-#SBATCH --partition=debug                                                       # job partition (debug, main)
-#SBATCH --mail-type=%(mail-type)s                                               # notify via email
-#SBATCH --mail-user=%(mail-user)s                                               # recipient
+    else:
+        exec_cmd = get_exec_command(job_dict)
+        bash_path = path.join(qa_dir, "QA.sh")
 
-time %(container)s %(actual_job_script)s --config $1
+        if job_dict["device"] == "EPN":
+            script = f"""#!/bin/bash
+#SBATCH --job-name=TPCPID_NNQA
+#SBATCH --chdir={qa_dir}
+#SBATCH --time=10
+#SBATCH --mem=30G
+#SBATCH --partition=prod
+#SBATCH --mail-type={job_dict['mail-type']}
+#SBATCH --mail-user={job_dict['mail-user']}
 
-""" % {**job_dict, 'container': container[job_dict["device"]], 'actual_job_script': actual_job_script, 'qa_dir': qa_dir})
-            bash_file.close()
+time {exec_cmd} "{job_script}" --config "$1"
+"""
+        else:
+            script = f"""#!/bin/bash
+#SBATCH --job-name=TPCPID_NNQA
+#SBATCH --chdir={qa_dir}
+#SBATCH --time=10
+#SBATCH --mem=30G
+#SBATCH --partition=debug
+#SBATCH --mail-type={job_dict['mail-type']}
+#SBATCH --mail-user={job_dict['mail-user']}
+
+time {exec_cmd} "{job_script}" --config "$1"
+"""
+        write_script(bash_path, script)
+
 
 elif scheduler.lower() == "htcondor":
 
-    bash_file = open(path.join(full_path_out, "TRAIN.sh".format(train_mode)), "w")
-    bash_file.write(
-"""#!/bin/bash
-time python3 %(job_script)s --config $1 --train-mode $2
-""" % job_dict)
-    bash_file.close()
-    os.system("chmod +x {0}".format(path.join(full_path_out, "TRAIN.sh".format(train_mode)))) # For execution on HTCondor
+    bash_path = path.join(full_path_out, "TRAIN.sh")
+    script = f"""#!/bin/bash
+time python3 "{job_script}" --config "$1" --train-mode "$2"
+"""
+    write_script(bash_path, script)
+
+
+elif scheduler.lower() == "local":
+
+    try:
+        local_exec = get_exec_command(job_dict)
+    except Exception as e:
+        LOG.info(str(e))
+        LOG.info("Stopping.")
+        exit()
+
+    if train_mode != "QA":
+        bash_path = path.join(full_path_out, "TRAIN.sh")
+        script = f"""#!/bin/bash
+set -euo pipefail
+
+cd "{full_path_out}"
+
+export OMP_NUM_THREADS="${{OMP_NUM_THREADS:-{job_dict.get('cpus-per-task', 1)}}}"
+
+time {local_exec} "{job_script}" --config "$1" --train-mode "$2"
+"""
+        write_script(bash_path, script)
+        LOG.info(f"Created local training script: {bash_path}")
+
+    else:
+        bash_path = path.join(qa_dir, "QA.sh")
+        script = f"""#!/bin/bash
+set -euo pipefail
+
+cd "{qa_dir}"
+
+export OMP_NUM_THREADS="${{OMP_NUM_THREADS:-{job_dict.get('cpus-per-task', 1)}}}"
+
+time {local_exec} "{job_script}" --config "$1"
+"""
+        write_script(bash_path, script)
+        LOG.info(f"Created local QA script: {bash_path}")
 
 
 else:
