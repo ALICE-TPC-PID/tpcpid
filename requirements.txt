@@ -14,3 +14,4 @@ scikit_learn
 scipy
 tqdm
 uproot
+torch
