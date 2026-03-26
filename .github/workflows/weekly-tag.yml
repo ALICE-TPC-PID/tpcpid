@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       custom:
-        description: "Use a custom weekly tag name? (leave empty for auto)"
+        description: "Custom tag name (leave empty for auto)"
         required: false
         default: ""
         type: string
@@ -17,29 +17,57 @@ on:
 jobs:
   weekly-tag:
     runs-on: ubuntu-latest
+
+    container:
+      image: rootproject/root:6.30.06-ubuntu22.04
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - id: tag
+      - name: Determine tag name
+        id: tag
+        shell: bash
         run: |
           DATE=$(date -u +'%d%m%Y')
           if [ -z "${{ github.event.inputs.custom }}" ]; then
             TAG="weekly-${DATE}"
           else
-            TAG="custom-weekly-${DATE}"
+            TAG="${{ github.event.inputs.custom }}"
           fi
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
-      - run: |
+      - name: Configure git
+        run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          TAG=${{ steps.tag.outputs.tag }}
-          git tag -d $TAG 2>/dev/null || true
-          git push origin :refs/tags/$TAG 2>/dev/null || true
 
-      - run: |
-          TAG=${{ steps.tag.outputs.tag }}
+      - name: Recreate tag on current commit
+        shell: bash
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          git tag -d "$TAG" 2>/dev/null || true
+          git push origin ":refs/tags/$TAG" 2>/dev/null || true
           git tag "$TAG"
           git push origin "$TAG"
+
+      - name: Check out created tag
+        run: |
+          git checkout "${{ steps.tag.outputs.tag }}"
+
+      - name: Set up pip
+        run: |
+          python3 -m ensurepip --upgrade || true
+          apt-get update
+          apt-get install -y python3-pip
+          python3 -m pip install --upgrade pip
+
+      - name: Install Python deps
+        run: |
+          python3 -m pip install -r requirements.txt
+
+      - name: Run CI test on weekly tag
+        run: |
+          python3 run/ci/ci_test.py
