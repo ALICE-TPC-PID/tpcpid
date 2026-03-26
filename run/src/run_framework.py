@@ -144,7 +144,8 @@ apptainer exec {CONFIG['settings']['base_container']} root -l -b -q '{CONFIG["se
         subprocess.run([
             "python3",
             f"{CONFIG['settings']['framework']}/framework/training_neural_networks/run_jobs.py",
-            "--config", args.config
+            "--config", args.config,
+            "--ci-run", str(args.ci_run)
         ], check=True)
 
 

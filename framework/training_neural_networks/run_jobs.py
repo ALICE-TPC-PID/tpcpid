@@ -14,6 +14,7 @@ import subprocess
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--config", type=str, required=True, help="Path to configuration file")
+parser.add_argument("-ci", "--ci-run", type=int, default=0, help="Run in CI mode (stream output to terminal)")
 args = parser.parse_args()
 
 config = args.config
@@ -22,6 +23,7 @@ with open(config, 'r') as config_file:
 
 sys.path.append(CONFIG['settings']['framework'] + "/framework")
 from base import *
+LOG = logger(min_severity=CONFIG["process"].get("severity", "DEBUG"), task_name="run_jobs")
 
 ### execution settings
 output_folder = CONFIG["output"]["general"]["training"]
@@ -42,14 +44,14 @@ def parse_first_level(directory):
 
 
 def run_command(cmd, name):
-    print(f"[INFO] Running {name}: {' '.join(cmd)}")
+    LOG.info(f"Running {name}: {' '.join(cmd)}")
     proc = subprocess.run(cmd, check=False)
 
     if proc.returncode != 0:
-        print(f"[ERROR] {name} failed with return code {proc.returncode}")
+        LOG.error(f"{name} failed with return code {proc.returncode}")
         sys.exit(proc.returncode)
 
-    print(f"[INFO] {name} finished successfully")
+    LOG.info(f"{name} finished successfully")
 
 
 data_dirs = parse_first_level(output_folder)
@@ -89,6 +91,7 @@ for tr_dir in data_dirs:
             sys.executable,
             run_job_single_sigma,
             "--config", args.config,
+            "--ci-run", str(args.ci_run),
         ],
         f"run_job_single_sigma for {tr_dir}"
     )

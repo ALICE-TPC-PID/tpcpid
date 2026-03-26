@@ -8,3 +8,5 @@ subprocess.run(
     stderr=subprocess.STDOUT,
     check=True
 )
+
+print("CI tests completed successfully.")

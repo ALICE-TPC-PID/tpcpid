@@ -13,6 +13,7 @@ import subprocess
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--config", default="configuration.json", help="Path to the configuration file")
+parser.add_argument("-ci", "--ci-run", type=int, default=0, help="Run in CI mode (stream output to terminal)")
 args = parser.parse_args()
 
 ### Command line arguments
@@ -244,13 +245,32 @@ elif scheduler == "local":
         sys.exit(0)
 
     for step in steps:
-        run_local_step(
-            name=step["name"],
-            cmd=step["cmd"],
-            stdout_path=step["stdout"],
-            stderr_path=step["stderr"],
-            cwd=step["cwd"]
-        )
+        LOG.info(f"Starting step: {step['name']}")
+        LOG.info("Command: " + " ".join(step["cmd"]))
+
+        if getattr(args, "ci_run", False):
+            proc = subprocess.run(
+                step["cmd"],
+                cwd=step["cwd"],
+                stderr=subprocess.STDOUT  # merge stderr into stdout
+            )
+        else:
+            ensure_parent_dir(step["stdout"])
+            ensure_parent_dir(step["stderr"])
+
+            with open(step["stdout"], "w") as fout, open(step["stderr"], "w") as ferr:
+                proc = subprocess.run(
+                    step["cmd"],
+                    stdout=fout,
+                    stderr=ferr,
+                    cwd=step["cwd"],
+                )
+
+        if proc.returncode != 0:
+            LOG.error(f"Step {step['name']} failed with return code {proc.returncode}")
+            sys.exit(proc.returncode)
+
+        LOG.info(f"Step {step['name']} finished successfully")
 
     LOG.info("All local steps finished successfully")
 
