@@ -1,7 +1,7 @@
 # The ALICE TPC PID framework
 
 [![CI (main)](https://github.com/ALICE-TPC-PID/tpcpid/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ALICE-TPC-PID/tpcpid/actions/workflows/ci.yml)
-[![Weekly tag status](https://github.com/ALICE-TPC-PID/tpcpid/actions/workflows/weekly-tag.yml/badge.svg?event=schedule)](https://github.com/ALICE-TPC-PID/tpcpid/actions/workflows/weekly-tag.yml)
+[![Weekly tag status](https://github.com/ALICE-TPC-PID/tpcpid/actions/workflows/weekly-tag.yml/badge.svg?branch=main)](https://github.com/ALICE-TPC-PID/tpcpid/actions/workflows/weekly-tag.yml)
 
 Framework for the PID calibration of the ALICE TPC in Run 3 and beyond
 
@@ -125,7 +125,7 @@ Onces the trains are finished, they are downloaded using getStandardDerivedTrees
 
 The full process  BB fits and NN is run at GSI cluster: https://github.com/ALICE-TPC-PID/tpcpid/tree/main/run
 
-The results are then uploaded into the mastergoogle sheet: 
+The results are then uploaded into the mastergoogle sheet:
 https://docs.google.com/spreadsheets/d/1jKdVtoK414_XngL9Xh1Zfxkwp7AlYeipujFRiRaFkx0/edit?gid=0#gid=0
 and uploaded into the test-CCDB
 
