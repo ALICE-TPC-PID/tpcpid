@@ -17,15 +17,12 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Set up pip
+      - name: Install dependencies
         run: |
           python3 -m ensurepip --upgrade || true
           apt-get update
-          apt-get install -y python3-pip
+          apt-get install -y git ca-certificates python3-pip
           python3 -m pip install --upgrade pip
-
-      - name: Install Python deps
-        run: |
           python3 -m pip install -r requirements.txt
 
       - name: Run CI test
