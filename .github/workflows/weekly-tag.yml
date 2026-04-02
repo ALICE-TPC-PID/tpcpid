@@ -22,6 +22,12 @@ jobs:
       image: rootproject/root:6.30.06-ubuntu22.04
 
     steps:
+      - name: Install base dependencies
+        run: |
+          apt-get update
+          apt-get install -y git ca-certificates python3-pip
+          python3 -m pip install --upgrade pip
+
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
@@ -56,13 +62,6 @@ jobs:
       - name: Check out created tag
         run: |
           git checkout "${{ steps.tag.outputs.tag }}"
-
-      - name: Set up pip
-        run: |
-          python3 -m ensurepip --upgrade || true
-          apt-get update
-          apt-get install -y python3-pip
-          python3 -m pip install --upgrade pip
 
       - name: Install Python deps
         run: |
