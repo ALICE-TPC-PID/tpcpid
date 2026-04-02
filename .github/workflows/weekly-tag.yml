@@ -46,12 +46,15 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Configure git
+        working-directory: ${{ github.workspace }}
         run: |
+          test -d .git
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
 
       - name: Recreate tag on current commit
         shell: bash
+        working-directory: ${{ github.workspace }}
         run: |
           TAG="${{ steps.tag.outputs.tag }}"
           git tag -d "$TAG" 2>/dev/null || true
@@ -60,6 +63,7 @@ jobs:
           git push origin "$TAG"
 
       - name: Check out created tag
+        working-directory: ${{ github.workspace }}
         run: |
           git checkout "${{ steps.tag.outputs.tag }}"
 
