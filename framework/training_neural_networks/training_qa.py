@@ -388,7 +388,7 @@ for i, mass in enumerate(np.sort(np.unique(fit_data[:,labels=='fMass'].flatten()
     isLowBField = CONFIG['trainNeuralNetOptions'].get('isLowBField', 'False').lower() == "true"
 
     default_ranges = {
-        "fTPCInnerParam": [-1., 1.],
+        "fTPCInnerParam": [-1., 1.5],
         "fTgl": [-1., 1.],
         "fNormNClustersTPC": [0.5, 152.5],
         "fNormMultTPC": [-2., 0.],
