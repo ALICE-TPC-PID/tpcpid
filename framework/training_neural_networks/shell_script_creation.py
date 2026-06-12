@@ -156,7 +156,7 @@ time srun {exec_cmd} "{job_script}" --config "$1" --train-mode "$2"
 #SBATCH --chdir=%(chdir)s
 #SBATCH --time=%(time)s
 #SBATCH --mem=%(mem)s
-#SBATCH --partition=gpu
+#SBATCH --partition=nvidia_gpu
 #SBATCH --mail-type=%(mail-type)s
 #SBATCH --mail-user=%(mail-user)s
 """ % job_dict
