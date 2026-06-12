@@ -391,8 +391,8 @@ for i, mass in enumerate(np.sort(np.unique(fit_data[:,labels=='fMass'].flatten()
         "fTPCInnerParam": [-1., 1.5],
         "fTgl": [-1., 1.],
         "fNormNClustersTPC": [0.5, 152.5],
-        "fNormMultTPC": [-2., 0.],
-        "fFt0Occ": [-0.1, 1.],
+        "fNormMultTPC": [0., 3.],
+        "fFt0Occ": [-0.3, 5.],
         "fHadronicRate": [-1., 0.3]
     }
     default_scaling_x = {
@@ -406,6 +406,7 @@ for i, mass in enumerate(np.sort(np.unique(fit_data[:,labels=='fMass'].flatten()
 
     if isSmallSystem:
         default_ranges['fNormMultTPC'] = [-2., 0.]
+        default_scaling_x['fNormMultTPC'] = True
         default_ranges['fFt0Occ'] = [-0.1, 1.]
     if isLowBField:
         default_ranges['fTPCInnerParam'] = [np.log10(0.003), 1.]
