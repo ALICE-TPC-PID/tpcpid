@@ -52,7 +52,7 @@ def write_script(script_path, script_content, make_executable=True):
 
 
 def get_exec_command(job_dict):
-    use_container = job_dict.get("use_container", False)
+    use_container = job_dict.get("use_container", True)
     device = job_dict.get("device", "CPU")
     python_cmd = job_dict.get("python", "python3")
 
@@ -64,12 +64,12 @@ def get_exec_command(job_dict):
     if runtime != "apptainer":
         raise ValueError(f"Unsupported container runtime: {runtime}")
 
-    if device == "HYDRA":
-        return f'apptainer exec --nv "{job_dict["hydra_container"]}" {python_cmd}'
-    elif device == "MI100_GPU":
-        return f'apptainer exec "{job_dict["rocm_container"]}" {python_cmd}'
+    if device == "NVIDIA_H200_GPU":
+        return f'apptainer exec --nv {job_dict["cuda_container"]} {python_cmd}'
+    elif device == "AMD_MI100_GPU":
+        return f'apptainer exec {job_dict["rocm_container"]} {python_cmd}'
     elif device == "CPU" or scheduler.lower() == "local":
-        return f'apptainer exec "{job_dict["cuda_container"]}" {python_cmd}'
+        return f'apptainer exec {job_dict["cuda_container"]} {python_cmd}'
     elif device == "EPN":
         return job_dict.get("python", "python3.9")
     else:
