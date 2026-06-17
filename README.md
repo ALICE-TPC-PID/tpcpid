@@ -16,7 +16,7 @@ Everythign is steered through the configuration.json. This file will be copied t
 ```json
 {
     "settings": {
-        "framework": "/lustre/alice/users/csonnab/TPC/tpcpid-github-official",
+        "framework": "/lustre/alice/users/csonnab/TPC/o2-tpc-pid",
         "git": {
             "checkout": 0,
             "create_diff": 1,
@@ -65,7 +65,7 @@ Everythign is steered through the configuration.json. This file will be copied t
     },
     "trainNeuralNetOptions": {
         "execution_mode": "FULL",
-        "configuration": "/lustre/alice/users/csonnab/TPC/tpcpid-github-official/run/configs/nnconfig.py",
+        "configuration": "/lustre/alice/users/csonnab/TPC/o2-tpc-pid/run/configs/nnconfig.py",
         "training_file": "train_single_sigma.py",
         "numberOfEpochs": "200",
         "num_networks": 1,
@@ -80,7 +80,7 @@ Everythign is steered through the configuration.json. This file will be copied t
             "job-name": "TPCPID_TRAINING",
             "partition": "main",
             "time": 480,
-            "device": "MI100_GPU",
+            "device": "NVIDIA_H200_GPU",
             "cpus-per-task": 10,
             "mem": "160G",
             "mail-type": "END,FAIL,INVALID_DEPEND",

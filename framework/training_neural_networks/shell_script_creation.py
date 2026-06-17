@@ -52,7 +52,7 @@ def write_script(script_path, script_content, make_executable=True):
 
 
 def get_exec_command(job_dict):
-    use_container = job_dict.get("use_container", False)
+    use_container = job_dict.get("use_container", True)
     device = job_dict.get("device", "CPU")
     python_cmd = job_dict.get("python", "python3")
 
@@ -64,12 +64,12 @@ def get_exec_command(job_dict):
     if runtime != "apptainer":
         raise ValueError(f"Unsupported container runtime: {runtime}")
 
-    if device == "HYDRA":
-        return f'apptainer exec --nv "{job_dict["hydra_container"]}" {python_cmd}'
-    elif device == "MI100_GPU":
-        return f'apptainer exec "{job_dict["rocm_container"]}" {python_cmd}'
+    if device == "NVIDIA_H200_GPU":
+        return f'apptainer exec --nv {job_dict["cuda_container"]} {python_cmd}'
+    elif device == "AMD_MI100_GPU":
+        return f'apptainer exec {job_dict["rocm_container"]} {python_cmd}'
     elif device == "CPU" or scheduler.lower() == "local":
-        return f'apptainer exec "{job_dict["cuda_container"]}" {python_cmd}'
+        return f'apptainer exec {job_dict["cuda_container"]} {python_cmd}'
     elif device == "EPN":
         return job_dict.get("python", "python3.9")
     else:
@@ -116,16 +116,16 @@ time srun {exec_cmd} "{job_script}" --config "$1" --train-mode "$2"
 """
             write_script(bash_path, script)
 
-        elif job_dict["device"] == "MI100_GPU":
+        elif job_dict["device"] == "AMD_MI100_GPU":
             script = """#!/bin/bash
 #SBATCH --job-name=%(job-name)s
 #SBATCH --chdir=%(chdir)s
 #SBATCH --time=%(time)s
 #SBATCH --mem=%(mem)s
-#SBATCH --partition=gpu
+#SBATCH --partition=amd_gpu
+#SBATCH --constraint=mi100
 #SBATCH --mail-type=%(mail-type)s
 #SBATCH --mail-user=%(mail-user)s
-#SBATCH --constraint=mi100
 """ % job_dict
 
             if "ngpus" in job_dict and int(job_dict["ngpus"]) > 8:
@@ -150,13 +150,14 @@ time srun {exec_cmd} "{job_script}" --config "$1" --train-mode "$2"
 """
             write_script(bash_path, script)
 
-        elif job_dict["device"] == "HYDRA":
+        elif job_dict["device"] == "NVIDIA_H200_GPU":
             script = """#!/bin/bash
 #SBATCH --job-name=%(job-name)s
 #SBATCH --chdir=%(chdir)s
 #SBATCH --time=%(time)s
 #SBATCH --mem=%(mem)s
-#SBATCH --partition=gpu
+#SBATCH --partition=nvidia_gpu
+#SBATCH --constraint=h200
 #SBATCH --mail-type=%(mail-type)s
 #SBATCH --mail-user=%(mail-user)s
 """ % job_dict
