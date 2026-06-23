@@ -24,7 +24,7 @@ from extract_from_root import *
 
 ### Example usage
 # cd /path/to/scripts/folder
-# python3 /lustre/alice/users/csonnab/TPC/o2-tpc-pid/framework/utils/scripts/v0_from_analysisresults.py --input  /lustre/alice/users/lubynets/tpc/outputs/HY/LHC24ar_pass3_QC1_sampling/588467/AnalysisResults_merge_LHC24ar.root --output ./test.pdf
+# python3 /lustre/alice/users/csonnab/TPC/o2-tpc-pid/framework/utils/scripts/v0_from_analysisresults.py --input  /lustre/alice/users/marin/R3A/TPCTrees/PbPb2024_scale1/LHC24ar/678249/AnalysisResults_merge_LHC24ar.root --output ./plots/AP_LHC24ar_678249.pdf
 
 def import_from_AO2D(filename, tree_name="O2tpcskimv0tree", variables=[
     'fTPCSignal',
@@ -519,7 +519,7 @@ cut_dict = {
 
     # K0S cuts
     "cutQTK0SLow": 0.1075,
-    "cutQTK0SHigh": 0.215,
+    "cutQTK0SHigh": 0.22,
     "cutAPK0SLow": 0.199,
     "cutAPK0SHigh": 0.8,
     "cutAPK0SHighTop": 0.9,
