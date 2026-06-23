@@ -14,7 +14,7 @@ with open(args.config, 'r') as config_file:
 sys.path.append(CONFIG['settings']['framework'] + "/framework")
 from base import *
 
-epn_switch = "EPN" in CONFIG["trainNeuralNetOptions"]["slurm"]["device"]
+epn_switch = (not args.ci_run) and ("EPN" in CONFIG["trainNeuralNetOptions"]["slurm"]["device"])
 
 
 def run_cmd(command, workdir=None, barerun=False):

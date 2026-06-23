@@ -92,7 +92,7 @@ for i, config_file in enumerate(args.config):
         create_folders(CONFIG)
         copied_config = copy_config(CONFIG)
 
-        epn_switch = "EPN" in CONFIG['trainNeuralNetOptions']['slurm']["device"]
+        epn_switch = (not args.ci_run) and ("EPN" in CONFIG['trainNeuralNetOptions']['slurm']["device"])
         if epn_switch:
             masterjob_defaults = {
                 "partition": "prod",
