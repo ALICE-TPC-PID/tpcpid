@@ -227,7 +227,7 @@ def update_v0_tree(tree, name, calculate_dEdx, output_V0_tree, buffers):
     fMass = array.array('f', [0.0])
     fNSigTPC = array.array('f', [0.0])
     fNSigTOF = array.array('f', [0.0])
-    fPidIndex = array.array('i', [0])
+    fPidIndex = array.array('B', [0])
     fSigned1Pt = array.array('f', [0.0])
     fBetaGamma = array.array('f', [0.0])
     fRunNumber = array.array('i', [0])
@@ -303,13 +303,14 @@ def update_v0_tree(tree, name, calculate_dEdx, output_V0_tree, buffers):
         tree.GetEntry(i)
 
         #count particles by species
-        if fPidIndex[0] == 0:
+        pid_index = int(fPidIndex[0])
+        if pid_index == 0:
             nElectronV0 += 1
-        elif fPidIndex[0] == 2:
+        elif pid_index == 2:
             nPionV0 += 1
-        elif fPidIndex[0] == 3:
+        elif pid_index == 3:
             nKaonV0 += 1
-        elif fPidIndex[0] == 4:
+        elif pid_index == 4:
             nProtonV0 += 1
         else:
             nRestV0 += 1
@@ -323,7 +324,7 @@ def update_v0_tree(tree, name, calculate_dEdx, output_V0_tree, buffers):
         fsTgl[0] = fTgl[0]
         fsMass[0] = fMass[0]
         fsNSigTOF[0] = fNSigTOF[0]
-        fsPidIndex[0] = fPidIndex[0]
+        fsPidIndex[0] = pid_index
         fsSigned1Pt[0] = fSigned1Pt[0]
         fsBetaGamma[0] = fBetaGamma[0]
         fsRunNumber[0] = fRunNumber[0]
@@ -371,7 +372,7 @@ def update_tpctof_tree(tree, name, calculate_dEdx, output_tpctof_tree, buffers):
     fMass = array.array('f', [0.0])
     fNSigTPC = array.array('f', [0.0])
     fNSigTOF = array.array('f', [0.0])
-    fPidIndex = array.array('i', [0])
+    fPidIndex = array.array('B', [0])
     fSigned1Pt = array.array('f', [0.0])
     fBetaGamma = array.array('f', [0.0])
     fRunNumber = array.array('i', [0])
@@ -441,13 +442,14 @@ def update_tpctof_tree(tree, name, calculate_dEdx, output_tpctof_tree, buffers):
     for i in range(nentries):
         tree.GetEntry(i)
         #count particles by species
-        if fPidIndex[0] == 0:
+        pid_index = int(fPidIndex[0])
+        if pid_index == 0:
             nElectronV0 += 1
-        elif fPidIndex[0] == 2:
+        elif pid_index == 2:
             nPionV0 += 1
-        elif fPidIndex[0] == 3:
+        elif pid_index == 3:
             nKaonV0 += 1
-        elif fPidIndex[0] == 4:
+        elif pid_index == 4:
             nProtonV0 += 1
             # LOG.debug(f"Proton TPC Inner Param = {fTPCInnerParam[0]}")
             # LOG.debug(f"Proton TPC abs(fSigned1Pt[0]) = {abs(1/fSigned1Pt[0])}")
@@ -461,7 +463,7 @@ def update_tpctof_tree(tree, name, calculate_dEdx, output_tpctof_tree, buffers):
         fsTgl[0] = fTgl[0]
         fsMass[0] = fMass[0]
         fsNSigTOF[0] = fNSigTOF[0]
-        fsPidIndex[0] = fPidIndex[0]
+        fsPidIndex[0] = pid_index
         fsSigned1Pt[0] = fSigned1Pt[0]
         fsBetaGamma[0] = fBetaGamma[0]
         fsRunNumber[0] = fRunNumber[0]
@@ -485,27 +487,27 @@ def update_tpctof_tree(tree, name, calculate_dEdx, output_tpctof_tree, buffers):
         # print(f"New TPCNSigma {fsNSigTPC}")
 
         #Here is the section where we apply cuts, on the kinematics and the PID
-        if(fPidIndex[0]==2 and fTPCInnerParam[0] > 1.8):
+        if(pid_index==2 and fTPCInnerParam[0] > 1.8):
             # print(f"Rejected TPC inner parameter is {fTPCInnerParam[0]} ")
             nRejectedPionsV0 += 1
             continue
-        if(fPidIndex[0]==4 and fTPCInnerParam[0] > 0.8):
+        if(pid_index==4 and fTPCInnerParam[0] > 0.8):
             nRejectedProtonsV0 += 1
             # print("[DEBUG] Cut on Inner Param applied")
             continue
-        if(fPidIndex[0]==2 and (abs(1/fSigned1Pt[0]))> 1.8):
+        if(pid_index==2 and (abs(1/fSigned1Pt[0]))> 1.8):
             nRejectedPionsV0 += 1
             continue
-        if(fPidIndex[0]==4 and (abs(1/fSigned1Pt[0]))> 0.8):
+        if(pid_index==4 and (abs(1/fSigned1Pt[0]))> 0.8):
             nRejectedProtonsV0 += 1
             # print("[DEBUG] Cut on Signed1Pt applied")
             continue
 
         #New Kaon cuts, to look at distribution and contamination
-        if(fPidIndex[0]==3 and (fsNSigTPC[0]>2.5)):
+        if(pid_index==3 and (fsNSigTPC[0]>2.5)):
             nRejectedKaonsV0 += 1
             continue
-        if(fPidIndex[0]==3 and (fsNSigTPC[0]<-2.5)):
+        if(pid_index==3 and (fsNSigTPC[0]<-2.5)):
             nRejectedKaonsV0 += 1
             continue
 

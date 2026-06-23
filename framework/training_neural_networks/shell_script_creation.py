@@ -85,13 +85,13 @@ if scheduler.lower() == "slurm":
 
         if job_dict["device"] == "EPN":
             script = """#!/bin/bash
-#SBATCH --job-name=%(name)s
-#SBATCH --chdir=%(pj)s
+#SBATCH --job-name=%(job-name)s
+#SBATCH --chdir=%(chdir)s
 #SBATCH --time=%(time)s
 #SBATCH --mem=%(mem)s
-#SBATCH --partition=%(part)s
-#SBATCH --mail-type=%(notify)s
-#SBATCH --mail-user=%(email)s
+#SBATCH --partition=prod
+#SBATCH --mail-type=%(mail-type)s
+#SBATCH --mail-user=%(mail-user)s
 """ % job_dict
 
             if "ngpus" in job_dict and int(job_dict["ngpus"]) > 8:

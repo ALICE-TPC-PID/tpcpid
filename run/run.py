@@ -92,11 +92,19 @@ for i, config_file in enumerate(args.config):
         create_folders(CONFIG)
         copied_config = copy_config(CONFIG)
 
-        masterjob_defaults = {
-            "partition": "main",
-            "time": "60",
-            "mem": "150G"
-        }
+        epn_switch = "EPN" in CONFIG['trainNeuralNetOptions']['slurm']["device"]
+        if epn_switch:
+            masterjob_defaults = {
+                "partition": "prod",
+                "time": "60",
+                "mem": "150G"
+            }
+        else:
+            masterjob_defaults = {
+                "partition": "main",
+                "time": "60",
+                "mem": "150G"
+            }
 
         deep_update(masterjob_defaults, CONFIG.get('masterjob', {}), name="Masterjob settings", verbose=False)
         masterjob_defaults["framework_path"] = CONFIG['settings']['framework']
