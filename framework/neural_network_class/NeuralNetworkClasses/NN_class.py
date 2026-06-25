@@ -321,7 +321,8 @@ class NN():
         if slurm_nodeid == 0:
             # Node 0 writes its hostname
             with open(self.hostfile, "w") as f:
-                f.write(socket.gethostname())
+                master_addr = socket.gethostbyname(socket.gethostname())
+                f.write(master_addr)
 
         # Slurm ensures simultaneous startup → we simply read the file
         with open(self.hostfile, "r") as f:
@@ -356,7 +357,7 @@ class NN():
                         device_ids=[slurm_localid],
                         output_device=slurm_localid)
 
-        return slurm_localid, worldsize
+        return slurm_procid, worldsize
 
     def delete_masteraddr_file(self):
         """
