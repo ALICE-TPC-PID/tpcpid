@@ -117,7 +117,7 @@ try:
             "python3",
             f'{CONFIG["settings"]["framework"]}/framework/bbfitting_and_qa/CreateDataset.py',
             "--config", args.config
-        ], barerun=True)
+        ], barerun=args.ci_run)
 
         LOG.framework("--- CreateDataset.py finished ---")
 
