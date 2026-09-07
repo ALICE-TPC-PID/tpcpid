@@ -46,7 +46,13 @@ class NN():
         self.verbose = verbose and (int(os.environ.get("SLURM_PROCID", "0"))==0)
 
         if self.multigpu:
-            self.rank, self.worldsize = self.multigpu_training_setup()
+            try:
+                self.rank, self.worldsize = self.multigpu_training_setup()
+            except Exception as e:
+                print("Error in multi-GPU setup:", e)
+                print("Falling back to single autodetection of single processors (CPU or GPU).")
+                self.multigpu = 0
+                exit()
 
         if self.verbose:
             print("\n============ Neural Network training ============\n")
@@ -67,7 +73,8 @@ class NN():
                     self.device = "cpu"
             else:
                 self.device = device
-
+            if verbose > 0:
+                print("Autodetected device:", self.device)
             self.network.to(device=self.device)
 
         ### Printing device information
