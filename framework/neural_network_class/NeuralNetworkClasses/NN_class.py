@@ -52,7 +52,6 @@ class NN():
                 print("Error in multi-GPU setup:", e)
                 print("Falling back to single autodetection of single processors (CPU or GPU).")
                 self.multigpu = 0
-                exit()
 
         if self.verbose:
             print("\n============ Neural Network training ============\n")
