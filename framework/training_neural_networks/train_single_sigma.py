@@ -90,9 +90,12 @@ if len(LABELS_Y) != 2:
 y = fit_data[:, columns[LABELS_Y[0]]] * fit_data[:, columns[LABELS_Y[1]]]
 del fit_data
 example_data = torch.from_numpy(X[:1].copy())
-# Every DDP rank must split exactly the same observations. Explicit seeds win.
-split_seed = int(CONFIG['trainNeuralNetOptions'].get('split_seed', 42))
-training_seed = int(CONFIG['trainNeuralNetOptions'].get('training_seed', split_seed))
+# Use one seed for dataset preparation, splitting, initialization and shuffling.
+# Legacy per-stage keys remain supported when explicitly configured.
+legacy_seed = CONFIG['trainNeuralNetOptions'].get(
+    'training_seed', CONFIG['trainNeuralNetOptions'].get('split_seed', 42))
+random_seed = int(CONFIG.get('settings', {}).get('random_seed', legacy_seed))
+split_seed = training_seed = random_seed
 random.seed(training_seed)
 np.random.seed(training_seed)
 torch.manual_seed(training_seed)
@@ -194,10 +197,12 @@ del X, y
 if torch.cuda.is_available():
     local_rank = int(os.environ.get('LOCAL_RANK', os.environ.get('SLURM_LOCALID', '0')))
     torch.cuda.set_device(0 if torch.cuda.device_count() == 1 else local_rank)
+loader_options = dict(dict_config["DATA_LOADER"])
+loader_options.setdefault('seed', random_seed)
 data = DataLoading(
     [X_train, y_train],
     [X_test, y_test],
-    **dict_config["DATA_LOADER"],
+    **loader_options,
     verbose=(int(os.environ.get("SLURM_PROCID", "0")) == 0)
 )
 

@@ -1,5 +1,6 @@
 {
     "settings": {
+        "random_seed": 42,
         "framework": "/lustre/alice/users/csonnab/TPC/o2-tpc-pid",
         "base_container": "/lustre/alice/users/csonnab/TPC/TPC_PRODUCTION/Containers/base.sif",
         "git": {

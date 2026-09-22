@@ -1,0 +1,155 @@
+Bootstrap: docker
+From: ubuntu:22.04
+
+%labels
+    Maintainer Jonathan Witte <jonathan.witte@cern.ch>
+    Maintainer "Christian Sonnabend" <christian.sonnabend@cern.ch>
+    Description "TPC PID QA + NN training stack with ROOT 6.40.04"
+    BaseImage ubuntu:22.04
+    ROOTVersion 6.40.04
+    BuildDate "2026-09-21"
+
+%help
+    Ubuntu 22.04 variant of the TPC PID framework container. It installs the
+    official ROOT 6.40.04 Ubuntu 22.04 binary distribution, including PyROOT
+    and ROOT.Experimental.ML.RDataLoader.
+
+    Build independently of the existing base image:
+        apptainer build base-root640.sif base-root640.def
+
+%environment
+    export DEBIAN_FRONTEND=noninteractive
+    export ROOTSYS=/opt/root
+    export VENV_DIR=/opt/venvs/tpcpid
+    export TPCPID_HOME=/opt/tpcpid
+    export PATH=${VENV_DIR}/bin:${ROOTSYS}/bin:${PATH}
+    export LD_LIBRARY_PATH=${ROOTSYS}/lib:${LD_LIBRARY_PATH}
+    export PYTHONPATH=${ROOTSYS}/lib:${TPCPID_HOME}/Neural-Network-Class/NeuralNetworkClasses:${PYTHONPATH}
+    export MPLCONFIGDIR=${TPCPID_HOME}/.config/matplotlib
+    export LC_ALL=C.UTF-8
+    export LANG=C.UTF-8
+
+%post
+    set -eu
+    export DEBIAN_FRONTEND=noninteractive
+    export ROOTSYS=/opt/root
+    VENV_DIR=/opt/venvs/tpcpid
+    TPCPID_HOME=/opt/tpcpid
+    MPLCONFIGDIR=${TPCPID_HOME}/.config/matplotlib
+    ROOT_ARCHIVE=root_v6.40.04.Linux-ubuntu22.04-x86_64-gcc11.4.tar.gz
+    ROOT_URL=https://github.com/root-project/root/releases/download/v6-40-04/${ROOT_ARCHIVE}
+    ROOT_SHA256=fb769e76d26ee25c2f56c9a583c20a9b7401e0d9c97ea7f90abcb278a32bf432
+
+    echo "[system] Installing ROOT and framework runtime dependencies"
+    apt-get update -y
+    apt-get install -y --no-install-recommends \
+        binutils \
+        build-essential \
+        ca-certificates \
+        cmake \
+        curl \
+        dpkg-dev \
+        git \
+        gnupg \
+        graphviz \
+        gfortran \
+        less \
+        libavahi-compat-libdnssd-dev \
+        libcfitsio-dev \
+        libfftw3-dev \
+        libfontconfig1 \
+        libfreetype6 \
+        libftgl-dev \
+        libgif-dev \
+        libglew-dev \
+        libglu1-mesa-dev \
+        libgraphviz-dev \
+        libgsl-dev \
+        libkrb5-dev \
+        libldap2-dev \
+        libpcre3-dev \
+        libssl-dev \
+        libtbb-dev \
+        libx11-dev \
+        libxext-dev \
+        libxft-dev \
+        libxml2-dev \
+        libxpm-dev \
+        nlohmann-json3-dev \
+        openssh-client \
+        pkg-config \
+        python3 \
+        python3-dev \
+        python3-numpy \
+        python3-pip \
+        python3-venv \
+        slurm-client \
+        unzip \
+        vim \
+        wget \
+        zip
+
+    echo "[root] Installing ROOT 6.40.04"
+    curl -fL --retry 3 -o /tmp/${ROOT_ARCHIVE} ${ROOT_URL}
+    echo "${ROOT_SHA256}  /tmp/${ROOT_ARCHIVE}" | sha256sum -c -
+    tar -xzf /tmp/${ROOT_ARCHIVE} -C /opt
+    rm /tmp/${ROOT_ARCHIVE}
+
+    export PATH=${ROOTSYS}/bin:${PATH}
+    export LD_LIBRARY_PATH=${ROOTSYS}/lib:${LD_LIBRARY_PATH:-}
+    export PYTHONPATH=${ROOTSYS}/lib:${PYTHONPATH:-}
+
+    echo "[python] Creating virtual environment"
+    mkdir -p /opt/venvs
+    python3 -m venv ${VENV_DIR}
+    . ${VENV_DIR}/bin/activate
+    python -m pip install --upgrade pip setuptools wheel
+
+    echo "[python] Installing scientific stack"
+    python -m pip install \
+        numpy \
+        scipy \
+        pandas \
+        matplotlib \
+        mplhep \
+        seaborn \
+        tqdm \
+        scikit-learn \
+        uproot \
+        awkward \
+        onnx \
+        onnxruntime \
+        tensorboard \
+        ipykernel \
+        jsonschema \
+        rich \
+        python-dateutil \
+        typing_extensions
+
+    echo "[python] Installing Torch CPU wheels"
+    python -m pip install --index-url https://download.pytorch.org/whl/cpu \
+        torch==2.3.1 \
+        torchvision==0.18.1 \
+        torchaudio==2.3.1
+
+    echo "[filesystem] Preparing workspace skeleton"
+    mkdir -p ${TPCPID_HOME} /workspace ${MPLCONFIGDIR}
+    chmod 777 /workspace ${MPLCONFIGDIR}
+
+    cat <<'EOF' > ${TPCPID_HOME}/README-container.txt
+TPC PID ROOT 6.40 container layout
+==================================
+
+ROOT 6.40.04 is installed in /opt/root. The tpcpid Python virtual environment
+is in /opt/venvs/tpcpid. Both are activated through the container environment.
+
+Bind the repository to /workspace and select the resulting .sif in the
+framework configuration.
+EOF
+
+%test
+    root-config --version | grep '^6.40/04$'
+    python3 -c 'import ROOT; assert hasattr(ROOT.Experimental.ML, "RDataLoader")'
+
+%runscript
+    exec /bin/bash "$@"

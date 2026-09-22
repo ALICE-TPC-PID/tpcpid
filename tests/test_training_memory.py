@@ -107,6 +107,23 @@ class TrainingTests(unittest.TestCase):
         net.training(data,multigpu=0,nsamples=1,verbose=False,shuffle_every_epoch=False)
         self.assertEqual(net.optimizer.state[model.weight]['step'].item(),1)
 
+    def test_seed_reproduces_initialization_shuffle_and_losses(self):
+        def train_once(seed):
+            torch.manual_seed(seed)
+            data=self.data(batches=(4,))
+            data.seed=seed
+            net=NN(nn.Sequential(nn.Linear(2,4),nn.ReLU(),nn.Linear(4,1)))
+            net.training(data,multigpu=0,epochs=3,verbose=False,
+                         shuffle_every_epoch=True)
+            state={key:value.detach().clone() for key,value in net.network.state_dict().items()}
+            return state,net.training_loss,net.validation_loss
+
+        state_a,train_a,val_a=train_once(42)
+        state_b,train_b,val_b=train_once(42)
+        self.assertEqual(train_a,train_b)
+        self.assertEqual(val_a,val_b)
+        self.assertTrue(all(torch.equal(state_a[key],state_b[key]) for key in state_a))
+
     def test_multioutput_weighted_loss(self):
         x=torch.tensor([[1.,2.],[3.,4.]])
         weights=torch.tensor([2.,3.])

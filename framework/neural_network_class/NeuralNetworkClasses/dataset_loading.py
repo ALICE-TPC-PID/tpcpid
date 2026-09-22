@@ -63,10 +63,11 @@ class TensorBatchSampler(Sampler):
 
 
 def batch_loader(data, batch_size, shuffle=False, rank=0, world_size=1,
-                 pad=False, num_workers=0, pin_memory=False):
+                 pad=False, num_workers=0, pin_memory=False, seed=0):
     if data.X.is_cuda and num_workers:
         raise ValueError('CUDA-resident datasets require num_workers=0')
-    sampler = TensorBatchSampler(len(data), batch_size, shuffle, rank, world_size, pad)
+    sampler = TensorBatchSampler(len(data), batch_size, shuffle, rank, world_size,
+                                 pad, seed)
     loader = DataLoader(data, batch_size=None, sampler=sampler,
                         num_workers=num_workers,
                         pin_memory=bool(pin_memory and data.X.device.type == 'cpu'),
@@ -77,11 +78,13 @@ def batch_loader(data, batch_size, shuffle=False, rank=0, world_size=1,
 class DataLoading:
     def __init__(self, training_data, validation_data, batch_sizes=None, num_workers=0,
                  X_data_scalers=None, y_data_scalers=None, transform_data=True,
-                 shuffle_every_epoch=True, copy_to_device=False, verbose=True):
+                 shuffle_every_epoch=True, copy_to_device=False, verbose=True,
+                 seed=0):
         self.device = torch.device('cuda' if torch.cuda.is_available() and copy_to_device else 'cpu')
         self.num_workers = num_workers
         self.transform_data = transform_data
         self.shuffle_every_epoch = shuffle_every_epoch
+        self.seed = int(seed)
         self.batch_sizes = [1] if batch_sizes is None else batch_sizes
         if not self.batch_sizes or any(int(n) <= 0 for n in self.batch_sizes):
             raise ValueError('batch_sizes must contain positive integers')

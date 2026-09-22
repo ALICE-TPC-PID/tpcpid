@@ -86,7 +86,7 @@ class NN():
         shuffle = data.shuffle_every_epoch if shuffle_every_epoch is None else shuffle_every_epoch
         validation_loader, _ = batch_loader(data.datasetVS, validation_batch_size,
             rank=self.rank, world_size=self.worldsize, num_workers=data.num_workers,
-            pin_memory=self.pin_memory)
+            pin_memory=self.pin_memory, seed=data.seed)
         training_loss, validation_loss = [], []
         train_loader = None
 
@@ -110,7 +110,8 @@ class NN():
                     idx = self.epochs_ls.index(epoch)
                     train_loader, sampler = batch_loader(data.datasetTS, data.batch_sizes[idx],
                         shuffle=shuffle, rank=self.rank, world_size=self.worldsize,
-                        pad=self.multigpu, num_workers=data.num_workers, pin_memory=self.pin_memory)
+                        pad=self.multigpu, num_workers=data.num_workers,
+                        pin_memory=self.pin_memory, seed=data.seed)
                 sampler.set_epoch(epoch)
                 self.network.train()
                 model.mode = 'train'
