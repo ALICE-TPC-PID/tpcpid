@@ -9,13 +9,19 @@ def custom_mse_loss(input, target, reduction='mean'):
         return torch.sum(torch.pow((input - target).flatten(),2))
 
 def weighted_mse_loss(input, target, weights=1., reduction='mean'):
-    if isinstance(weights,int):
-        nn.MSELoss()(input,target,reduction=reduction)
-    else:
-        if reduction=='mean':
-            return torch.mean(torch.pow((weights * (input - target).flatten()),2))
-        if reduction=='sum':
-            return torch.sum(torch.pow((weights * (input - target).flatten()),2))
+    # Preserve the historical squared-weight objective; broadcast per-row weights
+    # across outputs rather than flattening a multi-output prediction first.
+    error = input - target
+    if isinstance(weights, torch.Tensor) and weights.ndim == 1 and error.ndim > 1:
+        weights = weights.reshape((-1,) + (1,) * (error.ndim - 1))
+    loss = (weights * error).square()
+    if reduction == 'mean':
+        return loss.mean()
+    if reduction == 'sum':
+        return loss.sum()
+    if reduction == 'none':
+        return loss
+    raise ValueError(f'Unknown reduction: {reduction}')
 
 def hyperparamopt_loss(validation_loss, num_layers, num_neurons_per_layer, input_size, output_size):
     
@@ -60,11 +66,11 @@ class tpc_reg_mean_sig_mse_loss(object):
     def __init__(self, reg=2.):
         self.reg = reg
     def __call__(self, input, target, weights=1.):
-        return torch.mean(torch.pow(weights * (input - target).flatten(),2) + torch.pow(torch.maximum(torch.tensor(0), torch.abs(input.flatten())-self.reg),2))
+        return weighted_mse_loss(input, target, weights) + (input.abs()-self.reg).clamp_min(0).square().mean()
     
 class tpc_reg_full_mse_loss(object):
     def __init__(self, reg_mean=2., reg_sigma=0.1):
         self.reg_mean, self.reg_sigma = reg_mean, reg_sigma
     def __call__(self, input, target, weights=1.):
         # The two tensors have different size, thats why the mean is taken on the first summand and then again on the second and third summand 
-        return torch.mean(torch.pow(weights * (input - target).flatten(),2)) + torch.mean(torch.pow(torch.maximum(torch.tensor(0), torch.abs(input.T[0].flatten())-self.reg_mean),2) + torch.pow(torch.maximum(torch.tensor(0), torch.abs(input.T[1].flatten() - input.T[0].flatten())-self.reg_sigma),2))
+        return weighted_mse_loss(input, target, weights) + torch.mean(torch.pow((torch.abs(input.T[0].flatten())-self.reg_mean).clamp_min(0),2) + torch.pow((torch.abs(input.T[1].flatten() - input.T[0].flatten())-self.reg_sigma).clamp_min(0),2))

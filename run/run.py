@@ -107,6 +107,7 @@ for i, config_file in enumerate(args.config):
             }
 
         deep_update(masterjob_defaults, CONFIG.get('masterjob', {}), name="Masterjob settings", verbose=False)
+        masterjob_defaults.setdefault("cpus-per-task", 1)
         masterjob_defaults["framework_path"] = CONFIG['settings']['framework']
         masterjob_defaults["output_path"] = CONFIG["output"]["general"]["path"]
 
@@ -117,6 +118,7 @@ for i, config_file in enumerate(args.config):
 #SBATCH --chdir={masterjob_defaults['framework_path']}
 #SBATCH --time={masterjob_defaults['time']}
 #SBATCH --mem={masterjob_defaults['mem']}
+#SBATCH --cpus-per-task={masterjob_defaults['cpus_per_task']}
 #SBATCH --partition={masterjob_defaults['partition']}
 #SBATCH --output={masterjob_defaults['output_path']}/run_%j.out
 #SBATCH --error={masterjob_defaults['output_path']}/run_%j.err

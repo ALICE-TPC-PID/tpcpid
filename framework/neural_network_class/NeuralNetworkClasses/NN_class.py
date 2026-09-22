@@ -1,6 +1,8 @@
+from copy import deepcopy
 import os
 import timeit
 import socket
+import subprocess
 import onnx
 
 import numpy as np
@@ -10,11 +12,10 @@ import torch.onnx
 import torch.nn as nn
 import torch.optim as optim
 import torch.distributed as dist
-from torch.distributed import init_process_group, destroy_process_group
 from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.utils.data import DataLoader, DistributedSampler
 
 from .custom_loss_functions import *
+from .dataset_loading import batch_loader
 
 ### NN: A class for training a Neural network and predicting output (so to say a wrapper class for a General_NN)
 
@@ -23,6 +24,7 @@ class NN():
 
     def __init__(self, neural_net):
         self.network = neural_net.float()
+        self.rank = 0
 
     def __call__(self, X):
         return self.network(X)
@@ -34,244 +36,124 @@ class NN():
             model = self.network
         return model(X)
 
-    def training(self, data, multigpu=-1, pin_memory=1, epochs=1, epochs_ls=[0],
+    def training(self, data, multigpu=-1, pin_memory=1, epochs=1, epochs_ls=None,
                  optimizer=optim.Adam, scheduler=optim.lr_scheduler.ReduceLROnPlateau,
-                 learning_rate=0.01, weight_decay=0, loss_function=nn.MSELoss(), weights=False,
-                 verbose=True, nsamples=np.inf, copy_to_device = 1, patience=5, factor=0.5,
-                 shuffle_every_epoch=False, device=None, cpu_threads=1):
+                 learning_rate=0.01, weight_decay=0, loss_function=None, weights=False,
+                 verbose=True, nsamples=np.inf, copy_to_device=1, patience=5, factor=0.5,
+                 shuffle_every_epoch=None, device=None, cpu_threads=1,
+                 validation_batch_size=65536):
+        """Train with bounded batches and sample-weighted, detached epoch metrics.
 
-        self.rank = 0
-        self.worldsize = 1
-        self.multigpu = multigpu
-        self.verbose = verbose and (int(os.environ.get("SLURM_PROCID", "0"))==0)
-
+        nsamples retains its historical meaning as a maximum number of training
+        batches (now exact). Loss functions must return a scalar batch mean.
+        """
+        self.rank, self.worldsize = 0, 1
+        launched = int(os.environ.get('WORLD_SIZE', os.environ.get('SLURM_NTASKS', '1')))
+        self.multigpu = launched > 1 if multigpu == -1 else bool(multigpu)
+        if cpu_threads is not None:
+            torch.set_num_threads(int(cpu_threads))
+        if not data.loadTS or not data.loadVS or not len(data.datasetTS) or not len(data.datasetVS):
+            raise ValueError('Nonempty training and validation datasets are required')
+        self.epochs_ls = [0] if epochs_ls is None else list(epochs_ls)
+        if (not self.epochs_ls or self.epochs_ls[0] != 0 or
+                self.epochs_ls != sorted(set(self.epochs_ls)) or
+                len(self.epochs_ls) != len(data.batch_sizes)):
+            raise ValueError('epochs_ls must start at zero, increase, and match batch_sizes')
+        if nsamples <= 0 or (np.isfinite(nsamples) and int(nsamples) != nsamples):
+            raise ValueError('nsamples must be a positive number of batches or infinity')
         if self.multigpu:
-            try:
-                self.rank, self.worldsize = self.multigpu_training_setup()
-            except Exception as e:
-                print("Error in multi-GPU setup:", e)
-                print("Falling back to single autodetection of single processors (CPU or GPU).")
-                self.multigpu = 0
-
-        if self.verbose:
-            print("\n============ Neural Network training ============\n")
-
-        ### Setting the device on which to run ###
-
-        if not self.multigpu:
-            if device is None:
-                if torch.cuda.is_available():
-                    self.device = "cuda:0"
-                    # if self.settings["MACHINE_OPTIONS"]["device_id"] is None or "all":
-                    #     self.device = "cuda"
-                    # elif type(self.settings["MACHINE_OPTIONS"]["device_id"]) == type(list()):
-                    #     self.device = "cuda:" + ",".join(list(map(str, self.settings["MACHINE_OPTIONS"]["device_id"])))
-                elif torch.backends.mps.is_available():
-                    self.device = "mps"
-                else:
-                    self.device = "cpu"
-            else:
-                self.device = device
-            if verbose > 0:
-                print("Autodetected device:", self.device)
-            self.network.to(device=self.device)
-
-        ### Printing device information
-        if self.multigpu:
-            if self.verbose and self.rank == 0:
-                print("[Multi-GPU training]", self.worldsize, "participating GPUs.")
-                for i in range(self.worldsize):
-                    dev_id = torch.cuda.device_count()
-                    dev_name = torch.cuda.get_device_name(i)
-                    print("Device ID: ", i, ", Device name: ", dev_name)
+            self.multigpu = multigpu
+            self.rank, self.worldsize = self.multigpu_training_setup()
+            self.multigpu = True
         else:
-            if ("cuda" in self.device):
-                dev_id = torch.cuda.current_device()  # returns you the ID of your current device
-                dev_name = torch.cuda.get_device_name(dev_id)
-                # dev_mem_use = torch.cuda.memory_allocated(dev_id)          #returns you the current GPU memory usage by tensors in bytes for a given device
-                # dev_mem_man = torch.cuda.memory_reserved(dev_name)         #returns you the current GPU memory managed by caching allocator in bytes for a given device
-                torch.cuda.empty_cache()  # clear variables in cache that are unused
-                if self.verbose:
-                    print("\nRunning on GPU")
-                    print("Device ID: ", dev_id, ", Device name: ", dev_name, "\n")
-            elif self.device == "mps":
-                if self.verbose:
-                    print("\nRunning on MPS\n")
-            else:
-                if cpu_threads is not None:
-                    torch.set_num_threads(int(cpu_threads))
-                if self.verbose:
-                    print("\nRunning on CPU")
-                    print("{} CPU threads\n".format(torch.get_num_threads()))
-
-
-        ### Setting some variables of the network ###
-
+            if launched > 1:
+                raise ValueError('Multiple processes launched but distributed training disabled')
+            if device is None:
+                device = ('cuda:0' if torch.cuda.is_available() else
+                          'mps' if torch.backends.mps.is_available() else 'cpu')
+            self.device = str(device)
+            self.network.to(self.device)
+        self.verbose = verbose and self.rank == 0
         self.epochs = epochs
-        self.epochs_ls = epochs_ls
         self.optimizer = optimizer(self.network.parameters(), lr=learning_rate, weight_decay=weight_decay)
         self.scheduler = scheduler(self.optimizer, patience=patience, factor=factor)
-        self.loss_function = loss_function
-
-
-        ### Checking if data was loaded properly and extracting the scalers ###
-
-        if not data.loadTS or not data.loadVS:
-            print("The data has not been loaded. Shutting down.")
-            exit()
-
+        self.loss_function = nn.MSELoss() if loss_function is None else loss_function
+        model = self.network.module if isinstance(self.network, DDP) else self.network
         if data.transform_data:
-            self.network.scaling_X = data.scalingX
-            self.network.scaling_y = data.scalingY
-            self.network.inverse_X = data.inverse_X
-            self.network.inverse_Y = data.inverse_Y
+            model.scaling_X, model.scaling_y = data.scalingX, data.scalingY
+            model.inverse_X, model.inverse_Y = data.inverse_X, data.inverse_Y
+        self.pin_memory = bool(pin_memory is not False and pin_memory != 0 and 'cuda' in self.device)
+        shuffle = data.shuffle_every_epoch if shuffle_every_epoch is None else shuffle_every_epoch
+        validation_loader, _ = batch_loader(data.datasetVS, validation_batch_size,
+            rank=self.rank, world_size=self.worldsize, num_workers=data.num_workers,
+            pin_memory=self.pin_memory)
+        training_loss, validation_loss = [], []
+        train_loader = None
 
-        self.pin_memory = pin_memory
-        if self.pin_memory is None:
-            self.pin_memory = ("cuda" in self.device or "mps" in self.device) # and (self.dtype == torch.float)
+        def batch_loss(network, X, y):
+            if weights:
+                # Recover weights before transferring CPU features to the GPU.
+                batch_weights = (data.inverse_X(X)[:, -1] if data.transform_data
+                                 else X[:, -1]).to(self.device, non_blocking=self.pin_memory)
+                X = X[:, :-1]
+            if copy_to_device:
+                X = X.to(self.device, non_blocking=self.pin_memory)
+                y = y.to(self.device, non_blocking=self.pin_memory)
+            if weights:
+                return self.loss_function(network(X), y, weights=batch_weights)
+            return self.loss_function(network(X), y)
 
-
-        ######################### Starting the training #########################
-
-        self.network.mode='train'
-        training_loss = []
-        validation_loss = []
-
-        for epoch in range(int(epochs)):
-
-            start_time = timeit.default_timer() # Timer start
-
-            if epoch in self.epochs_ls:
-                idx_tr = self.epochs_ls.index(epoch)
-                if self.verbose:
-                    print("\n--- Batch size:", self.epochs_ls[idx_tr], "---\n")
-
-            if self.multigpu:
-                dist.barrier()
-                sampler = DistributedSampler(data.datasetTS, num_replicas=self.worldsize, rank=self.rank, shuffle=True)
+        try:
+            for epoch in range(int(epochs)):
+                start = timeit.default_timer()
+                if epoch in self.epochs_ls:
+                    idx = self.epochs_ls.index(epoch)
+                    train_loader, sampler = batch_loader(data.datasetTS, data.batch_sizes[idx],
+                        shuffle=shuffle, rank=self.rank, world_size=self.worldsize,
+                        pad=self.multigpu, num_workers=data.num_workers, pin_memory=self.pin_memory)
                 sampler.set_epoch(epoch)
-            else:
-                sampler = None
-
-            ### Iterating through the training data ###
-
-            train_dataloader = DataLoader(
-                data.datasetTS,
-                batch_size=data.batch_sizes[idx_tr],
-                num_workers=data.num_workers,
-                pin_memory=self.pin_memory,
-                shuffle=(False if self.multigpu else shuffle_every_epoch),
-                sampler=sampler
-            )
-
-            tr_loss = 0
-            av_tr_loss = 0
-
-            for counter, entry_tr in enumerate(train_dataloader, 0):
-                BX, BY = entry_tr
-
-                if (copy_to_device and self.device != "cpu"):
-                    BX = BX.to(device=self.device)
-                    BY = BY.to(device=self.device)
-
-                if counter > nsamples:
-                    break
-                else:
-                    if weights:
-                        weights_array_tr = data.inverse_X(BX)[:,-1].flatten()
-                        BX = BX[:,:-1]
-                    else:
-                        weights_array_tr = 1.
-
-                    self.optimizer.zero_grad()
-                    training_out = self.network(BX)
-                    loss = self.loss_function(training_out, BY, weights=weights_array_tr)
+                self.network.train()
+                model.mode = 'train'
+                # Accumulate detached tensors on-device; one synchronization per epoch.
+                totals = torch.zeros(4, device=self.device, dtype=torch.float64)
+                for counter, (X, y) in enumerate(train_loader):
+                    if counter >= nsamples:
+                        break
+                    self.optimizer.zero_grad(set_to_none=True)
+                    loss = batch_loss(self.network, X, y)
                     loss.backward()
                     self.optimizer.step()
-                    tr_loss += loss
-
-                    # if verbose:
-                    #     av_tr_loss += loss.item()
-                    #     if counter % 1000 == 999:
-                    #         print("{val1} minibatches. Average training loss: {val2}".format(val1=counter+1, val2 = np.round(av_tr_loss/1000.,6)))
-                    #         av_tr_loss = 0
-
+                    totals[0] += loss.detach() * len(X)
+                    totals[1] += len(X)
+                self.network.eval()
+                model.mode = 'eval'
+                # Evaluate the unwrapped model: ranks can have unequal validation
+                # batch counts. Synchronize buffers once, not in each forward.
                 if self.multigpu:
-                    dist.barrier()
-
-                del BX, BY
-                if self.device == "cuda":
-                    torch.cuda.empty_cache()
-            #----------------------------
-
-
-            ### Iterating through the validation data ###
-
-            validation_dataloader= DataLoader(data.datasetVS, batch_size=len(data.datasetVS),num_workers=data.num_workers, pin_memory=(not torch.cuda.is_available()), shuffle=data.shuffle_every_epoch)
-
-            val_loss = 0
-            for counter, entry_val in enumerate(validation_dataloader, 0):
-
-                val_obs, val_label = entry_val
-
-                if (copy_to_device and self.device != "cpu"):
-                    val_obs = val_obs.to(device=self.device)
-                    val_label = val_label.to(device=self.device)
-
-                if weights:
-                    weights_array_val = data.inverse_X(val_obs)[:,-1].flatten()
-                    val_obs = val_obs[:,:-1].float()
-                else:
-                    weights_array_val = 1.
-
-                validation_out = self.network(val_obs.float())
-                val_loss += loss_function(validation_out, val_label, weights=weights_array_val).cpu()
-
-            #    if verbose and counter % 1000 == 999:
-            #        print("Gone through {} samples in validation set".format(counter+1))
-
-            #----------------------------
-
-
-            ### Prepare for output: Training loss and validation loss normalized to number of batches ###
-
-            tr_loss = tr_loss.cpu()/len(train_dataloader)
-            val_loss = val_loss.cpu()
-            training_loss.append(float(tr_loss.detach().cpu()))
-            validation_loss.append(float(val_loss.detach().cpu()))
-            self.scheduler.step(val_loss.detach().item())
-
-            #----------------------------
-
-
-            end_time = timeit.default_timer() # Timer end
-
-
-            ### Printing the stats ###
-            if self.verbose:
-                print('Epoch ', epoch+1, '/', epochs , '|'
-                    ' Batch-size: ', data.batch_sizes[idx_tr],
-                    ', Validation loss: ', np.round(val_loss.detach().numpy(),6),
-                    ', Training loss: ', np.round(tr_loss.detach().numpy(),6),
-                    ', Execution time: ', np.round(end_time-start_time,3), 's')
-
-            #----------------------------
-
-        #print(list(self.network.parameters()))
-        if self.verbose:
-            print("\nTraining finished!\n")
-
-        ###########################################################################
-
-        #self.network.to('cpu')
-        self.training_loss = training_loss
-        self.validation_loss = validation_loss
-
-        self.network.mode='eval'
-
-        if self.multigpu > 0:
-            dist.destroy_process_group()
-            self.delete_masteraddr_file()
+                    for buffer in model.buffers():
+                        dist.broadcast(buffer, src=0)
+                with torch.no_grad():
+                    for X, y in validation_loader:
+                        loss = batch_loss(model, X, y)
+                        totals[2] += loss * len(X)
+                        totals[3] += len(X)
+                if self.multigpu:
+                    dist.all_reduce(totals, op=dist.ReduceOp.SUM)
+                tr_sum, tr_count, val_sum, val_count = totals.cpu().tolist()
+                tr_loss, val_loss = tr_sum/tr_count, val_sum/val_count
+                training_loss.append(tr_loss)
+                validation_loss.append(val_loss)
+                self.scheduler.step(val_loss)
+                if self.verbose:
+                    print(f'Epoch {epoch+1}/{epochs} | Batch size: {data.batch_sizes[idx]} '
+                          f'| Training: {tr_loss:.6g} | Validation: {val_loss:.6g} '
+                          f'| {timeit.default_timer()-start:.3f} s', flush=True)
+        finally:
+            if self.multigpu and dist.is_initialized():
+                dist.destroy_process_group()
+        self.training_loss, self.validation_loss = training_loss, validation_loss
+        self.network.eval()
+        model.mode = 'eval'
 
 
     def save_losses(self, path=["./training_loss.txt", "./validation_loss.txt"]):
@@ -287,95 +169,35 @@ class NN():
         self.network = self.network.eval()
 
     def multigpu_training_setup(self):
-        """
-        Setup PyTorch DistributedDataParallel using Slurm environment variables.
-        Automatically handles single-node and multi-node jobs.
-
-        Assumes:
-            - Slurm launches the job with srun
-            - self.multigpu contains the requested total number of GPUs (world size)
-            - 8 GPUs per node
-        """
-
-        # ----------------------------------------------------------------------
-        # 1. Read Slurm variables
-        # ----------------------------------------------------------------------
-        slurm_procid   = int(os.environ.get("SLURM_PROCID", "0"))    # global rank
-        slurm_localid  = int(os.environ.get("SLURM_LOCALID", "0"))   # local rank on this node
-        slurm_ntasks   = int(os.environ.get("SLURM_NTASKS", "1"))    # total tasks (world size)
-        slurm_nodeid   = int(os.environ.get("SLURM_NODEID", "0"))    # node index (0 .. nnodes-1)
-        slurm_nnodes   = int(os.environ.get("SLURM_NNODES", "1"))    # number of nodes
-        slurm_jobid    = int(os.environ.get("SLURM_JOBID", "0"))
-        user           = os.environ["USER"]
-
-        # Let user-provided n_gpus override Slurm if desired
-        worldsize = self.multigpu if self.multigpu > 0 else slurm_ntasks
-
-        # ----------------------------------------------------------------------
-        # 2. Set PyTorch DDP expected environment variables
-        # ----------------------------------------------------------------------
-        os.environ["RANK"]       = str(slurm_procid)
-        os.environ["WORLD_SIZE"] = str(worldsize)
-        os.environ["LOCAL_RANK"] = str(slurm_localid)
-
-        # ----------------------------------------------------------------------
-        # 3. Determine MASTER_ADDR (multi-node safe)
-        #    Only node 0 writes its hostname to a file shared across nodes.
-        # ----------------------------------------------------------------------
-        self.hostfile = os.path.join(os.environ.get("TMPDIR", "/tmp"), f"master_addr_{user}_{slurm_jobid}.txt")
-
-        if slurm_nodeid == 0:
-            # Node 0 writes its hostname
-            with open(self.hostfile, "w") as f:
-                master_addr = socket.gethostbyname(socket.gethostname())
-                f.write(master_addr)
-
-        # Slurm ensures simultaneous startup → we simply read the file
-        with open(self.hostfile, "r") as f:
-            master_addr = f.read().strip()
-
-        os.environ["MASTER_ADDR"] = master_addr
-
-        # ----------------------------------------------------------------------
-        # 4. Safe, collision-free master port
-        # ----------------------------------------------------------------------
-        master_port = 20000 + (slurm_jobid % 20000)
-        os.environ["MASTER_PORT"] = str(master_port)
-
-        # ----------------------------------------------------------------------
-        # 5. Initialize Process Group
-        # ----------------------------------------------------------------------
-        dist.init_process_group(
-            backend="nccl",
-            init_method="env://"
-        )
-
-        # ----------------------------------------------------------------------
-        # 6. Bind process to its GPU
-        # ----------------------------------------------------------------------
-        torch.cuda.set_device(slurm_localid)
-        self.device = f"cuda:{slurm_localid}"
-
-        # ----------------------------------------------------------------------
-        # 7. Wrap model in DDP
-        # ----------------------------------------------------------------------
-        self.network = DDP(self.network.to(self.device),
-                        device_ids=[slurm_localid],
-                        output_device=slurm_localid)
-
-        return slurm_procid, worldsize
-
-    def delete_masteraddr_file(self):
-        """
-        Delete the temporary master address file created during multi-node DDP setup.
-        Only node 0 should perform the deletion.
-        """
-
-        if self.rank == 0:
-            try:
-                os.remove(self.hostfile)
-            except OSError:
-                pass
+        """Use torchrun or Slurm rendezvous without a racy node-local host file."""
+        rank = int(os.environ.get('RANK', os.environ.get('SLURM_PROCID', '0')))
+        local_rank = int(os.environ.get('LOCAL_RANK', os.environ.get('SLURM_LOCALID', '0')))
+        world_size = int(os.environ.get('WORLD_SIZE', os.environ.get('SLURM_NTASKS', '1')))
+        if self.multigpu > 1 and self.multigpu != world_size:
+            raise ValueError('Requested GPU count does not match launched process count')
+        if not torch.cuda.is_available():
+            raise RuntimeError('Distributed GPU training requires CUDA/ROCm')
+        if 'MASTER_ADDR' not in os.environ:
+            nodes = os.environ.get('SLURM_JOB_NODELIST')
+            if int(os.environ.get('SLURM_NNODES', '1')) == 1 and nodes:
+                os.environ['MASTER_ADDR'] = socket.gethostname()
+            elif nodes:
+                os.environ['MASTER_ADDR'] = subprocess.check_output(
+                    ['scontrol', 'show', 'hostnames', nodes], text=True).splitlines()[0]
+            elif world_size == 1:
+                os.environ['MASTER_ADDR'] = '127.0.0.1'
+            else:
+                raise ValueError('Set MASTER_ADDR or launch with Slurm/torchrun')
+        job_id = int(os.environ.get('SLURM_JOB_ID', '0'))
+        os.environ.setdefault('MASTER_PORT', str(20000 + job_id % 20000))
+        os.environ['RANK'], os.environ['WORLD_SIZE'] = str(rank), str(world_size)
+        # Slurm may expose just one GPU per task, or all GPUs on the node.
+        gpu = 0 if torch.cuda.device_count() == 1 else local_rank
+        torch.cuda.set_device(gpu)
+        self.device = f'cuda:{gpu}'
+        dist.init_process_group(backend='nccl', init_method='env://')
+        self.network = DDP(self.network.to(self.device), device_ids=[gpu], output_device=gpu)
+        return rank, world_size
 
     def save_net(self, path="./net.pt", avoid_q=False):
 
@@ -386,7 +208,7 @@ class NN():
                 model = self.network
 
             checkpoint = {
-                "model_state_dict": model.to("cpu").state_dict(),
+                "model_state_dict": {k: v.detach().cpu() for k, v in model.state_dict().items()},
                 "training_loss": getattr(self, "training_loss", None),
                 "validation_loss": getattr(self, "validation_loss", None),
             }
@@ -433,15 +255,15 @@ class NN():
 
     def jit_script_model(self):
 
-        self.jit_script_model = torch.jit.script(self.network)
+        self._jit_script_model = torch.jit.script(self.network)
         print("Model converted to jit_script, saved in self.jit_script_model")
 
 
     def save_jit_script(self, path="./net_jit_script.pt"):
 
         if self.rank == 0:
-            self.jit_script_model = self.jit_script_model()
-            torch.jit.save(self.jit_script_model, path)
+            self.jit_script_model()
+            torch.jit.save(self._jit_script_model, path)
 
             print("Model saved!")
 
@@ -454,12 +276,13 @@ class NN():
             else:
                 model = self.network
 
-            model = model.to("cpu", dtype=torch.float32)
+            model = deepcopy(model).to("cpu", dtype=torch.float32).eval()
             example_data = example_data.to(device="cpu", dtype=torch.float32)
 
             torch.onnx.export(model,                                            # model being run
                                 example_data,                                   # model input (or a tuple for multiple inputs)
                                 path,                                           # where to save the model (can be a file or file-like object)
+                                dynamo=False,
                                 export_params=True,                             # store the trained parameter weights inside the model file
                                 opset_version=14,                               # the ONNX version to export the model to: https://onnxruntime.ai/docs/reference/compatibility.html
                                 do_constant_folding=True,                       # whether to execute constant folding for optimization
@@ -469,11 +292,7 @@ class NN():
                                             'output': {0: 'batch_size'}})
 
 
-    def check_onnx(self,path="./net_onnx.pt"):
+    def check_onnx(self, path="./net_onnx.onnx"):
         if self.rank == 0:
-            try:
-                onnx_model = onnx.load(path)
-                onnx.checker.check_model(onnx_model)
-                print("ONNX checker: Success!")
-            except:
-                print("Failure in ONNX checker!")
+            onnx.checker.check_model(onnx.load(path))
+            print("ONNX checker: Success!")

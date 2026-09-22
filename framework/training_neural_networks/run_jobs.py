@@ -17,7 +17,7 @@ parser.add_argument("-c", "--config", type=str, required=True, help="Path to con
 parser.add_argument("-ci", "--ci-run", type=int, default=0, help="Run in CI mode (stream output to terminal)")
 args = parser.parse_args()
 
-config = args.config
+config = os.path.abspath(args.config)
 with open(config, 'r') as config_file:
     CONFIG = json.load(config_file)
 
@@ -31,7 +31,7 @@ execution_mode = CONFIG["trainNeuralNetOptions"]["execution_mode"]
 base_folder = CONFIG["settings"]["framework"]
 scheduler = determine_scheduler(scheduler=CONFIG["trainNeuralNetOptions"].get("scheduler", None), verbose=False)
 CONFIG["trainNeuralNetOptions"]["scheduler"] = scheduler
-write_config(CONFIG, args.config)
+write_config(CONFIG, config)
 
 
 def parse_first_level(directory):
@@ -68,7 +68,7 @@ run_command(
     [
         sys.executable,
         shell_script_creation,
-        "--config", args.config,
+        "--config", config,
         "--job-script", training_script,
     ],
     "shell_script_creation (training)"
@@ -78,7 +78,7 @@ run_command(
     [
         sys.executable,
         shell_script_creation,
-        "--config", args.config,
+        "--config", config,
         "--job-script", qa_script,
         "--training-mode", "QA",
     ],
@@ -90,7 +90,7 @@ for tr_dir in data_dirs:
         [
             sys.executable,
             run_job_single_sigma,
-            "--config", args.config,
+            "--config", config,
             "--ci-run", str(args.ci_run),
         ],
         f"run_job_single_sigma for {tr_dir}"

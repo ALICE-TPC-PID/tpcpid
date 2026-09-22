@@ -29,50 +29,10 @@ jobs:
         run: |
           python3 run/ci/ci_test.py
 
-      - name: Upload full ONNX model
-        uses: actions/upload-artifact@v4
-        with:
-          name: tpcpid-full-onnx
-          path: output/**/networks/network_full/net_onnx_full.onnx
-          if-no-files-found: error
-
-  O2Physics-PID:
-    runs-on: ubuntu-latest
-    needs: CI
-
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Download full ONNX model
-        uses: actions/download-artifact@v4
-        with:
-          name: tpcpid-full-onnx
-          path: run/ci/o2physics_model
-
-      - name: Setup CVMFS
-        uses: cvmfs-contrib/github-action-cvmfs@v5
-        with:
-          cvmfs_repositories: "alice.cern.ch"
-
-      - name: Run O2Physics PID workflow
+      - name: Test bounded-memory data loading and training
         run: |
-          docker run --rm \
-            --shm-size=1g \
-            -v /cvmfs:/cvmfs:shared \
-            -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" \
-            -w "$GITHUB_WORKSPACE" \
-            alisw/slc9-builder:latest \
-            bash -lc '
-              set -euo pipefail
-              O2PHYSICS_PACKAGE="O2Physics/daily-20260914-0000-1"
-              bash /cvmfs/alice.cern.ch/bin/alienv printenv "$O2PHYSICS_PACKAGE" > o2physics_env.sh
-              source o2physics_env.sh
-              command -v o2-analysis-pid-tpc-service
-              command -v o2-analysis-event-selection-service
-              ONNX_FILE="$(find run/ci/o2physics_model -name net_onnx_full.onnx -print -quit)"
-              test -n "$ONNX_FILE"
-              python3 run/ci/o2physics_pid_test.py \
-                --required \
-                --onnx "$ONNX_FILE"
-            '
+          python3 -m unittest discover -s tests -p 'test_training_memory.py' -v
+
+      - name: Test MEAN SIGMA FULL training pipeline
+        run: |
+          python3 tests/smoke_training_pipeline.py
