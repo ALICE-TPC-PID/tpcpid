@@ -282,7 +282,6 @@ class NN():
             torch.onnx.export(model,                                            # model being run
                                 example_data,                                   # model input (or a tuple for multiple inputs)
                                 path,                                           # where to save the model (can be a file or file-like object)
-                                dynamo=False,
                                 export_params=True,                             # store the trained parameter weights inside the model file
                                 opset_version=14,                               # the ONNX version to export the model to: https://onnxruntime.ai/docs/reference/compatibility.html
                                 do_constant_folding=True,                       # whether to execute constant folding for optimization
