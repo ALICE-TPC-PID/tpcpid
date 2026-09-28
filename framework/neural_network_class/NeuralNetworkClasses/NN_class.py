@@ -466,9 +466,9 @@ class NN():
                                 do_constant_folding=True,                       # whether to execute constant folding for optimization
                                 input_names=['input'],                          # the model's input names
                                 output_names=['output'],                        # the model's output names
-                                dynamo=False,                                   # Disable torchdynamo for export: FIXME This needs to be tested with dynamic_axes=... being changed to dynamic_shapes=({0: torch.export.Dim("batch_size")},),
-                                dynamic_axes={'input': {0: 'batch_size'},       # variable length axes
-                                            'output': {0: 'batch_size'}})
+                                dynamo=True,                                    # Disable torchdynamo for export: FIXME This needs to be tested with dynamic_axes=... being changed to dynamic_shapes=({0: torch.export.Dim("batch_size")},),
+                                dynamic_shapes={"x": {0: torch.export.Dim("batch_size")}}
+            )
 
 
     def check_onnx(self,path="./net_onnx.pt"):
