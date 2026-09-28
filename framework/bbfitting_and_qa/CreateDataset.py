@@ -67,6 +67,11 @@ norm_cfg = CONFIG['createTrainingDatasetOptions'].setdefault('normalizations', {
 norm_cfg.setdefault('fHadronicRate', 50)     # or "50" or "lambda x: x/50"
 norm_cfg.setdefault('fFt0Occ', 60000)
 
+phi_entrance_config = CONFIG['createTrainingDatasetOptions'].get('phiEntrance', {})
+use_phi_entrance = phi_entrance_config.get('activate', False)
+phi_entrance_coeff_1 = phi_entrance_config.get('coeff1', 1.026)
+phi_entrance_coeff_2 = phi_entrance_config.get('coeff2', 85)
+
 def to_callable(v):
     if callable(v):
         return v
@@ -140,7 +145,7 @@ def check_particle_content(lbls, data, messages=None):
 def calculate_delta_phi(phi):
     sector_width = np.pi / 9.0
     phi = phi % (2 * np.pi)
-    idx = int(np.floor(phi / sector_width))
+    idx = np.floor(phi / sector_width)
     lower_boundary = idx * sector_width
     return phi - lower_boundary
 
@@ -161,8 +166,13 @@ if "fHadronicRate" in CONFIG['createTrainingDatasetOptions']['labels_x']:
 if "fPhi" in CONFIG['createTrainingDatasetOptions']['labels_x']:
     LOG.info("Using phi option in CreateDataset and calculate the delta phi angle (within a given ALICE sector)")
     fPhi_index = np.where(labels == 'fPhi')[0][0]  # Locate the index of fPhi in labels
-    for i in range(fit_data.shape[0]):
-        fit_data[i, fPhi_index] = calculate_delta_phi(fit_data[i, fPhi_index])
+    fSigned1Pt_index = np.where(labels == 'fSigned1Pt')[0][0]  # Locate the index of fSigned1Pt in labels
+    if use_phi_entrance:
+        LOG.info("Recalculating Phi at the TPC entrance")
+        fit_data[:, fPhi_index] += (phi_entrance_coeff_1 * light_speed_dm_ps * 0.5 * phi_entrance_coeff_2 * fit_data[:, fSigned1Pt_index])
+    else:
+        LOG.info("No recalculating Phi at the TPC entrance")
+    fit_data[:, fPhi_index] = calculate_delta_phi(fit_data[:, fPhi_index])
 
 # if len(fit_data) >= samplesize:
 #     ### Downsampling to defined sample size

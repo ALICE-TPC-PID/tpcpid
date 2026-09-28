@@ -80,3 +80,5 @@ particle_type = {
     "kAntiLambda": 4,
     "kUndef": 0
 }
+
+light_speed_dm_ps = 0.00299792

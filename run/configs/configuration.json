@@ -31,7 +31,12 @@
             "fInvDeDxExpTPC"
         ],
         "samplesize": "10000000",
-        "sigmarange": "3"
+        "sigmarange": "3",
+        "phiEntrance": {
+            "activate": false,
+            "coeff1": 1.026,
+            "coeff2": 85
+        }
     },
     "dataset": {
         "dEdxSelection": "TPCSignal",

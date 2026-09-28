@@ -226,7 +226,7 @@ time {exec_cmd} "{job_script}" --config "$1"
             script = f"""#!/bin/bash
 #SBATCH --job-name=TPCPID_NNQA
 #SBATCH --chdir={qa_dir}
-#SBATCH --time=10
+#SBATCH --time=30
 #SBATCH --mem=30G
 #SBATCH --partition=debug
 #SBATCH --mail-type={job_dict['mail-type']}

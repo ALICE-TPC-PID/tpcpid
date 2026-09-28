@@ -21,6 +21,18 @@ def write_config(CONFIG, path = "../configuration.json"):
     with open(path_config, "w") as f:
         json.dump(CONFIG, f, indent=4)
 
+#Reads config and evaluates NN version
+def evaluate_nn_version(config):
+    version = 1
+    if "fFt0Occ" in config["createTrainingDatasetOptions"]["labels_x"]:
+        version = 2
+        if "fHadronicRate" in config["createTrainingDatasetOptions"]["labels_x"]:
+            version = 3
+            if "fPhi" in config["createTrainingDatasetOptions"]["labels_x"]:
+                version = 4
+                if config['createTrainingDatasetOptions'].get('phiEntrance', {}).get('activate', False):
+                    version = 5
+    return version
 
 #Reads config and adds the name of the dataset
 def add_name_and_path(config):
@@ -43,10 +55,7 @@ def add_name_and_path(config):
     name = f"LHC{dataset['year']}{dataset['period']}_{dataset['pass']}_{dataset['dEdxSelection']}"
     if 'optTag' in dataset and dataset['optTag']:
         name += f"_{dataset['optTag']}"
-    if dataset.get("HadronicRate", "False") == "True":
-        name += "_HadronicRate"
-    if dataset.get("Phi", "False") == "True":
-        name += "_DeltaPhi"
+    name += f"_NNv{evaluate_nn_version(config)}"
     output_section = config.setdefault('output', {})
     output_section['name'] = name
     config["output"].setdefault('general', {})
