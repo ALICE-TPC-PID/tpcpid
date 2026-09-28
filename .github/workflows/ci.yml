@@ -25,6 +25,18 @@ jobs:
           python3 -m pip install --upgrade pip
           python3 -m pip install -r requirements.txt
 
+      - name: Check Python syntax
+        run: |
+          python3 -m compileall -q framework run tests
+
       - name: Run CI test
         run: |
           python3 run/ci/ci_test.py
+
+      - name: Test bounded-memory data loading and training
+        run: |
+          python3 -m unittest discover -s tests -p 'test_training_memory.py' -v
+
+      - name: Test MEAN SIGMA FULL training pipeline
+        run: |
+          python3 tests/smoke_training_pipeline.py

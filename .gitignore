@@ -3,3 +3,12 @@ run/src/*.sh
 output/
 logs/
 *.sif
+
+# own configs
+*.root
+!run/ci/data/mini_AO2D_full.root
+*.pdf
+run/configs/nn_ensemble
+run/configs/phd
+framework/playground
+**test

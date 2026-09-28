@@ -29,6 +29,7 @@ sys.path.append(CONFIG['settings']['framework'] + "/framework")
 from base import *
 from math_functions import *
 from neural_network_class.NeuralNetworkClasses.extract_from_root import *
+from neural_network_class.NeuralNetworkClasses.inference import predict_onnx
 nnconfig = import_from_path(CONFIG["trainNeuralNetOptions"]["configuration"])
 LOG = logger("training_qa")
 
@@ -71,7 +72,7 @@ jet_map_alpha = ListedColormap(jet_map)
 fontsize_axislabels = 30
 momentum = np.logspace(-2,3,1000)
 cload = load_tree()
-data = cload.load(use_vars=None, path=data_path, load_latest=True, verbose=True)
+data = cload.load(use_vars=LABELS_Y + LABELS_X, path=data_path, load_latest=True, verbose=True)
 labels = np.array(data[0])
 fit_data = data[1]
 del data
@@ -92,9 +93,9 @@ X = fit_data[:,mask_X]
 y = (fit_data[:,mask_y].T[0].flatten()*fit_data[:,mask_y].T[1].flatten())
 
 sess_options = ort.SessionOptions()
-sess_options.execution_mode  = ort.ExecutionMode.ORT_PARALLEL
-sess_options.intra_op_num_threads = 0
-sess_options.inter_op_num_threads = 10
+sess_options.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
+sess_options.intra_op_num_threads = int(os.environ.get('SLURM_CPUS_PER_TASK', '1'))
+sess_options.inter_op_num_threads = 1
 sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
 
 ort_sess_mean = ort.InferenceSession(training_folder+"/networks/network_mean/net_onnx_mean.onnx", sess_options)
@@ -102,7 +103,7 @@ ort_sess_sigma = ort.InferenceSession(training_folder+"/networks/network_sigma/n
 ort_sess_full = ort.InferenceSession(training_folder+"/networks/network_full/net_onnx_full.onnx", sess_options)
 
 def network(data, ort_session=ort_sess_full):
-    return np.array(ort_session.run(None, {'input': (torch.tensor(data).float()).numpy()}))
+    return predict_onnx(ort_session, data)[None, ...]
 
 net_out = network(X,ort_session=ort_sess_full)[0] ### Precompute for speed
 
@@ -338,9 +339,10 @@ def separation_power(useNN=0, useMassAssumption=0, momentumSelection=[0.3,0.4],
         output = (fit_data_tmp[:,labels=='fTPCSignal'].flatten()*fit_data_tmp[:,labels=='fInvDeDxExpTPC'].flatten() - 1.)/0.07
 
     hist1d = np.histogram(output, bins=y_bins, range=(-3.,3.), density=True)
-    initial_params[useMassAssumption][0] = np.max(hist1d[0])
-    initial_params[useMassAssumption][3] = np.max(hist1d[0])
-    popt, pcov = sc.optimize.curve_fit(double_gauss, y_bins[:-1], hist1d[0], p0=initial_params[useMassAssumption], bounds=fit_bounds_double_gauss)
+    fit_initial = list(initial_params[useMassAssumption])
+    fit_initial[0] = np.max(hist1d[0])
+    fit_initial[3] = np.max(hist1d[0])
+    popt, pcov = sc.optimize.curve_fit(double_gauss, y_bins[:-1], hist1d[0], p0=fit_initial, bounds=fit_bounds_double_gauss)
     plt.hist(output, bins=y_bins, histtype='step', lw=2, color="black", density=True)
     plt.plot(y_bins[:-1], double_gauss(y_bins[:-1], *popt), lw=1, label='Double gauss fit', c = "blue")
     plt.plot(y_bins[:-1], gauss(y_bins[:-1], popt[0], popt[1], popt[2]), lw=1, label=plot_labels[gauss_labels[useMassAssumption][0]][0] + " {:.3f}".format(popt[1]) + " $\pm$ " + "{:.3f}".format(popt[2]), c = plot_labels[gauss_labels[useMassAssumption][0]][1])
@@ -384,7 +386,7 @@ for i, mass in enumerate(np.sort(np.unique(fit_data[:,labels=='fMass'].flatten()
     def transform_ncl(x):
         return 152./(x**2)
 
-    isSmallSystem = CONFIG['trainNeuralNetOptions'].get('isSmallSystem', 'False').lower() == "true"
+    isSmallSystem = str(CONFIG['trainNeuralNetOptions'].get('isSmallSystem', False)).lower() == "true"
     isLowBField = CONFIG['trainNeuralNetOptions'].get('isLowBField', 'False').lower() == "true"
 
     default_ranges = {

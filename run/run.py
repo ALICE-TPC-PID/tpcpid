@@ -26,7 +26,7 @@ for i, config_file in enumerate(args.config):
         CONFIG['settings']['framework'] = os.getcwd()
         CONFIG['dataset']['input_skimmedtree_path'] = os.getcwd() + "/run/ci/data/AO2D_mini.root"
         CONFIG['trainNeuralNetOptions'] = {
-            "execution_mode": "MEAN",                                   ### Only run one network as a proof of principle
+            "execution_mode": "FULL",                                   ### Run MEAN -> SIGMA -> FULL to produce net_onnx_full.onnx
             "configuration": os.getcwd() + "/run/ci/nnconfig.py",
             "training_file": "train_single_sigma.py",
             "numberOfEpochs": "2",
@@ -107,6 +107,7 @@ for i, config_file in enumerate(args.config):
             }
 
         deep_update(masterjob_defaults, CONFIG.get('masterjob', {}), name="Masterjob settings", verbose=False)
+        masterjob_defaults.setdefault("cpus-per-task", 1)
         masterjob_defaults["framework_path"] = CONFIG['settings']['framework']
         masterjob_defaults["output_path"] = CONFIG["output"]["general"]["path"]
 
@@ -117,6 +118,7 @@ for i, config_file in enumerate(args.config):
 #SBATCH --chdir={masterjob_defaults['framework_path']}
 #SBATCH --time={masterjob_defaults['time']}
 #SBATCH --mem={masterjob_defaults['mem']}
+#SBATCH --cpus-per-task={masterjob_defaults['cpus_per_task']}
 #SBATCH --partition={masterjob_defaults['partition']}
 #SBATCH --output={masterjob_defaults['output_path']}/run_%j.out
 #SBATCH --error={masterjob_defaults['output_path']}/run_%j.err

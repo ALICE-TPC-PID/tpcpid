@@ -1,0 +1,127 @@
+{
+  "internal-dpl-aod-reader": {
+    "aod-file-private": "/lustre/alice/users/csonnab/TPC/o2-tpc-pid/run/ci/data/mini_AO2D_full.root",
+    "aod-max-io-rate": "0",
+    "time-limit": "0",
+    "orbit-offset-enumeration": "0",
+    "orbit-multiplier-enumeration": "0",
+    "start-value-enumeration": "0",
+    "end-value-enumeration": "-1",
+    "step-value-enumeration": "1"
+  },
+  "internal-dpl-aod-spawner": "",
+  "internal-dpl-aod-index-builder": "",
+  "internal-dpl-injected-dummy-sink": "",
+  "timestamp": {
+    "timestamp": {
+      "verbose": "false",
+      "fatalOnInvalidTimestamp": "false",
+      "rct-path": "RCT/Info/RunInformation",
+      "orbit-reset-path": "CTP/Calib/OrbitReset",
+      "isRun2MC": "-1"
+    }
+  },
+  "eventselection-run3": {
+    "timestamp": {
+      "verbose": "false",
+      "fatalOnInvalidTimestamp": "false",
+      "rct-path": "RCT/Info/RunInformation",
+      "orbit-reset-path": "CTP/Calib/OrbitReset",
+      "isRun2MC": "-1"
+    },
+    "bcselOpts": {
+      "amIneeded": "-1",
+      "triggerBcShift": "0",
+      "ITSROFrameStartBorderMargin": "-1",
+      "ITSROFrameEndBorderMargin": "-1",
+      "TimeFrameStartBorderMargin": "-1",
+      "TimeFrameEndBorderMargin": "-1",
+      "checkRunDurationLimits": "false",
+      "NumberOfOrbitsPerTF": "-1"
+    },
+    "evselOpts": {
+      "amIneeded": "-1",
+      "muonSelection": "0",
+      "maxDiffZvtxFT0vsPV": "1",
+      "isMC": "-1",
+      "confSigmaBCforHighPtTracks": "4",
+      "TimeIntervalForOccupancyCalculationMin": "-40",
+      "TimeIntervalForOccupancyCalculationMax": "100",
+      "TimeRangeVetoOnCollStrict": "10",
+      "TimeRangeVetoOnCollNarrow": "0.25",
+      "FT0CamplPerCollCutVetoOnCollInTimeRange": "8000",
+      "FT0CamplPerCollCutVetoOnCollInROF": "5000",
+      "EpsilonVzDiffVetoInROF": "0.3",
+      "UseWeightsForOccupancyEstimator": "true",
+      "NumberOfOrbitsPerTF": "-1",
+      "VzDiffNsigma": "3",
+      "VzDiffMargin": "0.2"
+    },
+    "lumiOpts": {
+      "amIneeded": "-1"
+    },
+    "ccdburl": "http://alice-ccdb.cern.ch"
+  },
+  "pid-tpc-base": {
+    "processIU": "true",
+    "processStandard": "false",
+    "processRun3": "false",
+    "processDummy": "true"
+  },
+  "pid-tpc-service": {
+    "ccdburl": "http://alice-ccdb.cern.ch",
+    "pidTPC": {
+      "param-file": "",
+      "ccdbPath": "Analysis/PID/TPC/Response",
+      "recoPass": "",
+      "ccdb-timestamp": "0",
+      "useNetworkCorrection": "true",
+      "autofetchNetworks": "false",
+      "skipTPCOnly": "0",
+      "devicesRequiringTPCOnlyPID": {
+        "values": [
+          "photon-conversion-builder"
+        ]
+      },
+      "networkPathLocally": "/lustre/alice/users/csonnab/TPC/o2-tpc-pid/output/LHC23/zzf/apass5/LHC23zzf_apass5_TPCSignal_CI_HadronicRate_DeltaPhi/20260914/training/networks/network_full/net_onnx_full.onnx",
+      "networkPathCCDB": "Analysis/PID/TPC/ML",
+      "enableNetworkOptimizations": "true",
+      "networkSetNumThreads": "1",
+      "savedEdxsCorrected": "0",
+      "useCorrecteddEdx": "false",
+      "pid-full-el": "0",
+      "pid-full-mu": "0",
+      "pid-full-pi": "1",
+      "pid-full-ka": "0",
+      "pid-full-pr": "0",
+      "pid-full-de": "0",
+      "pid-full-tr": "0",
+      "pid-full-he": "0",
+      "pid-full-al": "0",
+      "pid-tiny-el": "0",
+      "pid-tiny-mu": "0",
+      "pid-tiny-pi": "0",
+      "pid-tiny-ka": "0",
+      "pid-tiny-pr": "0",
+      "pid-tiny-de": "0",
+      "pid-tiny-tr": "0",
+      "pid-tiny-he": "0",
+      "pid-tiny-al": "0",
+      "enableTuneOnDataTable": "0",
+      "useNetworkEl": "0",
+      "useNetworkMu": "0",
+      "useNetworkPi": "1",
+      "useNetworkKa": "0",
+      "useNetworkPr": "0",
+      "useNetworkDe": "0",
+      "useNetworkTr": "0",
+      "useNetworkHe": "0",
+      "useNetworkAl": "0",
+      "networkBetaGammaCutoff": "0.45",
+      "ccdb-path-grplhcif": "GLO/Config/GRPLHCIF"
+    },
+    "processTracksIU": "true",
+    "processTracksIUWithTracksQA": "false",
+    "processTracksMCIU": "false"
+  }
+}

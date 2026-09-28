@@ -119,7 +119,7 @@ NeuralNet.training(data, **dict_config["NET_TRAINING"])
 NeuralNet.eval()
 if save_as_pt == "True":
     NeuralNet.save_net(path=args.local_training_dir+'/networks/network_'+str(train_mode).lower()+'/net_torch_'+str(train_mode).lower()+'.pt',avoid_q=True)
-   if save_as_onnx == "True":
+if save_as_onnx == "True":
     NeuralNet.save_onnx(example_data=torch.tensor(np.array([X[0]]),requires_grad=True).float(),
                         path=args.local_training_dir+'/networks/network_'+str(train_mode).lower()+'/net_onnx_'+str(train_mode).lower()+'.onnx')
     NeuralNet.check_onnx(path=args.local_training_dir+'/networks/network_'+str(train_mode).lower()+'/net_onnx_'+str(train_mode).lower()+'.onnx')

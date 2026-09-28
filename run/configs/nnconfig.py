@@ -25,7 +25,8 @@ DICT_MEAN = {
     "NET_SETTINGS": {
         "w_init": nn.init.xavier_normal_,
         "scale_data": False,
-        "gain": 2.5,
+        "gain": nn.init.calculate_gain("relu"),
+        "output_gain": 1.0,
         "verbose": True
     },
     "NET_TRAINING": {
@@ -63,7 +64,8 @@ DICT_SIGMA = {
     "NET_SETTINGS": {
         "w_init": nn.init.xavier_normal_,
         "scale_data": False,
-        "gain": 2.5,
+        "gain": nn.init.calculate_gain("relu"),
+        "output_gain": 1.0,
         "verbose": True
     },
     "NET_TRAINING": {
@@ -101,7 +103,8 @@ DICT_FULL = {
     "NET_SETTINGS": {
         "w_init": nn.init.xavier_normal_,
         "scale_data": False,
-        "gain": 5./3.,
+        "gain": nn.init.calculate_gain("relu"),
+        "output_gain": 1.0,
         "verbose": True
     },
     "NET_TRAINING": {
@@ -131,6 +134,25 @@ class model(nn.Module):
             *[nn.Sequential(nn.Linear(self.net_def["n_neurons_intermediate"], self.net_def["n_neurons_intermediate"]), nn.ReLU()) for i in range(self.net_def["n_layers"]-1)],
             nn.Linear(self.net_def["n_neurons_intermediate"], self.net_def["n_neurons_output"])
         )
+
+        # Apply the initializer requested by the configuration.  Previously the
+        # NET_SETTINGS block was ignored and PyTorch's implicit initialization
+        # made deep ReLU networks susceptible to run-dependent dead layers.
+        net_settings = dict_config.get("NET_SETTINGS", {})
+        weight_initializer = net_settings.get("w_init")
+        gain = net_settings.get("gain", 1.0)
+        output_gain = net_settings.get("output_gain", 1.0)
+        if weight_initializer is not None:
+            linear_layers = [layer for layer in self.network.modules()
+                             if isinstance(layer, nn.Linear)]
+            for index, layer in enumerate(linear_layers):
+                layer_gain = output_gain if index == len(linear_layers) - 1 else gain
+                try:
+                    weight_initializer(layer.weight, gain=layer_gain)
+                except TypeError:
+                    weight_initializer(layer.weight)
+                if layer.bias is not None:
+                    nn.init.zeros_(layer.bias)
         
     def forward(self, x):
         return self.network(x)

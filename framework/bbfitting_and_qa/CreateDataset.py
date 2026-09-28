@@ -1,4 +1,4 @@
-import os, sys, json
+import os, sys, json, random
 from datetime import datetime
 import numpy as np
 import scipy as sc
@@ -22,6 +22,9 @@ args = parser.parse_args()
 config = args.config
 with open(config, 'r') as config_file:
     CONFIG = json.load(config_file)
+random_seed = int(CONFIG.get('settings', {}).get('random_seed', 42))
+random.seed(random_seed)
+np.random.seed(random_seed)
 sys.path.append(CONFIG['settings']['framework'] + "/framework")
 from base import *
 from utils.classes.v0selection import *

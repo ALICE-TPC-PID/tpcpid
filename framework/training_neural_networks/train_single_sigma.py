@@ -9,6 +9,7 @@ import sys
 import os
 import argparse
 import datetime as dt
+import random
 import numpy as np
 import json
 from copy import deepcopy
@@ -71,29 +72,47 @@ if verbose:
 LOG.info("Loading data from ROOT file " + data_file)
 if data_file.split(".")[-1] == "root":
     cload = load_tree()
-    labels, fit_data = cload.load(use_vars=LABELS_X + LABELS_Y, path=data_file, load_latest=True)
+    labels, fit_data = cload.load(use_vars=LABELS_X + LABELS_Y, path=data_file, load_latest=True, dtype=np.float32)
 elif data_file.split(".")[-1] == "txt":
-    labels, fit_data = np.loadtxt(data_file, dtype='S')
+    labels = np.asarray(LABELS_X + LABELS_Y)
+    fit_data = np.loadtxt(data_file, dtype=np.float32, ndmin=2)
 else:
     LOG.info("Error: Allowed file type is one of ['ROOT','TXT'].")
     exit()
 
 labels = np.array(labels).astype(str)
-fit_data = np.array(fit_data).astype(float)
+fit_data = np.asarray(fit_data, dtype=np.float32)
+# Match the configured feature order, rather than ROOT's branch order.
+columns = {label: i for i, label in enumerate(labels)}
+X = np.ascontiguousarray(fit_data[:, [columns[label] for label in LABELS_X]])
+if len(LABELS_Y) != 2:
+    raise ValueError('Expected signal and inverse expected dEdx labels')
+y = fit_data[:, columns[LABELS_Y[0]]] * fit_data[:, columns[LABELS_Y[1]]]
+del fit_data
+example_data = torch.from_numpy(X[:1].copy())
+# Use one seed for dataset preparation, splitting, initialization and shuffling.
+# Legacy per-stage keys remain supported when explicitly configured.
+legacy_seed = CONFIG['trainNeuralNetOptions'].get(
+    'training_seed', CONFIG['trainNeuralNetOptions'].get('split_seed', 42))
+random_seed = int(CONFIG.get('settings', {}).get('random_seed', legacy_seed))
+split_seed = training_seed = random_seed
+random.seed(training_seed)
+np.random.seed(training_seed)
+torch.manual_seed(training_seed)
+if torch.cuda.is_available():
+    torch.cuda.manual_seed_all(training_seed)
+cpu_threads = int(os.environ.get('SLURM_CPUS_PER_TASK', '1'))
+torch.set_num_threads(cpu_threads)
 
-mask_X = []
-mask_y = []
-for l in labels:
-    mask_X.append(l in LABELS_X)
-    mask_y.append(l in LABELS_Y)
 
-X = fit_data[:, mask_X]
-y = (fit_data[:, mask_y].T[0] * fit_data[:, mask_y].T[1])
-
-
-def run_network(data, ort_session):
-    x = torch.tensor(data).float().cpu().numpy()
-    return np.array(ort_session.run(None, {'input': x})[0])
+def predict_batched(network, values, batch_size=65536):
+    network.eval()
+    output = np.empty(len(values), dtype=np.float32)
+    with torch.inference_mode():
+        for start in range(0, len(values), batch_size):
+            stop = min(start + batch_size, len(values))
+            output[start:stop] = network(torch.from_numpy(values[start:stop])).numpy().reshape(-1)
+    return output
 
 
 if args.train_mode == 'MEAN':
@@ -121,11 +140,12 @@ elif args.train_mode == "SIGMA":
         map_location="cpu"
     )
 
-    with torch.no_grad():
-        mean = net_mean(torch.tensor(X).float()).detach().numpy().flatten()
+    mean = predict_batched(net_mean, X)
+    del net_mean
 
     diff_mean = np.abs(y - mean)
     y = (diff_mean * np.sqrt(np.pi / 2.)).reshape(-1, 1)
+    del mean, diff_mean
 
 elif args.train_mode == "FULL":
 
@@ -152,11 +172,12 @@ elif args.train_mode == "FULL":
         map_location="cpu"
     )
 
-    with torch.no_grad():
-        mean = torch.flatten(net_mean(torch.tensor(X).float())).detach().numpy()
-        sigma = torch.flatten(net_sigma(torch.tensor(X).float())).detach().numpy()
+    mean = predict_batched(net_mean, X)
+    sigma = predict_batched(net_sigma, X)
+    del net_mean, net_sigma
 
-    y = np.vstack((mean, mean + sigma)).T
+    y = np.column_stack((mean, mean + sigma))
+    del mean, sigma
 
 else:
     LOG.info("Unknown args.train_mode! Please select 'MEAN', 'SIGMA' or 'FULL'.")
@@ -167,13 +188,25 @@ else:
 NeuralNet = NN(nnconfig.model(dict_config))
 
 ### data preparation
-X_train, X_test, y_train, y_test = train_test_split(X, y, **dict_config["DATA_SPLIT"])
+split_options = dict(dict_config["DATA_SPLIT"])
+if split_options.get('random_state') is None:
+    split_options['random_state'] = split_seed
+X_train, X_test, y_train, y_test = train_test_split(X, y, **split_options)
+del X, y
+# Bind before any optional CUDA-resident data preparation.
+if torch.cuda.is_available():
+    local_rank = int(os.environ.get('LOCAL_RANK', os.environ.get('SLURM_LOCALID', '0')))
+    torch.cuda.set_device(0 if torch.cuda.device_count() == 1 else local_rank)
+loader_options = dict(dict_config["DATA_LOADER"])
+loader_options.setdefault('seed', random_seed)
 data = DataLoading(
     [X_train, y_train],
     [X_test, y_test],
-    **dict_config["DATA_LOADER"],
+    **loader_options,
     verbose=(int(os.environ.get("SLURM_PROCID", "0")) == 0)
 )
+
+del X_train, X_test, y_train, y_test
 
 ### evaluate training and validation loss over epochs
 NeuralNet.training(data, **dict_config["NET_TRAINING"])
@@ -188,7 +221,7 @@ if str(args.train_mode) in ["MEAN", "SIGMA", "FULL"]:
         )
     if save_as_onnx == "True":
         NeuralNet.save_onnx(
-            example_data=torch.tensor(np.array([X[0]]), requires_grad=True).float(),
+            example_data=example_data,
             path=output_folder + '/networks/network_' + str(args.train_mode).lower() + '/net_onnx_' + str(args.train_mode).lower() + '.onnx'
         )
         NeuralNet.check_onnx(
@@ -211,7 +244,7 @@ elif str(args.train_mode) == "ENSEMBLE":
         )
     if save_as_onnx == "True":
         NeuralNet.save_onnx(
-            example_data=torch.tensor(np.array([X[0]]), requires_grad=True).float(),
+            example_data=example_data,
             path=output_folder + '/networks/network_' + str(args.train_mode).lower() + '/net_onnx_ensemble_' + str(job_id) + '.onnx'
         )
         NeuralNet.check_onnx(

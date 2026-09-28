@@ -67,7 +67,7 @@ def get_exec_command(job_dict):
     if device == "NVIDIA_H200_GPU":
         return f'apptainer exec --nv {job_dict["cuda_container"]} {python_cmd}'
     elif device == "AMD_MI100_GPU":
-        return f'apptainer exec {job_dict["rocm_container"]} {python_cmd}'
+        return f'apptainer exec --rocm {job_dict["rocm_container"]} {python_cmd}'
     elif device == "CPU" or scheduler.lower() == "local":
         return f'apptainer exec {job_dict["cuda_container"]} {python_cmd}'
     elif device == "EPN":
@@ -80,6 +80,11 @@ if scheduler.lower() == "slurm":
 
     if train_mode != "QA":
 
+        if job_dict.get('device') != 'CPU':
+            ngpus = int(job_dict.get('ngpus', 1))
+            if ngpus < 1 or (ngpus > 8 and ngpus % 8):
+                raise ValueError('ngpus must be 1..8 or a multiple of 8')
+        job_dict.setdefault('cpus-per-task', 1)
         exec_cmd = get_exec_command(job_dict)
         bash_path = path.join(full_path_out, "TRAIN.sh")
 
@@ -98,21 +103,33 @@ if scheduler.lower() == "slurm":
                 job_dict["nodes"] = int(job_dict["ngpus"]) // 8
                 job_dict["ntasks_per_node"] = 8
                 script += f"""#SBATCH --nodes={job_dict['nodes']}
+#SBATCH --cpus-per-task={job_dict['cpus-per-task']}
 #SBATCH --gres=gpu:8
 #SBATCH --ntasks-per-node={job_dict['ntasks_per_node']}
 
 export OMP_NUM_THREADS=${{SLURM_CPUS_PER_TASK:-1}}
 
-time srun {exec_cmd} "{job_script}" --config "$1" --train-mode "$2"
+export MASTER_ADDR=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
+export MASTER_PORT=$((20000 + SLURM_JOB_ID % 20000))
+
+# Hydra may round CPUs/Task up after submission, leaving this hint stale.
+unset SLURM_TRES_PER_TASK
+time srun --kill-on-bad-exit=1 {exec_cmd} "{job_script}" --config "$1" --train-mode "$2"
 """
             else:
                 script += f"""#SBATCH --nodes=1
+#SBATCH --cpus-per-task={job_dict['cpus-per-task']}
 #SBATCH --gres=gpu:{job_dict['ngpus']}
 #SBATCH --ntasks-per-node={job_dict['ngpus']}
 
 export OMP_NUM_THREADS=${{SLURM_CPUS_PER_TASK:-1}}
 
-time srun {exec_cmd} "{job_script}" --config "$1" --train-mode "$2"
+export MASTER_ADDR=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
+export MASTER_PORT=$((20000 + SLURM_JOB_ID % 20000))
+
+# Hydra may round CPUs/Task up after submission, leaving this hint stale.
+unset SLURM_TRES_PER_TASK
+time srun --kill-on-bad-exit=1 {exec_cmd} "{job_script}" --config "$1" --train-mode "$2"
 """
             write_script(bash_path, script)
 
@@ -132,21 +149,33 @@ time srun {exec_cmd} "{job_script}" --config "$1" --train-mode "$2"
                 job_dict["nodes"] = int(job_dict["ngpus"]) // 8
                 job_dict["ntasks_per_node"] = 8
                 script += f"""#SBATCH --nodes={job_dict['nodes']}
+#SBATCH --cpus-per-task={job_dict['cpus-per-task']}
 #SBATCH --gres=gpu:8
 #SBATCH --ntasks-per-node={job_dict['ntasks_per_node']}
 
 export OMP_NUM_THREADS=${{SLURM_CPUS_PER_TASK:-1}}
 
-time srun {exec_cmd} "{job_script}" --config "$1" --train-mode "$2"
+export MASTER_ADDR=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
+export MASTER_PORT=$((20000 + SLURM_JOB_ID % 20000))
+
+# Hydra may round CPUs/Task up after submission, leaving this hint stale.
+unset SLURM_TRES_PER_TASK
+time srun --kill-on-bad-exit=1 {exec_cmd} "{job_script}" --config "$1" --train-mode "$2"
 """
             else:
                 script += f"""#SBATCH --nodes=1
+#SBATCH --cpus-per-task={job_dict['cpus-per-task']}
 #SBATCH --gres=gpu:{job_dict['ngpus']}
 #SBATCH --ntasks-per-node={job_dict['ngpus']}
 
 export OMP_NUM_THREADS=${{SLURM_CPUS_PER_TASK:-1}}
 
-time srun {exec_cmd} "{job_script}" --config "$1" --train-mode "$2"
+export MASTER_ADDR=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
+export MASTER_PORT=$((20000 + SLURM_JOB_ID % 20000))
+
+# Hydra may round CPUs/Task up after submission, leaving this hint stale.
+unset SLURM_TRES_PER_TASK
+time srun --kill-on-bad-exit=1 {exec_cmd} "{job_script}" --config "$1" --train-mode "$2"
 """
             write_script(bash_path, script)
 
@@ -166,21 +195,33 @@ time srun {exec_cmd} "{job_script}" --config "$1" --train-mode "$2"
                 job_dict["nodes"] = int(job_dict["ngpus"]) // 8
                 job_dict["ntasks_per_node"] = 8
                 script += f"""#SBATCH --nodes={job_dict['nodes']}
+#SBATCH --cpus-per-task={job_dict['cpus-per-task']}
 #SBATCH --gres=gpu:8
 #SBATCH --ntasks-per-node={job_dict['ntasks_per_node']}
 
 export OMP_NUM_THREADS=${{SLURM_CPUS_PER_TASK:-1}}
 
-time srun {exec_cmd} "{job_script}" --config "$1" --train-mode "$2"
+export MASTER_ADDR=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
+export MASTER_PORT=$((20000 + SLURM_JOB_ID % 20000))
+
+# Hydra may round CPUs/Task up after submission, leaving this hint stale.
+unset SLURM_TRES_PER_TASK
+time srun --kill-on-bad-exit=1 {exec_cmd} "{job_script}" --config "$1" --train-mode "$2"
 """
             else:
                 script += f"""#SBATCH --nodes=1
+#SBATCH --cpus-per-task={job_dict['cpus-per-task']}
 #SBATCH --gres=gpu:{job_dict['ngpus']}
 #SBATCH --ntasks-per-node={job_dict['ngpus']}
 
 export OMP_NUM_THREADS=${{SLURM_CPUS_PER_TASK:-1}}
 
-time srun {exec_cmd} "{job_script}" --config "$1" --train-mode "$2"
+export MASTER_ADDR=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
+export MASTER_PORT=$((20000 + SLURM_JOB_ID % 20000))
+
+# Hydra may round CPUs/Task up after submission, leaving this hint stale.
+unset SLURM_TRES_PER_TASK
+time srun --kill-on-bad-exit=1 {exec_cmd} "{job_script}" --config "$1" --train-mode "$2"
 """
             write_script(bash_path, script)
 
