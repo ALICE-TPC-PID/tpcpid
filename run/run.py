@@ -1,10 +1,14 @@
 import sys, os, json, subprocess, glob
+import shutil
+import uuid
+from pathlib import Path
 import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--config", default="configuration.json", help="Path to the configuration file")
 parser.add_argument("-skip-q", "--skip-question", type=int, default=0, help="Skip the confirmation question to proceed with the run (1 to skip, 0 to ask)")
 parser.add_argument("-ci", "--ci-run", type=int, default=0, help="Run in CI mode")
+parser.add_argument("--ci-artifact-dir", help="Export networks from this CI run to this directory")
 args = parser.parse_args()
 
 if "*" in args.config:
@@ -24,12 +28,13 @@ for i, config_file in enumerate(args.config):
 
     if args.ci_run:
         CONFIG['settings']['framework'] = os.getcwd()
+        CONFIG['dataset']['outputPath'] = "ci/runs/" + uuid.uuid4().hex
         CONFIG['dataset']['input_skimmedtree_path'] = os.getcwd() + "/run/ci/data/AO2D_mini.root"
         CONFIG['trainNeuralNetOptions'] = {
-            "execution_mode": "MEAN",                                   ### Only run one network as a proof of principle
+            "execution_mode": "FULL",  # Train MEAN, SIGMA, then the combined O2 model
             "configuration": os.getcwd() + "/run/ci/nnconfig.py",
             "training_file": "train_single_sigma.py",
-            "numberOfEpochs": "2",
+            "numberOfEpochs": "20",
             "num_networks": 1,
             "qa_file": "training_qa.py",
             "enable_qa": "False",
@@ -57,6 +62,17 @@ for i, config_file in enumerate(args.config):
             "--config", copied_config,
             "--ci-run", "1"
         ], check=True)
+        if args.ci_artifact_dir:
+            artifact_dir = Path(args.ci_artifact_dir).resolve()
+            artifact_dir.mkdir(parents=True, exist_ok=False)
+            training_dir = Path(CONFIG['output']['general']['training'])
+            for mode in ("mean", "sigma", "full"):
+                source = training_dir / "networks" / f"network_{mode}"
+                if not (source / f"net_onnx_{mode}.onnx").is_file():
+                    raise FileNotFoundError(f"CI did not export the {mode} network")
+                # Preserve ONNX external data alongside each model.
+                shutil.copytree(source, artifact_dir / "networks" / f"network_{mode}")
+            shutil.copy2(copied_config, artifact_dir / "training-configuration.json")
 
     else:
         current_framework_path = CONFIG['settings']['framework'] + "/framework"
