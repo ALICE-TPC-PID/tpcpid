@@ -10,6 +10,9 @@ import signal
 import subprocess
 import tarfile
 
+# Example running:
+# cd /lustre/alice/users/csonnab/TPC/o2-tpc-pid
+# python3 /lustre/alice/users/csonnab/TPC/o2-tpc-pid/run/ci/o2physics/ccdb/fetch_ccdb.py --token-dir /lustre/alice/users/csonnab/token_dir --token-id 9898 --unset-proxies
 
 def digest(path):
     checksum = hashlib.sha256()
@@ -33,12 +36,19 @@ def main():
                         help='Optional local ONNX; otherwise use configured CCDB network')
     parser.add_argument('--host', default='http://alice-ccdb.cern.ch')
     parser.add_argument('--timeout', type=int, default=1800)
+    parser.add_argument('--unset-proxies', action='store_true',
+                        help='Remove HTTP, HTTPS and ALL proxy variables from the workflow environment')
     parser.add_argument('--token-dir', type=Path,
                         help='Directory containing tokencert_ID.pem and tokenkey_ID.pem')
     parser.add_argument('--token-id', type=int,
                         help='Select a token pair when the directory contains multiple IDs')
+    parser.add_argument('--remove-archive-on-startup', default=1, help='Removes the tar file on startup')
     args = parser.parse_args()
     env = os.environ.copy()
+    if args.unset_proxies:
+        for variable in ('http_proxy', 'https_proxy', 'all_proxy',
+                         'HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY'):
+            env.pop(variable, None)
     if args.token_id is not None and args.token_dir is None:
         parser.error('--token-id requires --token-dir')
     if args.token_dir is not None:
@@ -71,7 +81,7 @@ def main():
         if not path.is_file():
             parser.error(f'Missing input: {path}')
     if archive.exists():
-        parser.error('Archive must be new; move the old archive before refreshing')
+        subprocess.call(['rm', '-f',  str(output), + "/../*.tar.gz"])
     if output == archive or output in archive.parents:
         parser.error('Archive must be outside the work directory')
     if args.output.is_symlink() or (output.exists() and not output.is_dir()):
@@ -197,7 +207,7 @@ def main():
     print(f'Created {archive}: {len(objects)} objects, {archive.stat().st_size:,} bytes')
     if archive.stat().st_size >= 100 * 1024 * 1024:
         print('Archive exceeds 100 MiB; store it with Git LFS before pushing to GitHub.')
-
+    subprocess.call(['rm', '-rf', str(output)])
 
 if __name__ == '__main__':
     main()
