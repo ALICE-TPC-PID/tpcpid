@@ -118,7 +118,7 @@
     "autoSetProcessFunctions": "1",
     "reconstructionPass": "metadata",
     "timeShiftCCDBPathNegMC": "",
-    "ccdb-url": "http://alice-ccdb.cern.ch",
+    "ccdb-url": "http://ccdb-test.cern.ch:8080",
     "reconstructionPassDefault": "unanchored"
   },
   "tof-event-time": {
@@ -334,7 +334,7 @@
     "maxDCAxyToPVMFTTrack": "2",
     "maxEtaMFTTrack": "-2",
     "autoConfigureProcess": "0",
-    "ccdburl": "http://alice-ccdb.cern.ch",
+    "ccdburl": "http://ccdb-test.cern.ch:8080",
     "processCentralityRun3": "1"
   },
   "eventselection-run3": {
@@ -372,7 +372,7 @@
     "evselOpts.VzDiffMargin": "0.2",
     "bcselOpts.amIneeded": "-1",
     "evselOpts.TimeIntervalForOccupancyCalculationMax": "100",
-    "ccdburl": "http://alice-ccdb.cern.ch",
+    "ccdburl": "http://ccdb-test.cern.ch:8080",
     "evselOpts.muonSelection": "0",
     "evselOpts.UseWeightsForOccupancyEstimator": "1",
     "timestamp.verbose": "0",
@@ -414,7 +414,7 @@
     "trackTuner.usePvRefitCorrections": "0",
     "v0BuilderOpts.mc_addGeneratedGamma": "0",
     "v0BuilderOpts.moveTPCOnlyTracks": "1",
-    "ccdb.ccdb-url": "http://alice-ccdb.cern.ch",
+    "ccdb.ccdb-url": "http://ccdb-test.cern.ch:8080",
     "enabledTables": {
       "values": [
         [
@@ -574,7 +574,7 @@
     "v0BuilderOpts.mc_treatPiToMuDecays": "1",
     "trackTuner.debugInfo": "0",
     "trackPropagation.minPropagationDistance": "5",
-    "ccdburl": "http://alice-ccdb.cern.ch",
+    "ccdburl": "http://ccdb-test.cern.ch:8080",
     "cascadeBuilderOpts.mc_keepOnlyPhysicalPrimary": "0",
     "cascadeBuilderOpts.mc_addGeneratedXiMinus": "1",
     "cascadeBuilderOpts.minCrossedRows": "50",
@@ -1031,7 +1031,7 @@
       "values": []
     },
     "pidTPC.useNetworkCorrection": "1",
-    "ccdburl": "http://alice-ccdb.cern.ch",
+    "ccdburl": "http://ccdb-test.cern.ch:8080",
     "pidTPC.savedEdxsCorrected": "-1",
     "processTracksMCIU": "0"
   },
@@ -1042,7 +1042,7 @@
     "resoFT0A": "20",
     "collisionSystem": "-2",
     "addHistograms": "0",
-    "ccdb-url": "http://alice-ccdb.cern.ch",
+    "ccdb-url": "http://ccdb-test.cern.ch:8080",
     "processWithBypassFT0timeInMC": "0",
     "processStandard": "1"
   }
