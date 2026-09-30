@@ -45,6 +45,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: true
       - name: Download networks from this CI run
         uses: actions/download-artifact@v4
         with:

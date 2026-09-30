@@ -3,3 +3,5 @@ run/src/*.sh
 output/
 logs/
 *.sif
+run/ci/ccdb/work/
+run/ci/ccdb/*.partial

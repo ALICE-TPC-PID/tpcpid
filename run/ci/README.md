@@ -1,5 +1,15 @@
 # O2Physics integration CI
 
+## Local CCDB fixture
+
+Generate and commit `run/ci/ccdb/ccdb.tar.gz` before running CI. In an authenticated
+local O2Physics shell, run `python3 run/ci/ccdb/fetch_ccdb.py` from the repository
+root. The script runs the workflow, captures its CCDB objects and headers, and
+packages them with checksums and input provenance. See [CCDB instructions](ccdb/README.md)
+for input overrides, regeneration, GitHub upload and snapshot limitations.
+
+## Pipeline
+
 The `CI` GitHub Actions workflow trains MEAN, SIGMA, and FULL networks for **20 epochs each**. It exports the networks from that exact run as the `ci-networks` artifact. A dependent GitHub-hosted Ubuntu job mounts `alice.cern.ch` with CVMFS, selects the newest `daily-YYYYMMDD-HHMM-revision` O2Physics build, and runs it in the current CVMFS EL9 container. CVMFS fetches the container and package files on demand; no private image or login is required.
 
 The pipeline in `o2physics/run.sh` is adapted from `/scratch/alice/csonnab/MyO2/misc/test-mlfix/master/run.sh`. `o2physics/AO2D.2dfs.root` and `o2physics/configuration.json` are copies of the supplied inputs. The ROOT fixture is approximately 85 MiB and is included directly so GitHub runners do not depend on hydra or grid access. The original files are not changed.
