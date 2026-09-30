@@ -1,0 +1,212 @@
+{
+  "source": "mltest.log (run 572216, LHC26ak, apass1)",
+  "host": "http://alice-ccdb.cern.ch",
+  "run": 572216,
+  "objects": [
+    {
+      "path": "CTP/Calib/OrbitReset",
+      "timestamps": [
+        1779970676717
+      ],
+      "valid_from": 1779951118308,
+      "uuid": "b8c53c1f-5a61-11f1-b137-0aa140641b9a",
+      "created_ms": 1779951118345,
+      "ci_required": true
+    },
+    {
+      "path": "GLO/Config/GRPECS",
+      "timestamps": [
+        1779970676717
+      ],
+      "valid_from": 1779963054324,
+      "uuid": "518f7638-5aa1-11f1-b138-0aa145271b9a",
+      "created_ms": 1779978432978,
+      "ci_required": true
+    },
+    {
+      "path": "GLO/Config/GRPLHCIF",
+      "timestamps": [
+        1779970676717,
+        1779963677978
+      ],
+      "valid_from": 1779952952627,
+      "uuid": "fe16f721-5a65-11f1-b137-0aa202c71b9a",
+      "created_ms": 1779952952631,
+      "ci_required": true
+    },
+    {
+      "path": "CTP/Calib/FirstRunOrbit",
+      "timestamps": [
+        1779970676717
+      ],
+      "valid_from": 1779963097732,
+      "uuid": "9d0ad6a5-5a7d-11f1-b137-0aa140641b9a",
+      "created_ms": 1779963097734,
+      "ci_required": true
+    },
+    {
+      "path": "EventSelection/EventSelectionParams",
+      "timestamps": [
+        1779970676717
+      ],
+      "valid_from": 1543767116001,
+      "uuid": "5f880452-f6ff-11ee-82dc-90ce809b250c",
+      "created_ms": 1712728717490,
+      "ci_required": true
+    },
+    {
+      "path": "ITS/Config/AlpideParam",
+      "timestamps": [
+        1779970676717
+      ],
+      "valid_from": 1779904499893,
+      "uuid": "2e02be9c-59f5-11f1-b135-0aa202c71b9a",
+      "created_ms": 1779904499898,
+      "ci_required": true
+    },
+    {
+      "path": "EventSelection/TriggerAliases",
+      "timestamps": [
+        1779970676717
+      ],
+      "valid_from": 1779963096714,
+      "uuid": "5fd40d59-6f09-11f1-a9b8-bc864bbc24ee",
+      "created_ms": 1782222147831,
+      "ci_required": true
+    },
+    {
+      "path": "ITS/Calib/TimeDeadMap",
+      "timestamps": [
+        1779970676717
+      ],
+      "valid_from": 1779962712008,
+      "uuid": "f5aec10f-5aa0-11f1-b138-0aa200341b9a",
+      "created_ms": 1779978278833,
+      "ci_required": true
+    },
+    {
+      "path": "RCT/Flags/RunFlags",
+      "timestamps": [
+        1779970676717
+      ],
+      "valid_from": 1779963087714,
+      "uuid": "6137f500-b7f3-11f1-b18c-808d5c3e250c",
+      "created_ms": 1790239136118,
+      "ci_required": true
+    },
+    {
+      "path": "CTP/Config/Config",
+      "timestamps": [
+        1779963677978
+      ],
+      "valid_from": 1779962454843,
+      "uuid": "837b0584-5a7d-11f1-b137-0aa140641b9a",
+      "created_ms": 1779963054848,
+      "ci_required": true
+    },
+    {
+      "path": "CTP/Calib/Scalers",
+      "timestamps": [
+        1779963677978
+      ],
+      "valid_from": 1779962454843,
+      "uuid": "e7f5c5fd-5aa0-11f1-b138-0aa140641b9a",
+      "created_ms": 1779978255810,
+      "ci_required": true
+    },
+    {
+      "path": "Users/a/amarin/TPC/Response/Response",
+      "timestamps": [
+        1779963677978
+      ],
+      "valid_from": 1779807019450,
+      "uuid": "a650eb00-b366-11f1-996d-8cb53d0d24ee",
+      "created_ms": 1789738888355,
+      "ci_required": true
+    },
+    {
+      "path": "Users/a/amarin/TPC/ML",
+      "timestamps": [
+        1779963677978
+      ],
+      "valid_from": 1779807019450,
+      "uuid": "c01df999-b366-11f1-996d-8cb53d0d24ee",
+      "created_ms": 1789738931642,
+      "ci_required": false
+    },
+    {
+      "path": "GLO/Config/GRPMagField",
+      "timestamps": [
+        1779970676717
+      ],
+      "valid_from": 1779454477452,
+      "uuid": "63bb57f8-55dd-11f1-b133-0aa202c71b9a",
+      "created_ms": 1779454477455,
+      "ci_required": true
+    },
+    {
+      "path": "GLO/Calib/MeanVertex",
+      "timestamps": [
+        1779970676717
+      ],
+      "valid_from": 1779970600062,
+      "uuid": "33b3b53a-5a90-11f1-b138-0aa200341b9a",
+      "created_ms": 1779971081440,
+      "ci_required": true
+    },
+    {
+      "path": "GLO/Param/MatLUTInner",
+      "timestamps": [
+        1779970676717
+      ],
+      "valid_from": 1779660000000,
+      "uuid": "76ca18c1-8d30-11f1-baf9-808de0f5250c",
+      "created_ms": 1785537471609,
+      "ci_required": true
+    },
+    {
+      "path": "Centrality/Calibration",
+      "timestamps": [
+        1779970676717
+      ],
+      "valid_from": 1640995200000,
+      "uuid": "fb17ed1d-39db-11ed-ac0b-533d799c24ee",
+      "created_ms": 1663785249162,
+      "ci_required": true
+    },
+    {
+      "path": "TOF/Calib/Params",
+      "timestamps": [
+        1779963677978
+      ],
+      "valid_from": 1,
+      "uuid": "28ac401f-ab56-11ef-b328-200114580202",
+      "created_ms": 1732557200968,
+      "ci_required": true
+    },
+    {
+      "path": "Analysis/PID/TOFOffsetPos",
+      "timestamps": [
+        1779963677978
+      ],
+      "valid_from": 1,
+      "uuid": "bd53ec0a-ac9f-11ef-8a14-c1cc02a7250c",
+      "created_ms": 1732698754794,
+      "ci_required": true
+    },
+    {
+      "path": "Analysis/PID/TOFOffsetNeg",
+      "timestamps": [
+        1779963677978
+      ],
+      "valid_from": 1,
+      "uuid": "bdab681d-ac9f-11ef-8a14-c1cc02a7250c",
+      "created_ms": 1732698755367,
+      "ci_required": true
+    }
+  ],
+  "optional_missing": [
+    "GLO/GRP/GRP",
+    "Users/d/ddobrigk/stratof"
+  ]
+}
