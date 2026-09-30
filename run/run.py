@@ -29,10 +29,10 @@ for i, config_file in enumerate(args.config):
     if args.ci_run:
         CONFIG['settings']['framework'] = os.getcwd()
         CONFIG['dataset']['outputPath'] = "ci/runs/" + uuid.uuid4().hex
-        CONFIG['dataset']['input_skimmedtree_path'] = os.getcwd() + "/run/ci/data/AO2D_mini.root"
+        CONFIG['dataset']['input_skimmedtree_path'] = os.getcwd() + "/run/ci/nn/data/AO2D_mini.root"
         CONFIG['trainNeuralNetOptions'] = {
             "execution_mode": "FULL",  # Train MEAN, SIGMA, then the combined O2 model
-            "configuration": os.getcwd() + "/run/ci/nnconfig.py",
+            "configuration": os.getcwd() + "/run/ci/nn/nnconfig.py",
             "training_file": "train_single_sigma.py",
             "numberOfEpochs": "20",
             "num_networks": 1,

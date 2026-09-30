@@ -2,10 +2,10 @@
 
 ## Local CCDB fixture
 
-Generate and commit `run/ci/ccdb/ccdb.tar.gz` before running CI. In an authenticated
-local O2Physics shell, run `python3 run/ci/ccdb/fetch_ccdb.py` from the repository
+Generate and commit `run/ci/o2physics/ccdb/ccdb.tar.gz` before running CI. In an authenticated
+local O2Physics shell, run `python3 run/ci/o2physics/ccdb/fetch_ccdb.py` from the repository
 root. The script runs the workflow, captures its CCDB objects and headers, and
-packages them with checksums and input provenance. See [CCDB instructions](ccdb/README.md)
+packages them with checksums and input provenance. See [CCDB instructions](o2physics/ccdb/README.md)
 for input overrides, regeneration, GitHub upload and snapshot limitations.
 
 ## Pipeline
@@ -24,7 +24,7 @@ To reproduce from the repository root in an environment with the training depend
 
 ```bash
 python3 run/ci/ci_test.py --artifact-dir output/my-ci-networks
-python3 run/ci/o2physics_pid_test.py \
+python3 run/ci/o2physics/o2physics_pid_test.py \
   --artifact-dir output/my-ci-networks \
   --output-dir output/my-o2physics-test
 ```

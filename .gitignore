@@ -3,5 +3,5 @@ run/src/*.sh
 output/
 logs/
 *.sif
-run/ci/ccdb/work/
-run/ci/ccdb/*.partial
+run/ci/o2physics/ccdb/work/
+run/ci/o2physics/ccdb/*.partial

@@ -21,10 +21,10 @@ def digest(path):
 
 def main():
     base = Path(__file__).resolve().parent
-    fixtures = base.parent / 'o2physics'
+    fixtures = base.parent
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('output', type=Path, nargs='?', default=base / 'work',
-                        help='New working directory (default: ccdb/work)')
+                        help='Working directory, cleared on startup (default: ccdb/work)')
     parser.add_argument('--aod', type=Path, default=fixtures / 'AO2D.2dfs.root')
     parser.add_argument('--workflow', type=Path, default=fixtures / 'run.sh')
     parser.add_argument('--config', type=Path, default=fixtures / 'configuration.json')
@@ -33,17 +33,59 @@ def main():
                         help='Optional local ONNX; otherwise use configured CCDB network')
     parser.add_argument('--host', default='http://alice-ccdb.cern.ch')
     parser.add_argument('--timeout', type=int, default=1800)
+    parser.add_argument('--token-dir', type=Path,
+                        help='Directory containing tokencert_ID.pem and tokenkey_ID.pem')
+    parser.add_argument('--token-id', type=int,
+                        help='Select a token pair when the directory contains multiple IDs')
     args = parser.parse_args()
+    env = os.environ.copy()
+    if args.token_id is not None and args.token_dir is None:
+        parser.error('--token-id requires --token-dir')
+    if args.token_dir is not None:
+        token_dir = args.token_dir.expanduser().resolve()
+        if not token_dir.is_dir():
+            parser.error(f'Token directory does not exist: {token_dir}')
+        if args.token_id is None:
+            token_ids = []
+            for certificate in sorted(token_dir.glob('tokencert_*.pem')):
+                match = re.fullmatch(r'tokencert_(\d+)\.pem', certificate.name)
+                if (match and certificate.is_file()
+                        and (token_dir / f'tokenkey_{match.group(1)}.pem').is_file()):
+                    token_ids.append(match.group(1))
+            if len(token_ids) != 1:
+                parser.error('Expected one matching token pair in --token-dir; '
+                             'use --token-id to select a pair')
+            token_id = token_ids[0]
+        else:
+            token_id = str(args.token_id)
+        for variable, prefix in (('JALIEN_TOKEN_CERT', 'tokencert'),
+                                 ('JALIEN_TOKEN_KEY', 'tokenkey')):
+            token_path = token_dir / f'{prefix}_{token_id}.pem'
+            if not token_path.is_file() or not os.access(token_path, os.R_OK):
+                parser.error(f'Token file is missing or unreadable: {token_path}')
+            env[variable] = str(token_path)
     output, archive = args.output.resolve(), args.archive.resolve()
     inputs = {'aod': args.aod.resolve(), 'workflow': args.workflow.resolve(),
               'config': args.config.resolve()}
     for path in [*inputs.values(), *([args.network] if args.network else [])]:
         if not path.is_file():
             parser.error(f'Missing input: {path}')
-    if output.exists() or archive.exists():
-        parser.error('Work directory and archive must be new; move old ones before refreshing')
-    if output in archive.parents:
+    if archive.exists():
+        parser.error('Archive must be new; move the old archive before refreshing')
+    if output == archive or output in archive.parents:
         parser.error('Archive must be outside the work directory')
+    if args.output.is_symlink() or (output.exists() and not output.is_dir()):
+        parser.error('Work directory must be a real directory, not a symlink or file')
+    protected = [*inputs.values(), base, Path.cwd().resolve(), Path.home().resolve()]
+    if args.network:
+        protected.append(args.network.resolve())
+    if args.token_dir:
+        protected.append(args.token_dir.expanduser().resolve())
+    for variable in ('JALIEN_TOKEN_CERT', 'JALIEN_TOKEN_KEY'):
+        if env.get(variable):
+            protected.append(Path(env[variable]).expanduser().resolve())
+    if any(output == path or output in path.parents for path in protected):
+        parser.error('Work directory must not contain inputs, tokens, code, home or current directory')
     workflow = inputs['workflow'].read_text()
     if 'O2_AOD_FILE' not in workflow:
         parser.error('Workflow must accept O2_AOD_FILE (as the repository run.sh does)')
@@ -68,13 +110,15 @@ def main():
             'pidTPC.useNetworkCorrection': '1',
             'pidTPC.networkPathLocally': str(args.network.resolve()),
         })
+    if output.exists():
+        print(f'Removing existing work directory: {output}', flush=True)
+        shutil.rmtree(output)
     output.mkdir(parents=True)
     cache = output / 'ccdb'
     cache.mkdir()
     (output / 'configuration.json').write_text(json.dumps(config, indent=2) + '\n')
     provenance = {name: {'name': path.name, 'sha256': digest(path)}
                   for name, path in inputs.items()}
-    env = os.environ.copy()
     env['O2_AOD_FILE'] = str(inputs['aod'])
     env['ALICEO2_CCDB_LOCALCACHE'] = str(cache)
     env.pop('IGNORE_VALIDITYCHECK_OF_CCDB_LOCALCACHE', None)

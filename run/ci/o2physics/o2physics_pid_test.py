@@ -64,7 +64,7 @@ def clean_environment(home):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--artifact-dir', type=Path, required=True)
-    parser.add_argument('--fixtures', type=Path, default=Path(__file__).parent / 'o2physics')
+    parser.add_argument('--fixtures', type=Path, default=Path(__file__).parent)
     parser.add_argument('--output-dir', type=Path, required=True,
                         help='New directory for configurations, logs, and ROOT outputs')
     parser.add_argument('--package', help='Override automatic latest daily selection')

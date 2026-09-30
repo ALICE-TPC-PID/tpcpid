@@ -10,7 +10,7 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location('o2physics_pid_test', ROOT / 'run/ci/o2physics_pid_test.py')
+spec = importlib.util.spec_from_file_location('o2physics_pid_test', ROOT / 'run/ci/o2physics/o2physics_pid_test.py')
 ci = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(ci)
 
